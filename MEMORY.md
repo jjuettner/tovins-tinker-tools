@@ -1,13 +1,13 @@
 # Memory
 
 ## Current focus
-
-Bootstrap first version. Get tools running
+    Create Basic Layout
 
 ## In progress
 
 ## Recent decisions
 
 ## Known issues / blockers
+    light mode not functional
 
 ## Deferred

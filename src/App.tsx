@@ -1,16 +1,20 @@
-import { StorageCard } from "./components/StorageCard";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { AppLayout } from "./components/AppLayout";
+import { AboutRoute } from "./routes/AboutRoute";
+import { HomeRoute } from "./routes/HomeRoute";
+import { StorageRoute } from "./routes/StorageRoute";
 
 export default function App() {
   return (
-    <main className="mx-auto flex min-h-dvh max-w-3xl flex-col gap-6 p-6">
-      <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold tracking-tight">vibe</h1>
-        <p className="text-sm text-zinc-300">
-          Vite + React + TS. Tailwind. Storage helper + hook + component.
-        </p>
-      </header>
-
-      <StorageCard />
-    </main>
+    <BrowserRouter>
+      <Routes>
+        <Route element={<AppLayout />}>
+          <Route index element={<HomeRoute />} />
+          <Route path="/storage" element={<StorageRoute />} />
+          <Route path="/about" element={<AboutRoute />} />
+        </Route>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
   );
 }

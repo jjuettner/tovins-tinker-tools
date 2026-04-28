@@ -1,0 +1,146 @@
+import { Database, Home, Info, Menu, Moon, Sun, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { useStoredState } from "../hooks/useStoredState";
+
+type NavItem = {
+  to: string;
+  label: string;
+  icon: React.ReactNode;
+};
+
+function cx(...parts: Array<string | false | null | undefined>) {
+  return parts.filter(Boolean).join(" ");
+}
+
+function usePrefersDark() {
+  return useMemo(() => {
+    if (typeof window === "undefined") return true;
+    return window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? true;
+  }, []);
+}
+
+export function AppLayout() {
+  const prefersDark = usePrefersDark();
+  const { value: dark, setValue: setDark } = useStoredState<boolean>("vibe.theme.dark", prefersDark);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", dark);
+  }, [dark]);
+
+  const navItems: NavItem[] = [
+    { to: "/", label: "Home", icon: <Home className="h-4 w-4" aria-hidden="true" /> },
+    {
+      to: "/storage",
+      label: "Storage",
+      icon: <Database className="h-4 w-4" aria-hidden="true" />
+    },
+    { to: "/about", label: "About", icon: <Info className="h-4 w-4" aria-hidden="true" /> }
+  ];
+
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const location = useLocation();
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [location.pathname]);
+
+  return (
+    <div className="min-h-dvh">
+      <header className="sticky top-0 z-20 border-b border-zinc-200/70 bg-zinc-50/70 backdrop-blur dark:border-zinc-800/70 dark:bg-zinc-950/40">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-zinc-200 bg-white/70 text-zinc-900 hover:bg-white dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-50 dark:hover:bg-zinc-900 sm:hidden"
+              onClick={() => setMobileOpen((v) => !v)}
+              aria-label={mobileOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileOpen}
+            >
+              {mobileOpen ? <X className="h-4 w-4" aria-hidden="true" /> : <Menu className="h-4 w-4" aria-hidden="true" />}
+            </button>
+
+            <div className="flex flex-col leading-tight">
+              <div className="flex items-center gap-2">
+                <span className="font-display text-base font-semibold tracking-tight">vibe</span>
+                <span className="hidden rounded-full border border-zinc-200 bg-white/60 px-2 py-0.5 text-[11px] text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-300 sm:inline">
+                  starter
+                </span>
+              </div>
+              <span className="hidden text-xs text-zinc-600 dark:text-zinc-400 sm:block">
+                Layout + routes + storage demo
+              </span>
+            </div>
+          </div>
+
+          <nav className="hidden items-center gap-1 sm:flex" aria-label="Primary">
+            {navItems.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) =>
+                  cx(
+                    "inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition",
+                    "text-zinc-700 hover:bg-zinc-200/60 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-900/60 dark:hover:text-zinc-50",
+                    isActive && "bg-zinc-200/60 text-zinc-900 dark:bg-zinc-900/60 dark:text-zinc-50"
+                  )
+                }
+                end={item.to === "/"}
+              >
+                {item.icon}
+                {item.label}
+              </NavLink>
+            ))}
+          </nav>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setDark((v) => !v)}
+              className="inline-flex h-9 items-center gap-2 rounded-md border border-zinc-200 bg-white/70 px-3 text-sm font-medium text-zinc-900 hover:bg-white dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-50 dark:hover:bg-zinc-900"
+              aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {dark ? <Sun className="h-4 w-4" aria-hidden="true" /> : <Moon className="h-4 w-4" aria-hidden="true" />}
+              <span className="hidden sm:inline">{dark ? "Light" : "Dark"}</span>
+            </button>
+          </div>
+        </div>
+
+        {mobileOpen ? (
+          <div className="border-t border-zinc-200/70 bg-zinc-50/80 px-4 py-2 backdrop-blur dark:border-zinc-800/70 dark:bg-zinc-950/50 sm:hidden">
+            <nav className="mx-auto flex max-w-6xl flex-col gap-1" aria-label="Mobile primary">
+              {navItems.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  className={({ isActive }) =>
+                    cx(
+                      "inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium",
+                      "text-zinc-700 hover:bg-zinc-200/60 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-900/60 dark:hover:text-zinc-50",
+                      isActive && "bg-zinc-200/60 text-zinc-900 dark:bg-zinc-900/60 dark:text-zinc-50"
+                    )
+                  }
+                  end={item.to === "/"}
+                >
+                  {item.icon}
+                  {item.label}
+                </NavLink>
+              ))}
+            </nav>
+          </div>
+        ) : null}
+      </header>
+
+      <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
+        <Outlet />
+      </main>
+
+      <footer className="mx-auto w-full max-w-6xl px-4 pb-10 pt-2 text-xs text-zinc-600 dark:text-zinc-400 sm:px-6">
+        <div className="border-t border-zinc-200/70 pt-6 dark:border-zinc-800/70">
+          <span className="font-medium text-zinc-700 dark:text-zinc-300">vibe</span>{" "}
+          <span>· Vite + React + TS + Tailwind</span>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
