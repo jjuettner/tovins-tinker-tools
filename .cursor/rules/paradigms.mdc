@@ -1,0 +1,9 @@
+# Paradigms
+
+FP preferred: pure fns, immutability, map/filter/reduce.
+state: derive > store. compute from source of truth. no duplicated state.
+local-first: SQLite via sqlite-wasm + OPFS. no network = no problem.
+  schema versioning: user_version PRAGMA. check at boot, run migrations if stale.
+  migrations: additive only (add columns/tables). never drop/rename without version bump.
+  queries: raw SQL in lib/db/queries/. no ORM. typed return shapes in types/.
+  ephemeral UI state (theme, open panels): localStorage only. never in SQL

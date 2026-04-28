@@ -1,0 +1,16 @@
+# Testing
+
+framework: vitest + @testing-library/react
+coverage: lib/ and hooks/ → 80% min. components → interaction tests only.
+files: colocate. ComponentName.test.tsx next to ComponentName.tsx.
+
+patterns:
+  unit: pure fns in lib/ → test all branches.
+  hook: renderHook() + act(). test state changes.
+  component: userEvent over fireEvent. query by role/label, never testid unless last resort.
+  storage: mock localStorage via vi.stubGlobal or vitest-localstorage-mock.
+
+no: testing implementation details. no snapshot tests. no enzyme.
+naming: describe('ComponentName') → it('does X when Y').
+setup: vitest.config.ts → environment: 'jsdom'. globals: true.
+run: `vitest` for watch, `vitest run` for CI.

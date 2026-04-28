@@ -1,0 +1,16 @@
+# Coding
+
+ts: strict. no `any`. no `as` casts without comment. infer where obvious.
+naming:
+  components: PascalCase
+  fns/vars/hooks: camelCase
+  constants: SCREAMING_SNAKE
+  types/interfaces: PascalCase, no I-prefix
+files: one component per file. filename = component name. hooks: use prefix.
+imports: alias @/ = src/. no relative ../../.
+fns: pure where possible. max 40 lines. single responsibility. early returns.
+components: max 100 lines. extract if larger.
+no: any, ts-ignore, console.log, magic numbers, nested ternaries, default exports for utils.
+exports: named for utils/hooks/types. default for components/pages.
+errors: always handle. never silent catch. user-facing or rethrow.
+formatting: prettier default config. no manual formatting.
