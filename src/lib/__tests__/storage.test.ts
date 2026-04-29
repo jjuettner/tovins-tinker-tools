@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { readStorage, writeStorage } from "./storage";
+import { readStorage, writeStorage } from "../storage";
 
 describe("storage", () => {
   it("writes then reads typed json", () => {
@@ -11,3 +11,4 @@ describe("storage", () => {
     expect(value).toEqual({ n: 1 });
   });
 });
+

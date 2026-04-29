@@ -1,13 +1,15 @@
 # Memory
 
 ## Current focus
-    Create Basic Layout
+    New Features
 
 ## In progress
 
+
 ## Recent decisions
+    Rename routes to features, no suffix on pages
 
 ## Known issues / blockers
-    light mode not functional
+    
 
 ## Deferred

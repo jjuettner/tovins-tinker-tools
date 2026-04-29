@@ -4,6 +4,19 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>vibe</title>
+    <script>
+      (() => {
+        try {
+          const raw = localStorage.getItem("vibe.theme.dark");
+          const stored = raw === null ? null : JSON.parse(raw);
+          const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)")?.matches ?? false;
+          const dark = typeof stored === "boolean" ? stored : prefersDark;
+          document.documentElement.classList.toggle("dark", dark);
+        } catch {
+          // ignore
+        }
+      })();
+    </script>
   </head>
   <body class="min-h-dvh bg-zinc-50 text-zinc-950 antialiased dark:bg-zinc-950 dark:text-zinc-50">
     <div id="root"></div>

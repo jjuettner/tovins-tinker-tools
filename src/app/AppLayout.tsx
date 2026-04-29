@@ -1,4 +1,4 @@
-import { Database, Home, Info, Menu, Moon, Sun, X } from "lucide-react";
+import { Dice6, Menu, Moon, Sun, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useStoredState } from "../hooks/useStoredState";
@@ -9,14 +9,10 @@ type NavItem = {
   icon: React.ReactNode;
 };
 
-function cx(...parts: Array<string | false | null | undefined>) {
-  return parts.filter(Boolean).join(" ");
-}
-
 function usePrefersDark() {
   return useMemo(() => {
-    if (typeof window === "undefined") return true;
-    return window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? true;
+    if (typeof window === "undefined") return false;
+    return window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
   }, []);
 }
 
@@ -29,13 +25,7 @@ export function AppLayout() {
   }, [dark]);
 
   const navItems: NavItem[] = [
-    { to: "/", label: "Home", icon: <Home className="h-4 w-4" aria-hidden="true" /> },
-    {
-      to: "/storage",
-      label: "Storage",
-      icon: <Database className="h-4 w-4" aria-hidden="true" />
-    },
-    { to: "/about", label: "About", icon: <Info className="h-4 w-4" aria-hidden="true" /> }
+    { to: "/", label: "Characters", icon: <Dice6 className="h-4 w-4" aria-hidden="true" /> }
   ];
 
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -67,7 +57,7 @@ export function AppLayout() {
                 </span>
               </div>
               <span className="hidden text-xs text-zinc-600 dark:text-zinc-400 sm:block">
-                Layout + routes + storage demo
+                Characters
               </span>
             </div>
           </div>
@@ -78,11 +68,11 @@ export function AppLayout() {
                 key={item.to}
                 to={item.to}
                 className={({ isActive }) =>
-                  cx(
-                    "inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition",
-                    "text-zinc-700 hover:bg-zinc-200/60 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-900/60 dark:hover:text-zinc-50",
-                    isActive && "bg-zinc-200/60 text-zinc-900 dark:bg-zinc-900/60 dark:text-zinc-50"
-                  )
+                  (
+                    "inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition " +
+                    "text-zinc-700 hover:bg-zinc-200/60 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-900/60 dark:hover:text-zinc-50 " +
+                    (isActive ? "bg-zinc-200/60 text-zinc-900 dark:bg-zinc-900/60 dark:text-zinc-50" : "")
+                  ).trim()
                 }
                 end={item.to === "/"}
               >
@@ -113,11 +103,11 @@ export function AppLayout() {
                   key={item.to}
                   to={item.to}
                   className={({ isActive }) =>
-                    cx(
-                      "inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium",
-                      "text-zinc-700 hover:bg-zinc-200/60 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-900/60 dark:hover:text-zinc-50",
-                      isActive && "bg-zinc-200/60 text-zinc-900 dark:bg-zinc-900/60 dark:text-zinc-50"
-                    )
+                    (
+                      "inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium " +
+                      "text-zinc-700 hover:bg-zinc-200/60 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-900/60 dark:hover:text-zinc-50 " +
+                      (isActive ? "bg-zinc-200/60 text-zinc-900 dark:bg-zinc-900/60 dark:text-zinc-50" : "")
+                    ).trim()
                   }
                   end={item.to === "/"}
                 >
@@ -133,13 +123,6 @@ export function AppLayout() {
       <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
         <Outlet />
       </main>
-
-      <footer className="mx-auto w-full max-w-6xl px-4 pb-10 pt-2 text-xs text-zinc-600 dark:text-zinc-400 sm:px-6">
-        <div className="border-t border-zinc-200/70 pt-6 dark:border-zinc-800/70">
-          <span className="font-medium text-zinc-700 dark:text-zinc-300">vibe</span>{" "}
-          <span>· Vite + React + TS + Tailwind</span>
-        </div>
-      </footer>
     </div>
   );
 }
