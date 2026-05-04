@@ -1,5 +1,6 @@
 import { Pencil, Trash2 } from "lucide-react";
 import type { Character } from "../../../types/character";
+import { dndClassByIndex } from "../../../lib/dndData";
 import { buttonClass } from "../../ui/controlClasses";
 
 export function CharacterList(props: {
@@ -40,7 +41,7 @@ export function CharacterList(props: {
             >
               <span className="truncate text-sm font-semibold">{c.name || "Unnamed"}</span>
               <span className="truncate text-xs text-zinc-600 dark:text-zinc-400">
-                {c.world || "World"} · L{c.level}
+                {c.world || "World"} · {dndClassByIndex[c.classIndex]?.name ?? (c.classIndex || "Class")} · L{c.level}
               </span>
             </button>
           );

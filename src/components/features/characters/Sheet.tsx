@@ -10,11 +10,26 @@ import {
   type Ability,
   type Skill
 } from "../../../lib/dnd";
+import { dndClassByIndex, dndFeatByIndex, dndSpellByIndex } from "../../../lib/dndData";
 import { buttonClass } from "../../ui/controlClasses";
 import type { Character } from "../../../types/character";
 
 export function CharacterSheet(props: { c: Character; onEdit(): void }) {
   const prof = proficiencyBonus(props.c.level);
+  const className = dndClassByIndex[props.c.classIndex]?.name ?? (props.c.classIndex ? props.c.classIndex : "Class");
+  const spellNames = useMemo(
+    () =>
+      (props.c.spells ?? []).map((idx) => {
+        const s = dndSpellByIndex[idx];
+        if (!s) return idx;
+        return `${s.name} (${s.level === 0 ? "cantrip" : `lv${s.level}`})`;
+      }),
+    [props.c.spells]
+  );
+  const featNames = useMemo(
+    () => (props.c.feats ?? []).map((idx) => dndFeatByIndex[idx]?.name ?? idx),
+    [props.c.feats]
+  );
 
   const byAbility = useMemo(() => {
     const map: Record<Ability, Skill[]> = { STR: [], DEX: [], CON: [], INT: [], WIS: [], CHA: [] };
@@ -31,6 +46,8 @@ export function CharacterSheet(props: { c: Character; onEdit(): void }) {
           </h2>
           <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-300">
             {props.c.world ? <span className="font-medium">{props.c.world}</span> : <span>World</span>}
+            <span className="px-2 text-zinc-400">·</span>
+            <span className="font-medium">{className}</span>
             <span className="px-2 text-zinc-400">·</span>
             <span>Level {props.c.level}</span>
             <span className="px-2 text-zinc-400">·</span>
@@ -86,6 +103,34 @@ export function CharacterSheet(props: { c: Character; onEdit(): void }) {
             </div>
           );
         })}
+      </div>
+
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="rounded-xl border border-zinc-200 bg-zinc-50/70 p-4 dark:border-zinc-800 dark:bg-zinc-950/30">
+          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Spells</h3>
+          {spellNames.length ? (
+            <ul className="mt-3 list-disc space-y-1 pl-4 text-sm text-zinc-700 dark:text-zinc-200">
+              {spellNames.map((s) => (
+                <li key={s}>{s}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">None yet.</p>
+          )}
+        </div>
+
+        <div className="rounded-xl border border-zinc-200 bg-zinc-50/70 p-4 dark:border-zinc-800 dark:bg-zinc-950/30">
+          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Feats</h3>
+          {featNames.length ? (
+            <ul className="mt-3 list-disc space-y-1 pl-4 text-sm text-zinc-700 dark:text-zinc-200">
+              {featNames.map((f) => (
+                <li key={f}>{f}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">None yet.</p>
+          )}
+        </div>
       </div>
     </section>
   );

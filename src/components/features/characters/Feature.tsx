@@ -40,9 +40,14 @@ export function CharactersFeature() {
       level: Math.min(20, Math.max(1, Math.floor(draft.level || 1))),
       name: draft.name.trim(),
       world: draft.world.trim(),
+      classIndex: draft.classIndex.trim(),
+      spells: Array.from(new Set((draft.spells ?? []).map((s) => s.trim()).filter(Boolean))),
+      feats: Array.from(new Set((draft.feats ?? []).map((f) => f.trim()).filter(Boolean))),
       createdAt: mode === "create" ? now : selected?.createdAt ?? now,
       updatedAt: now
     };
+
+    if (!next.name || !next.classIndex) return;
 
     setCharacters((prev) => {
       const existing = prev.find((c) => c.id === next.id);

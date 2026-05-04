@@ -14,10 +14,13 @@ export function makeDraft(partial?: Partial<CharacterDraft>): CharacterDraft {
     id: partial?.id ?? newId(),
     name: partial?.name ?? "",
     world: partial?.world ?? "",
+    classIndex: partial?.classIndex ?? "",
     level: partial?.level ?? 1,
     stats: partial?.stats ?? defaultStats(),
     proficientSkills: partial?.proficientSkills ?? [],
-    proficientSaves: partial?.proficientSaves ?? []
+    proficientSaves: partial?.proficientSaves ?? [],
+    spells: partial?.spells ?? [],
+    feats: partial?.feats ?? []
   };
 }
 
