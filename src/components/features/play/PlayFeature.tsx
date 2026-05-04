@@ -11,6 +11,7 @@ import {
   weaponDamageSummary,
   weaponToHitBonus
 } from "../../../lib/combat";
+import { unlockedBaseClassFeaturesFromSrd } from "../../../lib/dndFeatures";
 import { dndClassByIndex, dndFeatByIndex, dndSpellByIndex, type DndSpell } from "../../../lib/dndData";
 import { dndEquipmentByIndex, isWeapon } from "../../../lib/dndEquipment";
 import { dndRaceByIndex } from "../../../lib/dndRaces";
@@ -183,9 +184,37 @@ function GeneralTab(props: { c: Character }) {
     [props.c.feats]
   );
 
+  const srdClassFeatures = useMemo(
+    () => unlockedBaseClassFeaturesFromSrd(props.c.classIndex, props.c.level),
+    [props.c.classIndex, props.c.level]
+  );
+
   return (
     <div className="space-y-8">
       <SkillCheckList c={props.c} />
+
+      {srdClassFeatures.length > 0 ? (
+        <section className="rounded-xl border border-zinc-200 bg-white/60 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
+          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Class features (SRD)</h2>
+          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+            From 5e-SRD-Features for your class and level. Subclass paths omitted until a subclass is stored on the character.
+          </p>
+          <ul className="mt-3 space-y-3 text-sm text-zinc-700 dark:text-zinc-200">
+            {srdClassFeatures.map((row) => (
+              <li key={row.index}>
+                <div className="font-medium text-zinc-900 dark:text-zinc-50">
+                  <span className="text-zinc-500 dark:text-zinc-400">Lv {row.level}</span> · {row.name}
+                </div>
+                {row.desc?.length ? (
+                  <p className="mt-1 whitespace-pre-wrap text-xs leading-relaxed text-zinc-600 dark:text-zinc-300">
+                    {row.desc.join("\n\n")}
+                  </p>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       {raceTraits.length > 0 ? (
         <section className="rounded-xl border border-zinc-200 bg-white/60 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">

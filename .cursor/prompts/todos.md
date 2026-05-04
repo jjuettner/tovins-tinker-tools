@@ -1,1 +1,2 @@
 - auto set first character as playing
+- display spell slots as circles / empty circles
