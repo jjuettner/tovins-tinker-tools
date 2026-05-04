@@ -1,0 +1,1 @@
+- auto set first character as playing
