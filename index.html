@@ -3,11 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>vibe</title>
+    <title>Tovin's Tinker Tools</title>
     <script>
       (() => {
         try {
-          const raw = localStorage.getItem("vibe.theme.dark");
+          const raw = localStorage.getItem("tovins-tinker-tools.theme.dark");
           const stored = raw === null ? null : JSON.parse(raw);
           const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)")?.matches ?? false;
           const dark = typeof stored === "boolean" ? stored : prefersDark;

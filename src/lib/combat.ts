@@ -1,0 +1,56 @@
+import type { Ability } from "./dnd";
+import { abilityMod, proficiencyBonus } from "./dnd";
+import type { Character, EquippedItem } from "../types/character";
+import type { DndEquipment } from "./dndEquipment";
+import { dndEquipmentByIndex, isWeapon, weaponIsFinesse, weaponIsRanged } from "./dndEquipment";
+
+/** Saved mastery override, else weapon’s SRD mastery. */
+export function resolvedWeaponMasteryIndex(weapon: EquippedItem, eq: DndEquipment | undefined): string | undefined {
+  const o = weapon.masteryIndex?.trim();
+  if (o) return o;
+  return eq?.mastery?.index;
+}
+
+export function weaponAbilityAndMod(
+  stats: Record<Ability, number>,
+  eq: DndEquipment | undefined
+): { ability: Ability; mod: number } {
+  if (!eq || !isWeapon(eq)) {
+    return { ability: "STR", mod: abilityMod(stats.STR) };
+  }
+  if (weaponIsRanged(eq)) {
+    return { ability: "DEX", mod: abilityMod(stats.DEX) };
+  }
+  if (weaponIsFinesse(eq)) {
+    const sm = abilityMod(stats.STR);
+    const dm = abilityMod(stats.DEX);
+    return sm >= dm ? { ability: "STR", mod: sm } : { ability: "DEX", mod: dm };
+  }
+  return { ability: "STR", mod: abilityMod(stats.STR) };
+}
+
+export function weaponToHitBonus(c: Character, weapon: EquippedItem): number {
+  const eq = dndEquipmentByIndex[weapon.equipmentIndex];
+  if (!eq || !isWeapon(eq)) return abilityMod(c.stats.STR) + proficiencyBonus(c.level);
+  const { mod } = weaponAbilityAndMod(c.stats, eq);
+  return mod + proficiencyBonus(c.level) + weapon.modifier;
+}
+
+export function weaponDamageSummary(c: Character, weapon: EquippedItem): { dice: string; bonus: number; type: string } {
+  const eq = dndEquipmentByIndex[weapon.equipmentIndex];
+  if (!eq?.damage?.damage_dice) {
+    const { mod } = weaponAbilityAndMod(c.stats, eq);
+    return { dice: "1", bonus: mod + weapon.modifier, type: "bludgeoning" };
+  }
+  const { mod } = weaponAbilityAndMod(c.stats, eq);
+  const type = eq.damage.damage_type?.index ?? "bludgeoning";
+  return { dice: eq.damage.damage_dice, bonus: mod + weapon.modifier, type };
+}
+
+export function unarmedToHit(c: Character): number {
+  return abilityMod(c.stats.STR) + proficiencyBonus(c.level);
+}
+
+export function unarmedDamageBonus(c: Character): number {
+  return abilityMod(c.stats.STR);
+}

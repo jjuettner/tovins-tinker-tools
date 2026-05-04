@@ -1,15 +1,11 @@
-import { Pencil, Trash2 } from "lucide-react";
 import type { Character } from "../../../types/character";
 import { dndClassByIndex } from "../../../lib/dndData";
-import { buttonClass } from "../../ui/controlClasses";
 
 export function CharacterList(props: {
   characters: Character[];
   selectedId: string | null;
+  usedCharacterId: string | null;
   onSelect(id: string): void;
-  onEdit(): void;
-  onDelete(): void;
-  hasSelection: boolean;
 }) {
   return (
     <aside className="rounded-2xl border border-zinc-200 bg-white/70 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
@@ -27,6 +23,7 @@ export function CharacterList(props: {
 
         {props.characters.map((c) => {
           const active = c.id === props.selectedId;
+          const used = c.id === props.usedCharacterId;
           return (
             <button
               key={c.id}
@@ -39,36 +36,28 @@ export function CharacterList(props: {
                   : "border-zinc-200 bg-white/50 text-zinc-700 hover:bg-white dark:border-zinc-800 dark:bg-zinc-950/20 dark:text-zinc-300 dark:hover:bg-zinc-950/40")
               }
             >
-              <span className="truncate text-sm font-semibold">{c.name || "Unnamed"}</span>
-              <span className="truncate text-xs text-zinc-600 dark:text-zinc-400">
+              <span className="flex items-center gap-2">
+                {used ? (
+                  <span
+                    className="h-2 w-2 shrink-0 rounded-full bg-emerald-500 shadow-[0_0_0_1px_rgba(16,185,129,0.4)]"
+                    title="Play character"
+                    aria-label="Play character"
+                  />
+                ) : (
+                  <span
+                    className="h-2 w-2 shrink-0 rounded-full border border-zinc-300 dark:border-zinc-600"
+                    aria-hidden="true"
+                  />
+                )}
+                <span className="truncate text-sm font-semibold">{c.name || "Unnamed"}</span>
+              </span>
+              <span className="truncate pl-4 text-xs text-zinc-600 dark:text-zinc-400">
                 {c.world || "World"} · {dndClassByIndex[c.classIndex]?.name ?? (c.classIndex || "Class")} · L{c.level}
               </span>
             </button>
           );
         })}
       </div>
-
-      <div className="mt-4 flex items-center gap-2">
-        <button
-          type="button"
-          className={buttonClass("ghost")}
-          disabled={!props.hasSelection}
-          onClick={props.onEdit}
-        >
-          <Pencil className="h-4 w-4" aria-hidden="true" />
-          Edit
-        </button>
-        <button
-          type="button"
-          className={buttonClass("danger")}
-          disabled={!props.hasSelection}
-          onClick={props.onDelete}
-        >
-          <Trash2 className="h-4 w-4" aria-hidden="true" />
-          Delete
-        </button>
-      </div>
     </aside>
   );
 }
-

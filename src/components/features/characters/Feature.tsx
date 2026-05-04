@@ -1,6 +1,8 @@
 import { Plus } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useStoredState } from "../../../hooks/useStoredState";
+import { normalizeCharacter } from "../../../lib/characterNormalize";
+import { STORAGE_KEYS } from "../../../lib/appConstants";
 import type { Character, CharacterDraft } from "../../../types/character";
 import { buttonClass } from "../../ui/controlClasses";
 import { CharacterEditor } from "./Editor";
@@ -13,10 +15,21 @@ function sortByName(a: Character, b: Character) {
 }
 
 export function CharactersFeature() {
-  const { value: characters, setValue: setCharacters } = useStoredState<Character[]>("vibe.dnd.characters", []);
+  const { value: characters, setValue: setCharacters } = useStoredState<Character[]>(STORAGE_KEYS.characters, []);
+  const { value: usedCharacterId, setValue: setUsedCharacterId } = useStoredState<string | null>(
+    STORAGE_KEYS.usedCharacterId,
+    null
+  );
+  const didMigrate = useRef(false);
   const [selectedId, setSelectedId] = useState<string | null>(characters[0]?.id ?? null);
   const [mode, setMode] = useState<"view" | "edit" | "create">("view");
   const [draft, setDraft] = useState<CharacterDraft>(() => makeDraft());
+
+  useEffect(() => {
+    if (didMigrate.current) return;
+    didMigrate.current = true;
+    setCharacters((prev) => prev.map((c) => normalizeCharacter(c)));
+  }, [setCharacters]);
 
   const selected = useMemo(() => characters.find((c) => c.id === selectedId) ?? null, [characters, selectedId]);
   const sorted = useMemo(() => [...characters].sort(sortByName), [characters]);
@@ -35,19 +48,20 @@ export function CharactersFeature() {
 
   function saveDraft() {
     const now = Date.now();
-    const next: Character = {
+    const next: Character = normalizeCharacter({
       ...draft,
       level: Math.min(20, Math.max(1, Math.floor(draft.level || 1))),
       name: draft.name.trim(),
       world: draft.world.trim(),
+      raceIndex: draft.raceIndex.trim(),
       classIndex: draft.classIndex.trim(),
       spells: Array.from(new Set((draft.spells ?? []).map((s) => s.trim()).filter(Boolean))),
       feats: Array.from(new Set((draft.feats ?? []).map((f) => f.trim()).filter(Boolean))),
       createdAt: mode === "create" ? now : selected?.createdAt ?? now,
       updatedAt: now
-    };
+    });
 
-    if (!next.name || !next.classIndex) return;
+    if (!next.name || !next.classIndex || !next.raceIndex) return;
 
     setCharacters((prev) => {
       const existing = prev.find((c) => c.id === next.id);
@@ -88,13 +102,11 @@ export function CharactersFeature() {
         <CharacterList
           characters={sorted}
           selectedId={selectedId}
+          usedCharacterId={usedCharacterId}
           onSelect={(id) => {
             setSelectedId(id);
             setMode("view");
           }}
-          onEdit={() => selected && startEdit(selected)}
-          onDelete={removeSelected}
-          hasSelection={Boolean(selected)}
         />
 
         <div className="flex flex-col gap-4">
@@ -107,7 +119,13 @@ export function CharactersFeature() {
               title={mode === "create" ? "Create character" : "Modify character"}
             />
           ) : selected ? (
-            <CharacterSheet c={selected} onEdit={() => startEdit(selected)} />
+            <CharacterSheet
+              c={selected}
+              isPlayTarget={selected.id === usedCharacterId}
+              onEdit={() => startEdit(selected)}
+              onDelete={removeSelected}
+              onUseCharacter={() => setUsedCharacterId(selected.id)}
+            />
           ) : (
             <section className="rounded-2xl border border-zinc-200 bg-white/70 p-8 text-sm text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-300">
               Pick a character or create one.

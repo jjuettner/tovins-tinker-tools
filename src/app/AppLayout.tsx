@@ -1,7 +1,8 @@
-import { Dice6, Menu, Moon, Sun, X } from "lucide-react";
+import { Dice6, Menu, Moon, Sun, Sword, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useStoredState } from "../hooks/useStoredState";
+import { APP_DISPLAY_NAME, STORAGE_KEYS } from "../lib/appConstants";
 
 type NavItem = {
   to: string;
@@ -18,14 +19,15 @@ function usePrefersDark() {
 
 export function AppLayout() {
   const prefersDark = usePrefersDark();
-  const { value: dark, setValue: setDark } = useStoredState<boolean>("vibe.theme.dark", prefersDark);
+  const { value: dark, setValue: setDark } = useStoredState<boolean>(STORAGE_KEYS.themeDark, prefersDark);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
   }, [dark]);
 
   const navItems: NavItem[] = [
-    { to: "/", label: "Characters", icon: <Dice6 className="h-4 w-4" aria-hidden="true" /> }
+    { to: "/", label: "Characters", icon: <Dice6 className="h-4 w-4" aria-hidden="true" /> },
+    { to: "/play", label: "Play", icon: <Sword className="h-4 w-4" aria-hidden="true" /> }
   ];
 
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -50,10 +52,9 @@ export function AppLayout() {
             </button>
 
             <div className="flex flex-col leading-tight">
-              <div className="flex items-center gap-2">
-                <span className="font-display text-base font-semibold tracking-tight">vibe</span>
-                <span className="hidden rounded-full border border-zinc-200 bg-white/60 px-2 py-0.5 text-[11px] text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-300 sm:inline">
-                  starter
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="font-display truncate text-base font-semibold tracking-tight sm:whitespace-normal">
+                  {APP_DISPLAY_NAME}
                 </span>
               </div>
               <span className="hidden text-xs text-zinc-600 dark:text-zinc-400 sm:block">
@@ -74,7 +75,7 @@ export function AppLayout() {
                     (isActive ? "bg-zinc-200/60 text-zinc-900 dark:bg-zinc-900/60 dark:text-zinc-50" : "")
                   ).trim()
                 }
-                end={item.to === "/"}
+                end={item.to === "/" || item.to === "/play"}
               >
                 {item.icon}
                 {item.label}
@@ -109,7 +110,7 @@ export function AppLayout() {
                       (isActive ? "bg-zinc-200/60 text-zinc-900 dark:bg-zinc-900/60 dark:text-zinc-50" : "")
                     ).trim()
                   }
-                  end={item.to === "/"}
+                  end={item.to === "/" || item.to === "/play"}
                 >
                   {item.icon}
                   {item.label}
