@@ -1,8 +1,9 @@
-import { Dice6, Menu, Moon, Sun, Sword, X } from "lucide-react";
+import { Dice6, LogOut, Menu, Moon, Sun, Sword, Tent, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useStoredState } from "../hooks/useStoredState";
 import { APP_DISPLAY_NAME, STORAGE_KEYS } from "../lib/appConstants";
+import { signOut, useProfile } from "../lib/auth";
 
 type NavItem = {
   to: string;
@@ -20,6 +21,7 @@ function usePrefersDark() {
 export function AppLayout() {
   const prefersDark = usePrefersDark();
   const { value: dark, setValue: setDark } = useStoredState<boolean>(STORAGE_KEYS.themeDark, prefersDark);
+  const { profile } = useProfile();
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
@@ -27,7 +29,8 @@ export function AppLayout() {
 
   const navItems: NavItem[] = [
     { to: "/", label: "Characters", icon: <Dice6 className="h-4 w-4" aria-hidden="true" /> },
-    { to: "/play", label: "Play", icon: <Sword className="h-4 w-4" aria-hidden="true" /> }
+    { to: "/play", label: "Play", icon: <Sword className="h-4 w-4" aria-hidden="true" /> },
+    { to: "/campaigns", label: "Campaigns", icon: <Tent className="h-4 w-4" aria-hidden="true" /> }
   ];
 
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -84,6 +87,17 @@ export function AppLayout() {
           </nav>
 
           <div className="flex items-center gap-2">
+            {profile ? (
+              <button
+                type="button"
+                onClick={() => void signOut()}
+                className="inline-flex h-9 items-center gap-2 rounded-md border border-zinc-200 bg-white/70 px-3 text-sm font-medium text-zinc-900 hover:bg-white dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-50 dark:hover:bg-zinc-900"
+                aria-label="Sign out"
+              >
+                <LogOut className="h-4 w-4" aria-hidden="true" />
+                <span className="hidden sm:inline">Sign out</span>
+              </button>
+            ) : null}
             <button
               type="button"
               onClick={() => setDark((v) => !v)}

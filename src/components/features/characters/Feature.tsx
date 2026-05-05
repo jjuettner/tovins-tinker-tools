@@ -1,5 +1,6 @@
 import { Plus } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
+import { useCharacters } from "../../../hooks/useCharacters";
 import { useStoredState } from "../../../hooks/useStoredState";
 import { normalizeCharacter } from "../../../lib/characterNormalize";
 import { STORAGE_KEYS } from "../../../lib/appConstants";
@@ -15,21 +16,14 @@ function sortByName(a: Character, b: Character) {
 }
 
 export function CharactersFeature() {
-  const { value: characters, setValue: setCharacters } = useStoredState<Character[]>(STORAGE_KEYS.characters, []);
+  const { characters, save, remove, loading, error } = useCharacters();
   const { value: usedCharacterId, setValue: setUsedCharacterId } = useStoredState<string | null>(
     STORAGE_KEYS.usedCharacterId,
     null
   );
-  const didMigrate = useRef(false);
   const [selectedId, setSelectedId] = useState<string | null>(characters[0]?.id ?? null);
   const [mode, setMode] = useState<"view" | "edit" | "create">("view");
   const [draft, setDraft] = useState<CharacterDraft>(() => makeDraft());
-
-  useEffect(() => {
-    if (didMigrate.current) return;
-    didMigrate.current = true;
-    setCharacters((prev) => prev.map((c) => normalizeCharacter(c)));
-  }, [setCharacters]);
 
   const selected = useMemo(() => characters.find((c) => c.id === selectedId) ?? null, [characters, selectedId]);
   const sorted = useMemo(() => [...characters].sort(sortByName), [characters]);
@@ -57,24 +51,20 @@ export function CharactersFeature() {
       classIndex: draft.classIndex.trim(),
       spells: Array.from(new Set((draft.spells ?? []).map((s) => s.trim()).filter(Boolean))),
       feats: Array.from(new Set((draft.feats ?? []).map((f) => f.trim()).filter(Boolean))),
+      id: mode === "create" ? crypto.randomUUID() : selected?.id ?? crypto.randomUUID(),
       createdAt: mode === "create" ? now : selected?.createdAt ?? now,
       updatedAt: now
     });
 
     if (!next.name || !next.classIndex || !next.raceIndex) return;
-
-    setCharacters((prev) => {
-      const existing = prev.find((c) => c.id === next.id);
-      if (!existing) return [...prev, next];
-      return prev.map((c) => (c.id === next.id ? next : c));
-    });
+    void save(next);
     setSelectedId(next.id);
     setMode("view");
   }
 
   function removeSelected() {
     if (!selected) return;
-    setCharacters((prev) => prev.filter((c) => c.id !== selected.id));
+    void remove(selected.id);
     setSelectedId(null);
     setMode("view");
   }
@@ -87,7 +77,7 @@ export function CharactersFeature() {
             Characters
           </h1>
           <p className="text-sm text-zinc-600 dark:text-zinc-300">
-            Stored in “db” = <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800/60">localStorage</code>.
+            Stored in <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800/60">Supabase</code>.
             Multiple characters supported.
           </p>
         </div>
@@ -99,6 +89,11 @@ export function CharactersFeature() {
       </header>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[320px_1fr]">
+        {loading ? (
+          <div className="text-sm text-zinc-600 dark:text-zinc-300">Loading…</div>
+        ) : error ? (
+          <div className="text-sm text-red-700 dark:text-red-300">{error}</div>
+        ) : null}
         <CharacterList
           characters={sorted}
           selectedId={selectedId}

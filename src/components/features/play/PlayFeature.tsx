@@ -1,6 +1,7 @@
 import { Bomb, Crosshair, Droplet, Heart, Sword, Tent, X } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { useCharacters } from "../../../hooks/useCharacters";
 import { useStoredState } from "../../../hooks/useStoredState";
 import { formatSigned } from "../../../lib/dnd";
 import { normalizeCharacter } from "../../../lib/characterNormalize";
@@ -45,7 +46,7 @@ type Tab = "general" | "combat" | "spells";
 type DamageRow = { type: string; amount: number };
 
 export function PlayFeature() {
-  const { value: characters, setValue: setCharacters } = useStoredState<Character[]>(STORAGE_KEYS.characters, []);
+  const { characters, save } = useCharacters();
   const { value: usedCharacterId } = useStoredState<string | null>(STORAGE_KEYS.usedCharacterId, null);
   const [tab, setTab] = useState<Tab>("general");
   const [restOpen, setRestOpen] = useState(false);
@@ -57,9 +58,45 @@ export function PlayFeature() {
 
   const patch = useCallback(
     (id: string, fn: (x: Character) => Character) => {
-      setCharacters((prev) => prev.map((ch) => (ch.id === id ? normalizeCharacter(fn(ch)) : ch)));
+      const current = characters.find((x) => x.id === id);
+      if (!current) return;
+      void save(normalizeCharacter(fn(current)));
     },
-    [setCharacters]
+    [characters, save]
+  );
+
+  const cls = dndClassByIndex[c?.classIndex ?? ""];
+  const maxima = useMemo(() => (c ? spellSlotMaximaForClass(cls, c.level) : { kind: "none" as const }), [cls, c]);
+  const slotRows = useMemo(() => (c ? computeSpellSlotsRemaining(maxima, c.spellSlotsUsed) : []), [maxima, c]);
+  const preparedLeveled = useMemo(
+    () =>
+      c
+        ? (c.spells ?? [])
+            .map((idx) => dndSpellByIndex[idx])
+            .filter((s): s is DndSpell => Boolean(s && s.level > 0))
+            .sort((a, b) => (a.level !== b.level ? a.level - b.level : a.name.localeCompare(b.name)))
+        : [],
+    [c]
+  );
+  const cantrips = useMemo(
+    () =>
+      c
+        ? (c.spells ?? [])
+            .map((idx) => dndSpellByIndex[idx])
+            .filter((s): s is DndSpell => Boolean(s && s.level === 0))
+            .sort((a, b) => a.name.localeCompare(b.name))
+        : [],
+    [c]
+  );
+  const weapons = useMemo(
+    () =>
+      c
+        ? splitEquipped(c.equipped).weapons.filter((w) => {
+            const eq = dndEquipmentByIndex[w.equipmentIndex];
+            return Boolean(w.equipmentIndex && eq && isWeapon(eq));
+          })
+        : [],
+    [c]
   );
 
   if (!usedCharacterId || !c) {
@@ -75,40 +112,6 @@ export function PlayFeature() {
       </section>
     );
   }
-
-  const cls = dndClassByIndex[c.classIndex];
-  const maxima = useMemo(() => spellSlotMaximaForClass(cls, c.level), [cls, c.level]);
-  const slotRows = useMemo(
-    () => computeSpellSlotsRemaining(maxima, c.spellSlotsUsed),
-    [maxima, c.spellSlotsUsed]
-  );
-
-  const preparedLeveled = useMemo(
-    () =>
-      (c.spells ?? [])
-        .map((idx) => dndSpellByIndex[idx])
-        .filter((s): s is DndSpell => Boolean(s && s.level > 0))
-        .sort((a, b) => (a.level !== b.level ? a.level - b.level : a.name.localeCompare(b.name))),
-    [c.spells]
-  );
-
-  const cantrips = useMemo(
-    () =>
-      (c.spells ?? [])
-        .map((idx) => dndSpellByIndex[idx])
-        .filter((s): s is DndSpell => Boolean(s && s.level === 0))
-        .sort((a, b) => a.name.localeCompare(b.name)),
-    [c.spells]
-  );
-
-  const weapons = useMemo(
-    () =>
-      splitEquipped(c.equipped).weapons.filter((w) => {
-        const eq = dndEquipmentByIndex[w.equipmentIndex];
-        return Boolean(w.equipmentIndex && eq && isWeapon(eq));
-      }),
-    [c.equipped]
-  );
 
   return (
     <div className="flex flex-col gap-4">
@@ -615,7 +618,7 @@ function CombatTab(props: {
     if (total <= 0) return;
     let temp = props.c.tempHp;
     let cur = props.c.currentHp;
-    let fromTemp = Math.min(temp, total);
+    const fromTemp = Math.min(temp, total);
     temp -= fromTemp;
     const rest = total - fromTemp;
     cur = Math.max(0, cur - rest);

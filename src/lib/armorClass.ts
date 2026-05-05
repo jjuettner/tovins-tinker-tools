@@ -13,7 +13,7 @@ function armorContribution(eq: DndEquipment, dexMod: number, magicPlus: number):
 
 export function computeArmorClass(equipped: EquippedItem[] | undefined, dexMod: number): number {
   const items = equipped ?? [];
-  let bestUnarmored = 10 + dexMod;
+  const bestUnarmored = 10 + dexMod;
   let bestArmor = 0;
   let shield = 0;
 
