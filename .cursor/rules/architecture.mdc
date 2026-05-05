@@ -1,17 +1,16 @@
+---
+alwaysApply: true
+---
+
 # Architecture
 
-stack: React 19, Vite, TypeScript strict, Tailwind v4
-state: SQLite (local-first) via @sqlite.org/sqlite-wasm. no backend unless specified.
-  persistence: sqlite-wasm writes to OPFS (Origin Private File System). survives reload.
-  fallback: localStorage for ephemeral UI state (theme, sidebar open, etc.) only.
-  future: sync layer (e.g. ElectricSQL, cr-sqlite) if multi-device needed. don't abstract yet.
-routing: React Router v7. no file-based routing.
 data flow: props down, callbacks up. context for db/auth/theme only.
+
 
 structure:
   src/
     app/          → App.tsx, router, global providers
-    pages/        → one file per route
+    pages/        → one file per route. layout for page
     components/
       ui/         → generic, reusable (Button, Input, Modal)
       features/   → domain-specific (TaskList, SettingsPanel)
