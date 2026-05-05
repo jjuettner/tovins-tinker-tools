@@ -44,3 +44,11 @@ Creates `rulesets.slug = "tce"` if missing, then upserts into:
 - `.env.seed`: paste `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` for `npm run seed:dnd2024` / `npm run import:tce` (template: `seed.env.example`)
 - optional `.env`: extra vars; loaded after `.env.seed` if you want one shared file
 
+## GitHub Pages (CI env)
+
+Add GitHub repo secrets:
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
+
+Workflow passes them into `npm run build` in `.github/workflows/deploy-pages.yml`.
+
