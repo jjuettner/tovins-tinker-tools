@@ -1,7 +1,10 @@
-import { Bomb, Crosshair, Droplet, Heart, Sword, Tent, X } from "lucide-react";
+import { Crosshair, Droplet, Heart, Sword, Tent, X } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useCharacters } from "../../../hooks/useCharacters";
+import { useActiveRulesetIds } from "../../../hooks/useActiveRulesetIds";
+import { useRemoteSpellSlots } from "../../../hooks/useRemoteSpellSlots";
+import { useRulesetSrdCatalog } from "../../../hooks/useRulesetSrdCatalog";
 import { useStoredState } from "../../../hooks/useStoredState";
 import { formatSigned } from "../../../lib/dnd";
 import { normalizeCharacter } from "../../../lib/characterNormalize";
@@ -65,28 +68,40 @@ export function PlayFeature() {
     [characters, save]
   );
 
-  const cls = dndClassByIndex[c?.classIndex ?? ""];
-  const maxima = useMemo(() => (c ? spellSlotMaximaForClass(cls, c.level) : { kind: "none" as const }), [cls, c]);
+  const { activeRuleIds } = useActiveRulesetIds(c?.campaignId ?? null);
+  const catalog = useRulesetSrdCatalog(activeRuleIds);
+  const { maximaFor } = useRemoteSpellSlots(activeRuleIds);
+
+  const classByIndex = catalog.loading ? dndClassByIndex : catalog.classesByIndex;
+  const spellByIndex = catalog.loading ? dndSpellByIndex : catalog.spellsByIndex;
+  const cls = classByIndex[c?.classIndex ?? ""];
+
+  const maxima = useMemo(() => {
+    if (!c) return { kind: "none" as const };
+    const remote = maximaFor(c.classIndex, c.level);
+    if (remote) return remote;
+    return spellSlotMaximaForClass(cls, c.level);
+  }, [c, cls, maximaFor]);
   const slotRows = useMemo(() => (c ? computeSpellSlotsRemaining(maxima, c.spellSlotsUsed) : []), [maxima, c]);
   const preparedLeveled = useMemo(
     () =>
       c
         ? (c.spells ?? [])
-            .map((idx) => dndSpellByIndex[idx])
+            .map((idx) => spellByIndex[idx])
             .filter((s): s is DndSpell => Boolean(s && s.level > 0))
             .sort((a, b) => (a.level !== b.level ? a.level - b.level : a.name.localeCompare(b.name)))
         : [],
-    [c]
+    [c, spellByIndex]
   );
   const cantrips = useMemo(
     () =>
       c
         ? (c.spells ?? [])
-            .map((idx) => dndSpellByIndex[idx])
+            .map((idx) => spellByIndex[idx])
             .filter((s): s is DndSpell => Boolean(s && s.level === 0))
             .sort((a, b) => a.name.localeCompare(b.name))
         : [],
-    [c]
+    [c, spellByIndex]
   );
   const weapons = useMemo(
     () =>
@@ -115,7 +130,7 @@ export function PlayFeature() {
 
   return (
     <div className="flex flex-col gap-4">
-      <PlayHeader c={c} onRest={() => setRestOpen(true)} />
+      <PlayHeader c={c} onRest={() => setRestOpen(true)} classByIndex={classByIndex} />
 
       {restOpen ? (
         <RestDialog
@@ -150,8 +165,17 @@ export function PlayFeature() {
         ))}
       </div>
 
-      {tab === "general" ? <GeneralTab c={c} /> : null}
-      {tab === "combat" ? <CombatTab c={c} weapons={weapons} onPatch={(next) => patch(c.id, () => next)} /> : null}
+      {tab === "general" ? (
+        <GeneralTab c={c} raceByIndex={catalog.loading ? dndRaceByIndex : catalog.racesByIndex} featByIndex={catalog.loading ? dndFeatByIndex : catalog.featsByIndex} />
+      ) : null}
+      {tab === "combat" ? (
+        <CombatTab
+          c={c}
+          weapons={weapons}
+          featByIndex={catalog.loading ? dndFeatByIndex : catalog.featsByIndex}
+          onPatch={(next) => patch(c.id, () => next)}
+        />
+      ) : null}
       {tab === "spells" ? (
         <SpellsTab
           c={c}
@@ -166,9 +190,9 @@ export function PlayFeature() {
   );
 }
 
-function GeneralTab(props: { c: Character }) {
+function GeneralTab(props: { c: Character; raceByIndex: Record<string, import("../../../lib/dndRaces").DndRace>; featByIndex: Record<string, import("../../../lib/dndData").DndFeat> }) {
   const raceTraits = useMemo(() => {
-    const race = dndRaceByIndex[props.c.raceIndex];
+    const race = props.raceByIndex[props.c.raceIndex];
     if (!race?.traits?.length) return [];
     return race.traits
       .map((t) => {
@@ -176,15 +200,15 @@ function GeneralTab(props: { c: Character }) {
         return { index: t.index, name: full?.name ?? t.name, description: full?.description };
       })
       .filter((t) => t.name);
-  }, [props.c.raceIndex]);
+  }, [props.c.raceIndex, props.raceByIndex]);
 
   const featBlocks = useMemo(
     () =>
       (props.c.feats ?? [])
-        .map((i) => dndFeatByIndex[i])
+        .map((i) => props.featByIndex[i])
         .filter((f): f is NonNullable<typeof f> => Boolean(f))
         .sort((a, b) => a.name.localeCompare(b.name)),
-    [props.c.feats]
+    [props.c.feats, props.featByIndex]
   );
 
   const srdClassFeatures = useMemo(
@@ -269,8 +293,8 @@ function hpHeartClass(c: Character): string {
   return "text-red-600 dark:text-red-400";
 }
 
-function PlayHeader(props: { c: Character; onRest(): void }) {
-  const clsName = dndClassByIndex[props.c.classIndex]?.name ?? (props.c.classIndex || "Class");
+function PlayHeader(props: { c: Character; onRest(): void; classByIndex: Record<string, import("../../../lib/dndData").DndClass> }) {
+  const clsName = props.classByIndex[props.c.classIndex]?.name ?? (props.c.classIndex || "Class");
   const hpCls = hpHeartClass(props.c);
 
   return (
@@ -476,7 +500,25 @@ function SpellsTab(props: {
                 className="rounded-lg border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-800"
               >
                 <div className="text-xs text-zinc-500 dark:text-zinc-400">Level {r.spellLevel}</div>
-                <div className="font-semibold text-zinc-900 dark:text-zinc-50">
+                <div className="mt-1 flex flex-wrap items-center gap-1">
+                  {Array.from({ length: r.max }).map((_, i) => {
+                    const filled = i < r.remaining;
+                    return (
+                      <span
+                        key={i}
+                        className={
+                          "inline-flex h-4 w-4 items-center justify-center text-[12px] leading-none " +
+                          (filled ? "text-sky-600 dark:text-sky-300" : "text-zinc-300 dark:text-zinc-700")
+                        }
+                        aria-label={filled ? "slot available" : "slot used"}
+                        title={filled ? "available" : "used"}
+                      >
+                        {filled ? "🔥" : "△"}
+                      </span>
+                    );
+                  })}
+                </div>
+                <div className="mt-1 font-semibold text-zinc-900 dark:text-zinc-50">
                   {r.remaining}/{r.max}
                 </div>
               </li>
@@ -599,6 +641,7 @@ function CastSpellModal(props: {
 function CombatTab(props: {
   c: Character;
   weapons: import("../../../types/character").EquippedItem[];
+  featByIndex: Record<string, import("../../../lib/dndData").DndFeat>;
   onPatch(next: Character): void;
 }) {
   const [rows, setRows] = useState<DamageRow[]>([{ type: "bludgeoning", amount: 0 }]);
@@ -686,12 +729,14 @@ function CombatTab(props: {
         <ul className="mt-3 space-y-2">
           <li className="grid grid-cols-1 items-center gap-2 rounded-lg border border-zinc-200 px-3 py-3 dark:border-zinc-800 sm:grid-cols-[1fr_auto_auto_auto] sm:gap-3">
             <span className="min-w-0 truncate text-sm font-medium text-zinc-800 dark:text-zinc-200">Unarmed strike</span>
-            <div className="flex items-center gap-1.5 text-sm tabular-nums text-zinc-600 dark:text-zinc-300">
+            <div className="flex items-center gap-2 text-sm tabular-nums text-zinc-600 dark:text-zinc-300">
+              <span className="w-9 text-[11px] font-medium text-zinc-400 dark:text-zinc-500">Hit</span>
               <Crosshair className="h-4 w-4 shrink-0 opacity-80" aria-hidden="true" />
               {formatSigned(uh)}
             </div>
-            <div className="flex min-w-0 items-center gap-1.5 text-sm text-zinc-600 dark:text-zinc-300">
-              <Bomb className="h-4 w-4 shrink-0 opacity-80" aria-hidden="true" />
+            <div className="flex min-w-0 items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300">
+              <span className="w-9 text-[11px] font-medium text-zinc-400 dark:text-zinc-500">Dmg</span>
+              <Droplet className="h-4 w-4 shrink-0 opacity-80" aria-hidden="true" />
               <span className="truncate">
                 1 {formatSigned(ud)} bludgeoning
               </span>
@@ -714,12 +759,14 @@ function CombatTab(props: {
                 <span className="min-w-0 truncate text-sm font-medium text-zinc-800 dark:text-zinc-200">
                   {eq?.name ?? w.equipmentIndex}
                 </span>
-                <div className="flex items-center gap-1.5 text-sm tabular-nums text-zinc-600 dark:text-zinc-300">
+                <div className="flex items-center gap-2 text-sm tabular-nums text-zinc-600 dark:text-zinc-300">
+                  <span className="w-9 text-[11px] font-medium text-zinc-400 dark:text-zinc-500">Hit</span>
                   <Crosshair className="h-4 w-4 shrink-0 opacity-80" aria-hidden="true" />
                   {formatSigned(th)}
                 </div>
-                <div className="flex min-w-0 items-center gap-1.5 text-sm text-zinc-600 dark:text-zinc-300">
-                  <Bomb className="h-4 w-4 shrink-0 opacity-80" aria-hidden="true" />
+                <div className="flex min-w-0 items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300">
+                  <span className="w-9 text-[11px] font-medium text-zinc-400 dark:text-zinc-500">Dmg</span>
+                  <Droplet className="h-4 w-4 shrink-0 opacity-80" aria-hidden="true" />
                   <span className="truncate">
                     {dmg.dice}
                     {dmg.bonus !== 0 ? ` ${formatSigned(dmg.bonus)}` : ""} {dmg.type}
@@ -745,6 +792,7 @@ function CombatTab(props: {
         <AttackRollModal
           c={props.c}
           ctx={attackCtx}
+          featByIndex={props.featByIndex}
           onClose={() => setAttackCtx(null)}
         />
       ) : null}
@@ -755,6 +803,7 @@ function CombatTab(props: {
 function AttackRollModal(props: {
   c: Character;
   ctx: { kind: "weapon"; weapon: import("../../../types/character").EquippedItem } | { kind: "unarmed" };
+  featByIndex: Record<string, import("../../../lib/dndData").DndFeat>;
   onClose(): void;
 }) {
   const toHit =
@@ -763,13 +812,13 @@ function AttackRollModal(props: {
 
   const combatFeatHints = useMemo(() => {
     return (props.c.feats ?? [])
-      .map((i) => dndFeatByIndex[i])
+      .map((i) => props.featByIndex[i])
       .filter((f): f is NonNullable<typeof f> => Boolean(f))
       .filter((f) => {
         const t = `${f.name} ${f.description ?? ""}`.toLowerCase();
         return t.includes("weapon") || t.includes("attack") || t.includes("damage") || t.includes("critical");
       });
-  }, [props.c.feats]);
+  }, [props.c.feats, props.featByIndex]);
 
   const dmg =
     props.ctx.kind === "unarmed"
@@ -814,7 +863,7 @@ function AttackRollModal(props: {
           <>
             <h2 className="font-display text-base font-semibold text-zinc-900 dark:text-zinc-50">Damage</h2>
             <p className="mt-2 flex items-start gap-2 text-sm text-zinc-700 dark:text-zinc-200">
-              <Bomb className="mt-0.5 h-4 w-4 shrink-0 opacity-90" aria-hidden="true" />
+              <Droplet className="mt-0.5 h-4 w-4 shrink-0 opacity-90" aria-hidden="true" />
               <span>
                 {dmg.dice}
                 {dmg.bonus !== 0 ? ` ${formatSigned(dmg.bonus)}` : ""} {dmg.type}

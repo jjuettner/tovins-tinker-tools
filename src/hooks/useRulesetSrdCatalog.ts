@@ -1,0 +1,220 @@
+import { useEffect, useMemo, useState } from "react";
+import type { DndEquipment } from "../lib/dndEquipment";
+import type { DndFeat, DndSpell, DndClass } from "../lib/dndData";
+import { type DndRace } from "../lib/dndRaces";
+import type { DndWeaponMastery } from "../lib/dndWeaponMastery";
+import { fetchClasses, fetchEquipment, fetchFeats, fetchRaces, fetchSpells, fetchWeaponMastery } from "../lib/db/srd";
+
+export type RulesetSrdCatalog = {
+  loading: boolean;
+  error: string | null;
+  races: DndRace[];
+  classes: DndClass[];
+  spells: DndSpell[];
+  feats: DndFeat[];
+  equipment: DndEquipment[];
+  weaponMasteries: DndWeaponMastery[];
+  racesByIndex: Record<string, DndRace>;
+  classesByIndex: Record<string, DndClass>;
+  spellsByIndex: Record<string, DndSpell>;
+  featsByIndex: Record<string, DndFeat>;
+  equipmentByIndex: Record<string, DndEquipment>;
+  weaponMasteryByIndex: Record<string, DndWeaponMastery>;
+};
+
+function toDndSchoolIndex(s: string): string {
+  return s.toLowerCase().replace(/\s+/g, "-");
+}
+
+function transformRaces(rows: { slug: string; name: string }[]) {
+  return rows
+    .map((r) => ({ index: r.slug, name: r.name } satisfies DndRace))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function transformClasses(rows: { slug: string; name: string; hit_die: number | null }[]) {
+  return rows
+    .map((c) => ({
+      index: c.slug,
+      name: c.name,
+      hit_die: typeof c.hit_die === "number" ? c.hit_die : 8
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function transformFeats(rows: { slug: string; name: string; feat_type: string | null; repeatable: string | null; description: string | null }[]) {
+  return rows
+    .map((f) => ({
+      index: f.slug,
+      name: f.name,
+      description: f.description ?? undefined,
+      type: f.feat_type ?? undefined,
+      repeatable: f.repeatable ?? undefined
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function transformSpells(rows: Array<{
+  slug: string;
+  name: string;
+  level: number;
+  school: string | null;
+  casting_time?: string | null;
+  range_text?: string | null;
+  duration?: string | null;
+  concentration?: boolean | null;
+  ritual?: boolean | null;
+  classes?: string[] | null;
+}>) {
+  return rows
+    .map((sp) => {
+      const school = sp.school
+        ? {
+            index: toDndSchoolIndex(sp.school),
+            name: sp.school
+          }
+        : undefined;
+
+      const classes = Array.isArray(sp.classes) ? sp.classes.filter(Boolean).map((idx) => ({ index: idx })) : undefined;
+
+      return {
+        index: sp.slug,
+        name: sp.name,
+        level: sp.level,
+        school,
+        classes,
+        casting_time: sp.casting_time ?? undefined,
+        range: sp.range_text ?? undefined,
+        duration: sp.duration ?? undefined,
+        concentration: sp.concentration ?? undefined,
+        ritual: sp.ritual ?? undefined
+      } satisfies DndSpell;
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export function useRulesetSrdCatalog(rulesetIds: string[]): Omit<RulesetSrdCatalog, "loading" | "error" | "racesByIndex" | "classesByIndex" | "spellsByIndex" | "featsByIndex" | "equipmentByIndex" | "weaponMasteryByIndex"> & {
+  loading: boolean;
+  error: string | null;
+  racesByIndex: Record<string, DndRace>;
+  classesByIndex: Record<string, DndClass>;
+  spellsByIndex: Record<string, DndSpell>;
+  featsByIndex: Record<string, DndFeat>;
+  equipmentByIndex: Record<string, DndEquipment>;
+  weaponMasteryByIndex: Record<string, DndWeaponMastery>;
+} {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [races, setRaces] = useState<DndRace[]>([]);
+  const [classes, setClasses] = useState<DndClass[]>([]);
+  const [spells, setSpells] = useState<DndSpell[]>([]);
+  const [feats, setFeats] = useState<DndFeat[]>([]);
+  const [equipment, setEquipment] = useState<DndEquipment[]>([]);
+  const [weaponMasteries, setWeaponMasteries] = useState<DndWeaponMastery[]>([]);
+
+  const key = useMemo(() => [...rulesetIds].sort().join(","), [rulesetIds]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function run() {
+      setLoading(true);
+      setError(null);
+      try {
+        if (rulesetIds.length === 0) {
+          if (!cancelled) {
+            setRaces([]);
+            setClasses([]);
+            setSpells([]);
+            setFeats([]);
+            setEquipment([]);
+            setWeaponMasteries([]);
+          }
+          return;
+        }
+
+        const [racesRows, classesRows, spellsRows, featsRows, equipmentRows, weaponMasteryRows] = await Promise.all([
+          fetchRaces(rulesetIds),
+          fetchClasses(rulesetIds),
+          fetchSpells(rulesetIds),
+          fetchFeats(rulesetIds),
+          fetchEquipment(rulesetIds),
+          fetchWeaponMastery(rulesetIds)
+        ]);
+
+        if (cancelled) return;
+
+        const racesUi = transformRaces(racesRows.map((r) => ({ slug: r.slug, name: r.name })));
+        const classesUi = transformClasses(classesRows.map((c) => ({ slug: c.slug, name: c.name, hit_die: c.hit_die })));
+        const featsUi = transformFeats(featsRows.map((f) => ({ slug: f.slug, name: f.name, feat_type: f.feat_type, repeatable: f.repeatable, description: f.description })));
+        const spellsUi = transformSpells(
+          spellsRows.map((s) => ({
+            slug: s.slug,
+            name: s.name,
+            level: s.level,
+            school: s.school ?? null,
+            casting_time: s.casting_time ?? null,
+            range_text: s.range_text ?? null,
+            duration: s.duration ?? null,
+            concentration: s.concentration ?? null,
+            ritual: s.ritual ?? null,
+            classes: s.classes ?? null
+          }))
+        );
+
+        const equipmentUi = equipmentRows.map((eq) => {
+          const data = (eq.data ?? {}) as Record<string, unknown>;
+          return { ...(data as unknown as DndEquipment), index: eq.slug, name: eq.name } as DndEquipment;
+        });
+
+        const weaponMasteryUi = weaponMasteryRows
+          .map((w) => ({
+            index: w.slug,
+            name: w.name,
+            description: w.description ?? undefined
+          }))
+          .sort((a, b) => a.name.localeCompare(b.name));
+
+        setRaces(racesUi);
+        setClasses(classesUi);
+        setSpells(spellsUi);
+        setFeats(featsUi);
+        setEquipment(equipmentUi);
+        setWeaponMasteries(weaponMasteryUi);
+        setLoading(false);
+      } catch (e) {
+        if (cancelled) return;
+        setError(e instanceof Error ? e.message : "Failed to load ruleset catalog");
+        setLoading(false);
+      }
+    }
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [key, rulesetIds]);
+
+  const racesByIndex = useMemo(() => Object.fromEntries(races.map((r) => [r.index, r])), [races]);
+  const classesByIndex = useMemo(() => Object.fromEntries(classes.map((c) => [c.index, c])), [classes]);
+  const spellsByIndex = useMemo(() => Object.fromEntries(spells.map((s) => [s.index, s])), [spells]);
+  const featsByIndex = useMemo(() => Object.fromEntries(feats.map((f) => [f.index, f])), [feats]);
+  const equipmentByIndex = useMemo(() => Object.fromEntries(equipment.map((e) => [e.index, e])), [equipment]);
+  const weaponMasteryByIndex = useMemo(() => Object.fromEntries(weaponMasteries.map((m) => [m.index, m])), [weaponMasteries]);
+
+  return {
+    loading,
+    error,
+    races,
+    classes,
+    spells,
+    feats,
+    equipment,
+    weaponMasteries,
+    racesByIndex,
+    classesByIndex,
+    spellsByIndex,
+    featsByIndex,
+    equipmentByIndex,
+    weaponMasteryByIndex
+  } satisfies RulesetSrdCatalog;
+}
+

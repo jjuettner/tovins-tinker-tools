@@ -1,8 +1,10 @@
-import "dotenv/config";
 import { createClient } from "@supabase/supabase-js";
 import ws from "ws";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import { loadSeedEnv } from "./loadSeedEnv";
+
+loadSeedEnv();
 
 type Json = Record<string, unknown>;
 

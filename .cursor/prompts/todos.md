@@ -1,2 +1,8 @@
 - auto set first character as playing
-- display spell slots as circles / empty circles
+- display spell slots as blue/greenish flame icons: filled in when available, outline only for used
+- weapon mastery
+  - only display checkbox "is proficient" then use the standard (cleave, graze etc) if checked
+- attacks
+  - change bomb icon to the blood drop icon
+  - make hit / damage labels align with each other across multiple attacks
+- weapon mastery as checkbox in character editor / recognize class features/feats/proficiency with weapon type

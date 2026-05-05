@@ -12,14 +12,14 @@ export type CharacterRow = {
 };
 
 export function characterFromRow(row: CharacterRow): Character {
-  return row.data as Character;
+  return { ...(row.data as Character), campaignId: row.campaign_id } as Character;
 }
 
 export function characterToRow(c: Character, ownerId: string) {
   return {
     id: c.id,
     owner: ownerId,
-    campaign_id: null,
+    campaign_id: c.campaignId ?? null,
     name: c.name,
     data: c
   } as const;

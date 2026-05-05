@@ -1,0 +1,48 @@
+# Adding Rulesets
+
+## Context
+- the existing SRD files have been moved to data/PHB24
+- there are new data files in data/dnd5ejs
+
+## Task
+- for all the tables imported to supabase do
+  - analyze the structure of the entries
+  - create a structure that is compatible with the existing entries -> on conflict, ask how to resolve
+  - for the field "book", create a ruleset if it doesnt exist yet
+  - add all the items, in the compatible format to the db
+    - reference them to the corresponding ruleset
+  - the existing ruleset would equal Player's Handbook 2024, based on Player's Handbook 2014, these should not change
+  - newly created rulesets are not considered builtin
+
+## Result
+- runnable migration script (incremental)
+  - separate scripts into rulesets
+
+## Scope
+- We start with ONLY ruleset "Tasha's Cauldron of Everything" (TCE)
+  - others: later
+
+## adjustments ui
+- existing campaigns should be selected in the character editor
+  - depending on the used rulesets in that campaign, include resources of these rulesets (new classes, spells, etc.) in the editor
+  - if no campaign selected, show filter menu with toggles for rulesets
+  - if campaign selected, show menu as read only
+
+
+## more adjustments
+
+- the game/world field should become the campaign dropdown that shows the available campaigns
+  - for now, show all available
+- the filter in the character editor should be hidden behind a button that toggles a popup
+- by default: show all content
+
+
+## bugs
+- Artificer shows as lowercase -> check field used, dont use slug, but name
+- when tce deselect -> class defaults to barbarian -> still show, maybe display a mismatch / conflict warning
+
+
+- added tce spells like tashas caustic brew not showing up when not in edit mode, nor in play mode
+- spell slots for artificer class not shown in play mode
+
+-> decouple local files, only fall back to supabase data as single source of truth

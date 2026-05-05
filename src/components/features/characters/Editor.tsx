@@ -1,5 +1,5 @@
 import { Check, Save, Trash2, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { abilities, abilityMod, formatSigned, proficiencyBonus, skillAbility, skills } from "../../../lib/dnd";
 import type { Ability, Skill } from "../../../lib/dnd";
 import { computeArmorClass } from "../../../lib/armorClass";
@@ -14,9 +14,11 @@ import {
   type DndSpell
 } from "../../../lib/dndData";
 import { dndRaces } from "../../../lib/dndRaces";
+import { DND2024_RULESET_ID, listRulesets } from "../../../lib/db/rulesets";
+import { listCampaignRulesets, listCampaigns } from "../../../lib/db/campaigns";
+import { useRulesetSrdCatalog } from "../../../hooks/useRulesetSrdCatalog";
 import { emptyWeapon, rebuildEquipped, splitEquipped } from "../../../lib/equippedLayout";
 import { newEquippedItemId } from "../../../lib/randomId";
-import { dndWeaponMasteries } from "../../../lib/dndWeaponMastery";
 import { toggleInList } from "../../../lib/utils";
 import type { CharacterDraft, EquippedItem } from "../../../types/character";
 import { buttonClass, inputClass, smallLabelClass } from "../../ui/controlClasses";
@@ -34,9 +36,108 @@ export function CharacterEditor(props: {
     props.draft.name.trim().length > 0 &&
     props.draft.classIndex.trim().length > 0 &&
     props.draft.raceIndex.trim().length > 0;
+
+  const campaignId = props.draft.campaignId ?? null;
+
+  const [allRulesets, setAllRulesets] = useState<{ id: string; name: string }[]>([]);
+  const [campaignRuleIds, setCampaignRuleIds] = useState<string[] | null>(null);
+  const [selectedRuleIds, setSelectedRuleIds] = useState<string[]>([DND2024_RULESET_ID]);
+  const [rulesetPopupOpen, setRulesetPopupOpen] = useState(false);
+  const [campaigns, setCampaigns] = useState<{ id: string; name: string }[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function run() {
+      try {
+        const rs = await listRulesets();
+        if (cancelled) return;
+        setAllRulesets(rs.map((r) => ({ id: r.id, name: r.name })));
+      } catch {
+        if (cancelled) return;
+        setAllRulesets([{ id: DND2024_RULESET_ID, name: "D&D 2024 SRD" }]);
+      }
+    }
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function run() {
+      try {
+        const cs = await listCampaigns();
+        if (cancelled) return;
+        setCampaigns(cs.map((c) => ({ id: c.id, name: c.name })));
+      } catch {
+        if (cancelled) return;
+        setCampaigns([]);
+      }
+    }
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!campaignId) {
+      setCampaignRuleIds(null);
+      return;
+    }
+    let cancelled = false;
+    async function run() {
+      try {
+        const cid = campaignId;
+        if (!cid) {
+          setCampaignRuleIds(null);
+          return;
+        }
+        const ids = await listCampaignRulesets(cid);
+        if (cancelled) return;
+        setCampaignRuleIds(ids);
+      } catch {
+        if (cancelled) return;
+        setCampaignRuleIds(null);
+      }
+    }
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [campaignId]);
+
+  const activeRuleIds = useMemo(() => {
+    if (campaignId) return campaignRuleIds && campaignRuleIds.length ? campaignRuleIds : [DND2024_RULESET_ID];
+    return selectedRuleIds.length ? selectedRuleIds : [DND2024_RULESET_ID];
+  }, [campaignId, campaignRuleIds, selectedRuleIds]);
+
+  // Default: show all content (only when no campaign picked).
+  useEffect(() => {
+    if (campaignId) return;
+    if (!allRulesets.length) return;
+    setSelectedRuleIds(allRulesets.map((r) => r.id));
+  }, [campaignId, allRulesets]);
+
+  const catalog = useRulesetSrdCatalog(activeRuleIds);
+
+  const racesForSelect = catalog.loading ? dndRaces : catalog.races;
+  const classesForSelect = catalog.loading ? dndClasses : catalog.classes;
+  const featsForSelect = catalog.loading ? dndFeats : catalog.feats;
+  const spellsForPool = catalog.loading ? null : catalog.spells;
+  const spellByIndex = catalog.loading ? dndSpellByIndex : catalog.spellsByIndex;
+  const featByIndex = catalog.loading ? dndFeatByIndex : catalog.featsByIndex;
+
   const [spellQuery, setSpellQuery] = useState("");
   const [featQuery, setFeatQuery] = useState("");
-  const classSpellPool = useMemo(() => spellsOnClassList(props.draft.classIndex), [props.draft.classIndex]);
+  const classSpellPool = useMemo(() => {
+    if (!spellsForPool) return spellsOnClassList(props.draft.classIndex);
+    const idx = props.draft.classIndex.trim();
+    if (!idx) return spellsForPool;
+    const onList = spellsForPool.filter((s) => s.classes?.some((c) => c.index === idx));
+    return onList.length > 0 ? onList : spellsForPool;
+  }, [props.draft.classIndex, spellsForPool]);
 
   const filteredSpells = useMemo(() => {
     const q = spellQuery.trim().toLowerCase();
@@ -54,22 +155,22 @@ export function CharacterEditor(props: {
   }, [filteredSpells]);
   const filteredFeats = useMemo(() => {
     const q = featQuery.trim().toLowerCase();
-    if (!q) return dndFeats;
-    return dndFeats.filter((f) => f.name.toLowerCase().includes(q));
-  }, [featQuery]);
+    if (!q) return featsForSelect;
+    return featsForSelect.filter((f) => f.name.toLowerCase().includes(q));
+  }, [featQuery, featsForSelect]);
   const selectedSpellChips = useMemo(
     () =>
       [...props.draft.spells]
-        .map((idx) => ({ idx, s: dndSpellByIndex[idx] }))
+        .map((idx) => ({ idx, s: spellByIndex[idx] }))
         .filter((x): x is { idx: string; s: DndSpell } => Boolean(x.s))
         .sort(
           (a, b) => (a.s.level !== b.s.level ? a.s.level - b.s.level : a.s.name.localeCompare(b.s.name))
         ),
-    [props.draft.spells]
+    [props.draft.spells, spellByIndex]
   );
   const selectedFeats = useMemo(
-    () => props.draft.feats.map((idx) => dndFeatByIndex[idx]?.name ?? idx),
-    [props.draft.feats]
+    () => props.draft.feats.map((idx) => featByIndex[idx]?.name ?? idx),
+    [props.draft.feats, featByIndex]
   );
 
   const dexMod = abilityMod(props.draft.stats.DEX);
@@ -119,6 +220,88 @@ export function CharacterEditor(props: {
         </div>
       </div>
 
+      <div className="mt-4 flex items-center justify-between gap-3">
+        <div className="flex flex-col gap-1">
+          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Rulesets</h3>
+          {campaignId ? (
+            <span className="text-xs text-zinc-600 dark:text-zinc-400">From campaign (read-only)</span>
+          ) : (
+            <span className="text-xs text-zinc-600 dark:text-zinc-400">Default: all</span>
+          )}
+        </div>
+        <div className="relative">
+          <button type="button" className={buttonClass("ghost")} onClick={() => setRulesetPopupOpen((v) => !v)}>
+            Filters
+          </button>
+          {rulesetPopupOpen ? (
+            <div className="absolute right-0 top-11 z-20 w-[min(520px,calc(100vw-2rem))] rounded-xl border border-zinc-200 bg-white p-4 shadow-lg dark:border-zinc-800 dark:bg-zinc-950">
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Ruleset filters</div>
+                <button type="button" className={buttonClass("ghost")} onClick={() => setRulesetPopupOpen(false)}>
+                  Close
+                </button>
+              </div>
+
+              {campaignId ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {activeRuleIds.map((rid) => {
+                    const name = allRulesets.find((r) => r.id === rid)?.name ?? rid;
+                    return (
+                      <span
+                        key={rid}
+                        className="inline-flex items-center rounded-full border border-zinc-200 bg-white/70 px-3 py-1 text-xs text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900/30 dark:text-zinc-200"
+                      >
+                        {name}
+                      </span>
+                    );
+                  })}
+                </div>
+              ) : (
+                <>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {allRulesets.map((r) => {
+                      const active = selectedRuleIds.includes(r.id);
+                      return (
+                        <button
+                          key={r.id}
+                          type="button"
+                          onClick={() =>
+                            setSelectedRuleIds((prev) =>
+                              prev.includes(r.id) ? prev.filter((x) => x !== r.id) : [...prev, r.id]
+                            )
+                          }
+                          className={
+                            "inline-flex items-center rounded-full border px-3 py-1 text-xs transition " +
+                            (active
+                              ? "border-zinc-300 bg-white text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900/50 dark:text-zinc-50"
+                              : "border-zinc-200 bg-white/60 text-zinc-700 hover:bg-white dark:border-zinc-800 dark:bg-zinc-950/30 dark:text-zinc-200 dark:hover:bg-zinc-900/40")
+                          }
+                          aria-pressed={active}
+                        >
+                          {r.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      type="button"
+                      className={buttonClass("ghost")}
+                      onClick={() => setSelectedRuleIds(allRulesets.map((r) => r.id))}
+                    >
+                      Select all
+                    </button>
+                    <button type="button" className={buttonClass("ghost")} onClick={() => setSelectedRuleIds([DND2024_RULESET_ID])}>
+                      Only PHB24
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          ) : null}
+        </div>
+      </div>
+
       <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
         <label className="flex flex-col gap-1">
           <span className={smallLabelClass()}>Name</span>
@@ -131,13 +314,22 @@ export function CharacterEditor(props: {
         </label>
 
         <label className="flex flex-col gap-1">
-          <span className={smallLabelClass()}>Game / world</span>
-          <input
-            value={props.draft.world}
-            onChange={(e) => props.onChange({ ...props.draft, world: e.target.value })}
+          <span className={smallLabelClass()}>Campaign</span>
+          <select
+            value={props.draft.campaignId ?? ""}
+            onChange={(e) => {
+              const v = e.target.value;
+              props.onChange({ ...props.draft, campaignId: v ? v : null });
+            }}
             className={inputClass()}
-            placeholder="Forgotten Realms"
-          />
+          >
+            <option value="">— None —</option>
+            {campaigns.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
         </label>
 
         <label className="flex flex-col gap-1">
@@ -148,7 +340,12 @@ export function CharacterEditor(props: {
             className={inputClass()}
           >
             <option value="">— Race —</option>
-            {dndRaces.map((r) => (
+            {props.draft.raceIndex && !racesForSelect.some((r) => r.index === props.draft.raceIndex) ? (
+              <option value={props.draft.raceIndex}>
+                Unknown / filtered out: {props.draft.raceIndex}
+              </option>
+            ) : null}
+            {racesForSelect.map((r) => (
               <option key={r.index} value={r.index}>
                 {r.name}
               </option>
@@ -166,12 +363,22 @@ export function CharacterEditor(props: {
             <option value="" disabled>
               Choose…
             </option>
-            {dndClasses.map((c) => (
+            {props.draft.classIndex && !classesForSelect.some((c) => c.index === props.draft.classIndex) ? (
+              <option value={props.draft.classIndex}>
+                Unknown / filtered out: {props.draft.classIndex}
+              </option>
+            ) : null}
+            {classesForSelect.map((c) => (
               <option key={c.index} value={c.index}>
                 {c.name}
               </option>
             ))}
           </select>
+          {props.draft.classIndex && !classesForSelect.some((c) => c.index === props.draft.classIndex) ? (
+            <p className="text-xs text-amber-700 dark:text-amber-300">
+              Selected class not available under current ruleset filters. Re-enable its ruleset or choose another.
+            </p>
+          ) : null}
         </label>
 
         <label className="flex flex-col gap-1">
@@ -598,8 +805,6 @@ export function CharacterEditor(props: {
   );
 }
 
-const MASTERY_DEFAULT = "__default__";
-
 function WeaponEquipRow(props: {
   item: EquippedItem;
   onChange(next: EquippedItem): void;
@@ -614,11 +819,6 @@ function WeaponEquipRow(props: {
     const list = !q ? dndWeapons : dndWeapons.filter((w) => w.name.toLowerCase().includes(q));
     return list.slice(0, 50);
   }, [query]);
-
-  const masterySelectValue =
-    props.item.masteryIndex && props.item.masteryIndex.trim().length > 0
-      ? props.item.masteryIndex.trim()
-      : MASTERY_DEFAULT;
 
   if (picking) {
     return (
@@ -641,7 +841,8 @@ function WeaponEquipRow(props: {
                   props.onChange({
                     ...props.item,
                     equipmentIndex: w.index,
-                    masteryIndex: w.mastery?.index ? w.mastery.index : undefined
+                    masteryIndex: undefined,
+                    masteryProficient: false
                   })
                 }
               >
@@ -673,29 +874,26 @@ function WeaponEquipRow(props: {
               Change weapon
             </button>
           </div>
-          <label className="flex max-w-xs flex-col gap-1">
-            <span className={smallLabelClass()}>Mastery</span>
-            <select
-              className={inputClass()}
-              value={masterySelectValue}
-              onChange={(e) => {
-                const v = e.target.value;
-                props.onChange({
-                  ...props.item,
-                  masteryIndex: v === MASTERY_DEFAULT ? undefined : v
-                });
-              }}
-            >
-              <option value={MASTERY_DEFAULT}>
-                Default{picked?.mastery?.name ? ` (${picked.mastery.name})` : " (none)"}
-              </option>
-              {dndWeaponMasteries.map((m) => (
-                <option key={m.index} value={m.index}>
-                  {m.name}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="flex flex-col gap-2">
+            <label className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-200">
+              <input
+                type="checkbox"
+                checked={Boolean(props.item.masteryProficient)}
+                onChange={(e) =>
+                  props.onChange({
+                    ...props.item,
+                    masteryProficient: e.target.checked
+                  })
+                }
+              />
+              Weapon mastery proficient
+            </label>
+            {props.item.masteryProficient && picked?.mastery?.name ? (
+              <div className="text-xs text-zinc-600 dark:text-zinc-300">
+                Uses default mastery: <span className="font-medium">{picked.mastery.name}</span>
+              </div>
+            ) : null}
+          </div>
         </div>
         <div className="flex flex-col items-end gap-2">
           <label className="flex flex-col gap-1">

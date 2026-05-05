@@ -15,6 +15,7 @@ export function makeDraft(partial?: Partial<CharacterDraft>): CharacterDraft {
     id: partial?.id ?? newId(),
     name: partial?.name ?? "",
     world: partial?.world ?? "",
+    campaignId: partial?.campaignId ?? null,
     raceIndex: partial?.raceIndex ?? "",
     classIndex: partial?.classIndex ?? "",
     level: partial?.level ?? 1,

@@ -1,5 +1,5 @@
 import { Plus } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useCharacters } from "../../../hooks/useCharacters";
 import { useStoredState } from "../../../hooks/useStoredState";
 import { normalizeCharacter } from "../../../lib/characterNormalize";
@@ -27,6 +27,13 @@ export function CharactersFeature() {
 
   const selected = useMemo(() => characters.find((c) => c.id === selectedId) ?? null, [characters, selectedId]);
   const sorted = useMemo(() => [...characters].sort(sortByName), [characters]);
+
+  useEffect(() => {
+    if (usedCharacterId) return;
+    const first = sorted[0]?.id;
+    if (!first) return;
+    setUsedCharacterId(first);
+  }, [sorted, usedCharacterId, setUsedCharacterId]);
 
   function startCreate() {
     setDraft(makeDraft());

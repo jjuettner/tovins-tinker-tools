@@ -7,12 +7,20 @@ export type EquippedItem = {
   modifier: number;
   /** Weapon mastery property index (SRD); empty uses weapon default mastery if any. */
   masteryIndex?: string;
+  /** When false, ignore weapon's default mastery and any override. */
+  masteryProficient?: boolean;
 };
 
 export type Character = {
   id: string;
   name: string;
   world: string;
+  /**
+   * Optional campaign context stored on the DB row (`characters.campaign_id`).
+   * The editor uses this to decide which rulesets to show; the editor itself does not
+   * currently provide a campaign picker (minimal linkage mode).
+   */
+  campaignId?: string | null;
   /** SRD race index, e.g. `elf`. */
   raceIndex: string;
   classIndex: string;

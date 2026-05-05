@@ -29,7 +29,8 @@ export function normalizeCharacter(c: Character): Character {
         masteryIndex:
           typeof e.masteryIndex === "string" && e.masteryIndex.trim().length > 0
             ? e.masteryIndex.trim()
-            : undefined
+            : undefined,
+        masteryProficient: typeof e.masteryProficient === "boolean" ? e.masteryProficient : false
       }))
     : [];
 

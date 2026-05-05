@@ -1,6 +1,6 @@
-import rawClasses from "../data/5e-SRD-Classes.json";
-import rawFeats from "../data/5e-SRD-Feats.json";
-import rawSpells from "../data/5e-SRD-Spells.json";
+import rawClasses from "../data/PHB24/5e-SRD-Classes.json";
+import rawFeats from "../data/PHB24/5e-SRD-Feats.json";
+import rawSpells from "../data/PHB24/5e-SRD-Spells.json";
 
 export type DndClass = {
   index: string;

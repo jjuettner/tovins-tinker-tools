@@ -1,4 +1,4 @@
-import rawFeatures from "../data/5e-SRD-Features.json";
+import rawFeatures from "../data/PHB24/5e-SRD-Features.json";
 
 export type DndSrdClassFeature = {
   index: string;

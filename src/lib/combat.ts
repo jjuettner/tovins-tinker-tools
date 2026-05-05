@@ -6,6 +6,7 @@ import { dndEquipmentByIndex, isWeapon, weaponIsFinesse, weaponIsRanged } from "
 
 /** Saved mastery override, else weapon’s SRD mastery. */
 export function resolvedWeaponMasteryIndex(weapon: EquippedItem, eq: DndEquipment | undefined): string | undefined {
+  if (!weapon.masteryProficient) return undefined;
   const o = weapon.masteryIndex?.trim();
   if (o) return o;
   return eq?.mastery?.index;

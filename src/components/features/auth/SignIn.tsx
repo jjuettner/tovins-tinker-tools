@@ -56,7 +56,7 @@ export function SignIn() {
       <div className="mt-4 flex gap-2">
         <button
           type="button"
-          className={buttonClass(mode === "magic" ? "primary" : "secondary")}
+          className={buttonClass(mode === "magic" ? "primary" : "ghost")}
           onClick={() => {
             setMode("magic");
             setStatus("idle");
@@ -68,7 +68,7 @@ export function SignIn() {
         </button>
         <button
           type="button"
-          className={buttonClass(mode === "password" ? "primary" : "secondary")}
+          className={buttonClass(mode === "password" ? "primary" : "ghost")}
           onClick={() => {
             setMode("password");
             setStatus("idle");

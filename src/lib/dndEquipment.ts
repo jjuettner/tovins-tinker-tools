@@ -1,4 +1,4 @@
-import rawEquipment from "../data/5e-SRD-Equipment.json";
+import rawEquipment from "../data/PHB24/5e-SRD-Equipment.json";
 
 export type DndEquipmentCategory = {
   index: string;

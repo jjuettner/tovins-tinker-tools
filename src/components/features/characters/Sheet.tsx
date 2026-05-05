@@ -7,10 +7,12 @@ import { dndTraitByIndex } from "../../../lib/dndTraits";
 import { buttonClass } from "../../ui/controlClasses";
 import type { Character } from "../../../types/character";
 import { SkillCheckList } from "./SkillCheckList";
+import { useActiveRulesetIds } from "../../../hooks/useActiveRulesetIds";
+import { useRulesetSrdCatalog } from "../../../hooks/useRulesetSrdCatalog";
 
-function spellsGrouped(indices: string[]): { level: number; spells: DndSpell[] }[] {
+function spellsGrouped(spellByIndex: Record<string, DndSpell>, indices: string[]): { level: number; spells: DndSpell[] }[] {
   const list = indices
-    .map((idx) => dndSpellByIndex[idx])
+    .map((idx) => spellByIndex[idx])
     .filter((s): s is DndSpell => Boolean(s));
   list.sort((a, b) => (a.level !== b.level ? a.level - b.level : a.name.localeCompare(b.name)));
   const groups = new Map<number, DndSpell[]>();
@@ -31,14 +33,22 @@ export function CharacterSheet(props: {
   onUseCharacter(): void;
 }) {
   const prof = proficiencyBonus(props.c.level);
-  const className = dndClassByIndex[props.c.classIndex]?.name ?? (props.c.classIndex ? props.c.classIndex : "Class");
-  const raceName = dndRaceByIndex[props.c.raceIndex]?.name ?? (props.c.raceIndex ? props.c.raceIndex : null);
+  const { activeRuleIds } = useActiveRulesetIds(props.c.campaignId ?? null);
+  const catalog = useRulesetSrdCatalog(activeRuleIds);
 
-  const spellGroups = useMemo(() => spellsGrouped(props.c.spells ?? []), [props.c.spells]);
+  const className =
+    (catalog.loading ? dndClassByIndex : catalog.classesByIndex)[props.c.classIndex]?.name ??
+    (props.c.classIndex ? props.c.classIndex : "Class");
+  const raceName =
+    (catalog.loading ? dndRaceByIndex : catalog.racesByIndex)[props.c.raceIndex]?.name ??
+    (props.c.raceIndex ? props.c.raceIndex : null);
+
+  const spellByIndex = catalog.loading ? dndSpellByIndex : catalog.spellsByIndex;
+  const spellGroups = useMemo(() => spellsGrouped(spellByIndex, props.c.spells ?? []), [spellByIndex, props.c.spells]);
 
   const featNames = useMemo(
-    () => (props.c.feats ?? []).map((idx) => dndFeatByIndex[idx]?.name ?? idx),
-    [props.c.feats]
+    () => (props.c.feats ?? []).map((idx) => (catalog.loading ? dndFeatByIndex : catalog.featsByIndex)[idx]?.name ?? idx),
+    [catalog.loading, props.c.feats, catalog.featsByIndex]
   );
 
   const raceTraits = useMemo(() => {

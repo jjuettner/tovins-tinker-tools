@@ -15,16 +15,32 @@
 
 ## Seed SRD (dnd2024)
 
+Create `.env.seed` (see `seed.env.example`), then:
+
 ```bash
-SUPABASE_URL="..." SUPABASE_SERVICE_ROLE_KEY="..." npm run seed:dnd2024
+npm run seed:dnd2024
 ```
 
 Notes:
 - creates/updates ruleset `dnd2024` with fixed id `00000000-0000-4000-8000-00000000d202`
 - upserts SRD rows into `spells`, `classes`, `races`, `feats`, `equipment`, `features`, `traits`, `weapon_mastery_properties`, `class_spell_slots`
 
+## Import extra ruleset (TCE)
+
+Imports only entries with `book == "Tasha's Cauldron of Everything"` from `src/data/dnd5ejs/*`.
+
+```bash
+npm run import:tce
+```
+
+Creates `rulesets.slug = "tce"` if missing, then upserts into:
+- `spells`
+- `equipment` (items mapped into equipment rows)
+- `classes`
+
 ## Local env files
 
 - `.env.local`: put `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` for the app
-- `.env.seed.example`: copy to `.env.seed.local` for seeding (service role key)
+- `.env.seed`: paste `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` for `npm run seed:dnd2024` / `npm run import:tce` (template: `seed.env.example`)
+- optional `.env`: extra vars; loaded after `.env.seed` if you want one shared file
 
