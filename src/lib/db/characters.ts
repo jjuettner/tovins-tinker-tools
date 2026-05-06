@@ -53,6 +53,23 @@ export async function listCharacters(): Promise<Character[]> {
 }
 
 /**
+ * List characters linked to a campaign (for encounter player picks).
+ *
+ * @param campaignId Campaign id.
+ * @returns Characters sorted by name.
+ */
+export async function listCharactersByCampaign(campaignId: string): Promise<Character[]> {
+  const sb = requireSupabase();
+  const { data, error } = await sb
+    .from("characters")
+    .select("*")
+    .eq("campaign_id", campaignId)
+    .order("name", { ascending: true });
+  if (error) throw error;
+  return (data as CharacterRow[]).map(characterFromRow);
+}
+
+/**
  * Insert or update character for current user.
  *
  * @param c Character to upsert.

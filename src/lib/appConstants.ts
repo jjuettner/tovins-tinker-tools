@@ -8,5 +8,6 @@ export const APP_DISPLAY_NAME = "Tovin's Tinker Tools";
 export const STORAGE_KEYS = {
   themeDark: `${PREFIX}.theme.dark`,
   characters: `${PREFIX}.dnd.characters`,
-  usedCharacterId: `${PREFIX}.dnd.usedCharacterId`
+  usedCharacterId: `${PREFIX}.dnd.usedCharacterId`,
+  usedCampaignId: `${PREFIX}.dnd.usedCampaignId`
 } as const;

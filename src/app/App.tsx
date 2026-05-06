@@ -4,6 +4,7 @@ import { CharactersPage } from "@/pages/Characters";
 import { PlayPage } from "@/pages/Play";
 import { AuthGate } from "@/components/features/auth/AuthGate";
 import { CampaignsPage } from "@/pages/Campaigns";
+import { EncountersPage } from "@/pages/Encounters";
 import { ResetPasswordPage } from "@/pages/ResetPassword";
 
 const rawBase = import.meta.env.BASE_URL;
@@ -36,6 +37,14 @@ export function App() {
             element={
               <AuthGate>
                 <CampaignsPage />
+              </AuthGate>
+            }
+          />
+          <Route
+            path="encounters"
+            element={
+              <AuthGate>
+                <EncountersPage />
               </AuthGate>
             }
           />

@@ -1,4 +1,4 @@
-import { Dice6, LogOut, Menu, Moon, Sun, Sword, Tent, X } from "lucide-react";
+import { Dice6, LogOut, Menu, Moon, Sun, Sword, Swords, Tent, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useStoredState } from "@/hooks/useStoredState";
@@ -30,7 +30,8 @@ export function AppLayout() {
   const navItems: NavItem[] = [
     { to: "/", label: "Characters", icon: <Dice6 className="h-4 w-4" aria-hidden="true" /> },
     { to: "/play", label: "Play", icon: <Sword className="h-4 w-4" aria-hidden="true" /> },
-    { to: "/campaigns", label: "Campaigns", icon: <Tent className="h-4 w-4" aria-hidden="true" /> }
+    { to: "/campaigns", label: "Campaigns", icon: <Tent className="h-4 w-4" aria-hidden="true" /> },
+    { to: "/encounters", label: "Encounters", icon: <Swords className="h-4 w-4" aria-hidden="true" /> }
   ];
 
   const [mobileOpen, setMobileOpen] = useState(false);
