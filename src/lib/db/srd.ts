@@ -1,4 +1,4 @@
-import { requireSupabase } from "../supabase";
+import { requireSupabase } from "@/lib/supabase";
 
 export type RulesetScoped<T> = T & { ruleset_id: string; slug: string; name: string };
 
@@ -35,6 +35,14 @@ export type ClassSpellSlotsRow = {
   slots: unknown;
 };
 
+/**
+ * Fetch rows from a table filtered by ruleset ids.
+ *
+ * @param table Table name.
+ * @param rulesetIds Ruleset ids filter.
+ * @param columns Columns selection (Supabase select string).
+ * @returns Rows typed as `T`.
+ */
 async function fetchByRulesets<T>(table: string, rulesetIds: string[], columns = "*"): Promise<T[]> {
   const sb = requireSupabase();
   if (rulesetIds.length === 0) return [];
@@ -43,24 +51,72 @@ async function fetchByRulesets<T>(table: string, rulesetIds: string[], columns =
   return data as T[];
 }
 
+/**
+ * Fetch spells scoped to the given rulesets.
+ *
+ * @param rulesetIds Ruleset ids.
+ * @returns Spell rows.
+ */
 export function fetchSpells(rulesetIds: string[]) {
   return fetchByRulesets<SpellRow>("spells", rulesetIds);
 }
+
+/**
+ * Fetch classes scoped to the given rulesets.
+ *
+ * @param rulesetIds Ruleset ids.
+ * @returns Class rows.
+ */
 export function fetchClasses(rulesetIds: string[]) {
   return fetchByRulesets<ClassRow>("classes", rulesetIds);
 }
+
+/**
+ * Fetch races scoped to the given rulesets.
+ *
+ * @param rulesetIds Ruleset ids.
+ * @returns Race rows.
+ */
 export function fetchRaces(rulesetIds: string[]) {
   return fetchByRulesets<RaceRow>("races", rulesetIds);
 }
+
+/**
+ * Fetch feats scoped to the given rulesets.
+ *
+ * @param rulesetIds Ruleset ids.
+ * @returns Feat rows.
+ */
 export function fetchFeats(rulesetIds: string[]) {
   return fetchByRulesets<FeatRow>("feats", rulesetIds);
 }
+
+/**
+ * Fetch equipment scoped to the given rulesets.
+ *
+ * @param rulesetIds Ruleset ids.
+ * @returns Equipment rows.
+ */
 export function fetchEquipment(rulesetIds: string[]) {
   return fetchByRulesets<EquipmentRow>("equipment", rulesetIds);
 }
+
+/**
+ * Fetch weapon mastery properties scoped to the given rulesets.
+ *
+ * @param rulesetIds Ruleset ids.
+ * @returns Weapon mastery rows.
+ */
 export function fetchWeaponMastery(rulesetIds: string[]) {
   return fetchByRulesets<WeaponMasteryRow>("weapon_mastery_properties", rulesetIds);
 }
+
+/**
+ * Fetch class spell slot progressions scoped to the given rulesets.
+ *
+ * @param rulesetIds Ruleset ids.
+ * @returns Class spell slot rows.
+ */
 export function fetchClassSpellSlots(rulesetIds: string[]) {
   return fetchByRulesets<ClassSpellSlotsRow>("class_spell_slots", rulesetIds);
 }

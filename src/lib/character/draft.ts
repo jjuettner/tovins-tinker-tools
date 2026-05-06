@@ -1,15 +1,23 @@
-import type { Ability } from "../../../lib/dnd";
-import { normalizeDraft } from "../../../lib/characterNormalize";
-import type { Character, CharacterDraft } from "../../../types/character";
+import type { Ability } from "@/lib/dnd";
+import { normalizeDraft } from "@/lib/character/normalize";
+import type { Character, CharacterDraft } from "@/types/character";
+import { newId } from "@/lib/randomId";
 
-function newId() {
-  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
-}
-
+/**
+ * Default ability scores for new drafts.
+ *
+ * @returns Ability scores map.
+ */
 function defaultStats(): Record<Ability, number> {
   return { STR: 10, DEX: 10, CON: 10, INT: 10, WIS: 10, CHA: 10 };
 }
 
+/**
+ * Create a normalized draft from a partial payload.
+ *
+ * @param partial Optional overrides (e.g. for "duplicate character" flows).
+ * @returns Normalized character draft.
+ */
 export function makeDraft(partial?: Partial<CharacterDraft>): CharacterDraft {
   const raw: CharacterDraft = {
     id: partial?.id ?? newId(),
@@ -34,9 +42,16 @@ export function makeDraft(partial?: Partial<CharacterDraft>): CharacterDraft {
   return normalizeDraft(raw);
 }
 
+/**
+ * Convert a persisted `Character` into an editable draft.
+ *
+ * @param c Persisted character.
+ * @returns Normalized draft.
+ */
 export function fromCharacter(c: Character): CharacterDraft {
   const { createdAt, updatedAt, ...rest } = c;
   void createdAt;
   void updatedAt;
   return normalizeDraft(rest);
 }
+

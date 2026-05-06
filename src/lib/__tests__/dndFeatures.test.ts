@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { unlockedBaseClassFeaturesFromSrd } from "../dndFeatures";
+import { unlockedBaseClassFeaturesFromSrd } from "@/lib/dndFeatures";
 
 describe("unlockedBaseClassFeaturesFromSrd", () => {
   it("barbarian level 2 includes Rage and Unarmored Defense", () => {

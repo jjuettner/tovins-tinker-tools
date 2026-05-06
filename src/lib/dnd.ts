@@ -45,17 +45,35 @@ export const skillAbility: Record<Skill, Ability> = {
 
 export const skills: Skill[] = Object.keys(skillAbility) as Skill[];
 
+/**
+ * Clamp a character level into 1-20.
+ *
+ * @param level Raw level.
+ * @returns Integer in range 1-20.
+ */
 export function clampLevel(level: number): number {
   if (!Number.isFinite(level)) return 1;
   return Math.min(20, Math.max(1, Math.floor(level)));
 }
 
+/**
+ * Compute ability modifier for a score.
+ *
+ * @param score Ability score.
+ * @returns Ability modifier.
+ */
 export function abilityMod(score: number): number {
   const n = Number(score);
   if (!Number.isFinite(n)) return 0;
   return Math.floor((n - 10) / 2);
 }
 
+/**
+ * Compute proficiency bonus for a character level.
+ *
+ * @param level Character level (clamped to 1-20).
+ * @returns Proficiency bonus.
+ */
 export function proficiencyBonus(level: number): number {
   const lv = clampLevel(level);
   if (lv <= 4) return 2;
@@ -65,6 +83,12 @@ export function proficiencyBonus(level: number): number {
   return 6;
 }
 
+/**
+ * Format signed number for UI.
+ *
+ * @param n Number.
+ * @returns String with explicit "+" for non-negative values.
+ */
 export function formatSigned(n: number): string {
   return n >= 0 ? `+${n}` : `${n}`;
 }

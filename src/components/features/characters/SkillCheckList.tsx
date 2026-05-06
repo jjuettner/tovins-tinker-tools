@@ -8,10 +8,10 @@ import {
   skills,
   type Ability,
   type Skill
-} from "../../../lib/dnd";
-import { ProficiencyEmptyMark } from "../../ui/ProficiencyEmptyMark";
-import { ProficiencyMark } from "../../ui/ProficiencyMark";
-import type { Character, CharacterDraft } from "../../../types/character";
+} from "@/lib/dnd";
+import { ProficiencyEmptyMark } from "@/components/ui/ProficiencyEmptyMark";
+import { ProficiencyMark } from "@/components/ui/ProficiencyMark";
+import type { Character, CharacterDraft } from "@/types/character";
 
 export type SkillCheckCharacter = Pick<Character, "level" | "stats" | "proficientSkills" | "proficientSaves">;
 

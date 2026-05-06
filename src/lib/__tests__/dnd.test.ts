@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { abilityMod, proficiencyBonus } from "../dnd";
+import { abilityMod, proficiencyBonus } from "@/lib/dnd";
 
 describe("dnd", () => {
   it("abilityMod: 17 -> +3", () => {

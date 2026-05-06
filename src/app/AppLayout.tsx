@@ -1,9 +1,9 @@
 import { Dice6, LogOut, Menu, Moon, Sun, Sword, Tent, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { useStoredState } from "../hooks/useStoredState";
-import { APP_DISPLAY_NAME, STORAGE_KEYS } from "../lib/appConstants";
-import { signOut, useProfile } from "../lib/auth";
+import { useStoredState } from "@/hooks/useStoredState";
+import { APP_DISPLAY_NAME, STORAGE_KEYS } from "@/lib/appConstants";
+import { signOut, useProfile } from "@/lib/auth";
 
 type NavItem = {
   to: string;

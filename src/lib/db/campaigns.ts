@@ -1,4 +1,4 @@
-import { requireSupabase } from "../supabase";
+import { requireSupabase } from "@/lib/supabase";
 
 export type Campaign = {
   id: string;
@@ -14,6 +14,11 @@ export type CampaignRulesetRow = {
   created_at: string;
 };
 
+/**
+ * List campaigns (most recent first).
+ *
+ * @returns Campaign rows.
+ */
 export async function listCampaigns(): Promise<Campaign[]> {
   const sb = requireSupabase();
   const { data, error } = await sb.from("campaigns").select("*").order("created_at", { ascending: false });
@@ -21,6 +26,13 @@ export async function listCampaigns(): Promise<Campaign[]> {
   return data as Campaign[];
 }
 
+/**
+ * Create campaign owned by current user.
+ *
+ * @param input Campaign create payload.
+ * @returns Inserted campaign row.
+ * @throws If not signed in.
+ */
 export async function createCampaign(input: { name: string; description?: string | null }): Promise<Campaign> {
   const sb = requireSupabase();
   const { data: sessionData, error: sessionError } = await sb.auth.getSession();
@@ -37,6 +49,12 @@ export async function createCampaign(input: { name: string; description?: string
   return data as Campaign;
 }
 
+/**
+ * List ruleset ids attached to campaign.
+ *
+ * @param campaignId Campaign id.
+ * @returns Ruleset ids.
+ */
 export async function listCampaignRulesets(campaignId: string): Promise<string[]> {
   const sb = requireSupabase();
   const { data, error } = await sb.from("campaign_rulesets").select("ruleset_id").eq("campaign_id", campaignId);
@@ -44,12 +62,26 @@ export async function listCampaignRulesets(campaignId: string): Promise<string[]
   return (data as { ruleset_id: string }[]).map((x) => x.ruleset_id);
 }
 
+/**
+ * Attach ruleset to campaign.
+ *
+ * @param campaignId Campaign id.
+ * @param rulesetId Ruleset id.
+ * @returns Nothing.
+ */
 export async function attachCampaignRuleset(campaignId: string, rulesetId: string): Promise<void> {
   const sb = requireSupabase();
   const { error } = await sb.from("campaign_rulesets").insert({ campaign_id: campaignId, ruleset_id: rulesetId });
   if (error) throw error;
 }
 
+/**
+ * Detach ruleset from campaign.
+ *
+ * @param campaignId Campaign id.
+ * @param rulesetId Ruleset id.
+ * @returns Nothing.
+ */
 export async function detachCampaignRuleset(campaignId: string, rulesetId: string): Promise<void> {
   const sb = requireSupabase();
   const { error } = await sb

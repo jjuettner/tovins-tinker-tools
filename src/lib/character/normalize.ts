@@ -1,11 +1,19 @@
-import type { Character, CharacterDraft, EquippedItem } from "../types/character";
-import { abilityMod, clampLevel } from "./dnd";
-import { dndClassByIndex } from "./dndData";
-import { computeArmorClass } from "./armorClass";
-import { newEquippedItemId } from "./randomId";
+import type { Character, CharacterDraft, EquippedItem } from "@/types/character";
+import { abilityMod, clampLevel } from "@/lib/dnd";
+import { dndClassByIndex } from "@/lib/dndData";
+import { computeArmorClass } from "@/lib/character/armorClass";
+import { newEquippedItemId } from "@/lib/randomId";
 
-export { newEquippedItemId } from "./randomId";
+export { newEquippedItemId } from "@/lib/randomId";
 
+/**
+ * Estimate max HP using fixed average after level 1.
+ *
+ * @param level Character level.
+ * @param conMod Constitution modifier.
+ * @param hitDie Class hit die.
+ * @returns Estimated max HP.
+ */
 function defaultMaxHp(level: number, conMod: number, hitDie: number): number {
   const lv = clampLevel(level);
   const first = Math.max(1, hitDie + conMod);
@@ -14,6 +22,14 @@ function defaultMaxHp(level: number, conMod: number, hitDie: number): number {
   return first + (lv - 1) * per;
 }
 
+/**
+ * Normalize a character for safe use in UI.
+ *
+ * Clamps level/HP, fills missing ids, trims strings, and recomputes derived fields.
+ *
+ * @param c Raw character.
+ * @returns Normalized character.
+ */
 export function normalizeCharacter(c: Character): Character {
   const level = clampLevel(c.level);
   const cls = dndClassByIndex[c.classIndex];
@@ -35,15 +51,16 @@ export function normalizeCharacter(c: Character): Character {
     : [];
 
   const maxHp =
-    Number.isFinite(c.maxHp) && (c.maxHp as number) > 0 ? Math.floor(c.maxHp as number) : defaultMaxHp(level, conMod, hitDie);
+    Number.isFinite(c.maxHp) && (c.maxHp as number) > 0
+      ? Math.floor(c.maxHp as number)
+      : defaultMaxHp(level, conMod, hitDie);
 
   let currentHp = Number.isFinite(c.currentHp) ? Math.floor(c.currentHp as number) : maxHp;
   currentHp = Math.min(maxHp, Math.max(0, currentHp));
 
   const tempHp = Number.isFinite(c.tempHp) ? Math.max(0, Math.floor(c.tempHp as number)) : 0;
 
-  const spellSlotsUsed =
-    c.spellSlotsUsed && typeof c.spellSlotsUsed === "object" ? { ...c.spellSlotsUsed } : {};
+  const spellSlotsUsed = c.spellSlotsUsed && typeof c.spellSlotsUsed === "object" ? { ...c.spellSlotsUsed } : {};
 
   const armorClass = computeArmorClass(equipped, dexMod);
 
@@ -60,6 +77,12 @@ export function normalizeCharacter(c: Character): Character {
   };
 }
 
+/**
+ * Normalize a draft using `normalizeCharacter` and copy back draft-safe fields.
+ *
+ * @param d Character draft.
+ * @returns Normalized draft.
+ */
 export function normalizeDraft(d: CharacterDraft): CharacterDraft {
   const n = normalizeCharacter({ ...d, createdAt: 0, updatedAt: 0 } as Character);
   return {
@@ -74,3 +97,4 @@ export function normalizeDraft(d: CharacterDraft): CharacterDraft {
     spellSlotsUsed: n.spellSlotsUsed
   };
 }
+

@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { updatePassword, useSession } from "../../../lib/auth";
-import { buttonClass, inputClass, smallLabelClass } from "../../ui/controlClasses";
+import { updatePassword, useSession } from "@/lib/auth";
+import { buttonClass, inputClass, smallLabelClass } from "@/components/ui/controlClasses";
 
 export function ResetPassword() {
   const { session, loading } = useSession();

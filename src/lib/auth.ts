@@ -1,6 +1,6 @@
 import type { Session } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
-import { requireSupabase } from "./supabase";
+import { requireSupabase } from "@/lib/supabase";
 
 export type Profile = {
   id: string;
@@ -8,6 +8,11 @@ export type Profile = {
   is_admin: boolean;
 };
 
+/**
+ * Subscribe to Supabase auth session changes.
+ *
+ * @returns Current session + loading state.
+ */
 export function useSession() {
   const sb = requireSupabase();
   const [session, setSession] = useState<Session | null>(null);
@@ -42,6 +47,12 @@ export function useSession() {
   return { session, loading } as const;
 }
 
+/**
+ * Send a magic-link sign-in email.
+ *
+ * @param email User email.
+ * @returns Nothing.
+ */
 export async function sendMagicLink(email: string) {
   const sb = requireSupabase();
   const { error } = await sb.auth.signInWithOtp({
@@ -53,12 +64,26 @@ export async function sendMagicLink(email: string) {
   if (error) throw error;
 }
 
+/**
+ * Sign in with email/password.
+ *
+ * @param email User email.
+ * @param password User password.
+ * @returns Nothing.
+ */
 export async function signInWithPassword(email: string, password: string) {
   const sb = requireSupabase();
   const { error } = await sb.auth.signInWithPassword({ email, password });
   if (error) throw error;
 }
 
+/**
+ * Sign up with email/password.
+ *
+ * @param email User email.
+ * @param password User password.
+ * @returns Nothing.
+ */
 export async function signUpWithPassword(email: string, password: string) {
   const sb = requireSupabase();
   const { error } = await sb.auth.signUp({
@@ -71,6 +96,12 @@ export async function signUpWithPassword(email: string, password: string) {
   if (error) throw error;
 }
 
+/**
+ * Request a password reset email.
+ *
+ * @param email User email.
+ * @returns Nothing.
+ */
 export async function requestPasswordReset(email: string) {
   const sb = requireSupabase();
   const { error } = await sb.auth.resetPasswordForEmail(email, {
@@ -79,18 +110,34 @@ export async function requestPasswordReset(email: string) {
   if (error) throw error;
 }
 
+/**
+ * Update current user's password.
+ *
+ * @param newPassword New password.
+ * @returns Nothing.
+ */
 export async function updatePassword(newPassword: string) {
   const sb = requireSupabase();
   const { error } = await sb.auth.updateUser({ password: newPassword });
   if (error) throw error;
 }
 
+/**
+ * Sign out current user.
+ *
+ * @returns Nothing.
+ */
 export async function signOut() {
   const sb = requireSupabase();
   const { error } = await sb.auth.signOut();
   if (error) throw error;
 }
 
+/**
+ * Load profile record for current session.
+ *
+ * @returns Profile + loading state.
+ */
 export function useProfile() {
   const sb = requireSupabase();
   const { session } = useSession();

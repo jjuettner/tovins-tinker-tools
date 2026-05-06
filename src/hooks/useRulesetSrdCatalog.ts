@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import type { DndEquipment } from "../lib/dndEquipment";
-import type { DndFeat, DndSpell, DndClass } from "../lib/dndData";
-import { type DndRace } from "../lib/dndRaces";
-import type { DndWeaponMastery } from "../lib/dndWeaponMastery";
-import { fetchClasses, fetchEquipment, fetchFeats, fetchRaces, fetchSpells, fetchWeaponMastery } from "../lib/db/srd";
+import type { DndClass, DndFeat, DndSpell } from "@/lib/dndData";
+import type { DndEquipment } from "@/lib/dndEquipment";
+import type { DndRace } from "@/lib/dndRaces";
+import type { DndWeaponMastery } from "@/lib/dndWeaponMastery";
+import { fetchClasses, fetchEquipment, fetchFeats, fetchRaces, fetchSpells, fetchWeaponMastery } from "@/lib/db/srd";
 
 export type RulesetSrdCatalog = {
   loading: boolean;
@@ -22,16 +22,34 @@ export type RulesetSrdCatalog = {
   weaponMasteryByIndex: Record<string, DndWeaponMastery>;
 };
 
+/**
+ * Normalize spell-school name to an SRD-ish index.
+ *
+ * @param s School name.
+ * @returns Index string.
+ */
 function toDndSchoolIndex(s: string): string {
   return s.toLowerCase().replace(/\s+/g, "-");
 }
 
+/**
+ * Transform race rows into SRD race objects sorted by name.
+ *
+ * @param rows Race rows.
+ * @returns SRD races.
+ */
 function transformRaces(rows: { slug: string; name: string }[]) {
   return rows
     .map((r) => ({ index: r.slug, name: r.name } satisfies DndRace))
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
+/**
+ * Transform class rows into SRD class objects sorted by name.
+ *
+ * @param rows Class rows.
+ * @returns SRD classes.
+ */
 function transformClasses(rows: { slug: string; name: string; hit_die: number | null }[]) {
   return rows
     .map((c) => ({
@@ -42,6 +60,12 @@ function transformClasses(rows: { slug: string; name: string; hit_die: number | 
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
+/**
+ * Transform feat rows into SRD feat objects sorted by name.
+ *
+ * @param rows Feat rows.
+ * @returns SRD feats.
+ */
 function transformFeats(rows: { slug: string; name: string; feat_type: string | null; repeatable: string | null; description: string | null }[]) {
   return rows
     .map((f) => ({
@@ -54,6 +78,12 @@ function transformFeats(rows: { slug: string; name: string; feat_type: string | 
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
+/**
+ * Transform spell rows into SRD spell objects sorted by name.
+ *
+ * @param rows Spell rows.
+ * @returns SRD spells.
+ */
 function transformSpells(rows: Array<{
   slug: string;
   name: string;
@@ -93,6 +123,12 @@ function transformSpells(rows: Array<{
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
+/**
+ * Load SRD catalog rows for the given rulesets and expose derived index maps.
+ *
+ * @param rulesetIds Active ruleset ids.
+ * @returns Catalog (loading/error + arrays + index maps).
+ */
 export function useRulesetSrdCatalog(rulesetIds: string[]): Omit<RulesetSrdCatalog, "loading" | "error" | "racesByIndex" | "classesByIndex" | "spellsByIndex" | "featsByIndex" | "equipmentByIndex" | "weaponMasteryByIndex"> & {
   loading: boolean;
   error: string | null;

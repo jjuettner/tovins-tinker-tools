@@ -14,6 +14,12 @@ export const supabase =
       })
     : null;
 
+/**
+ * Get configured Supabase client or throw.
+ *
+ * @returns Supabase client.
+ * @throws If env vars are missing.
+ */
 export function requireSupabase() {
   if (!supabase) throw new Error("Supabase not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.");
   return supabase;

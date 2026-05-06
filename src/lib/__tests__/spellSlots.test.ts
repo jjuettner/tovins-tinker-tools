@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { computeSpellSlotsRemaining, spellSlotMaximaForClass } from "../spellSlots";
-import type { DndClass } from "../dndData";
+import type { DndClass } from "@/lib/dndData";
+import { computeSpellSlotsRemaining, spellSlotMaximaForClass } from "@/lib/spellSlots";
 
 describe("spellSlots", () => {
   it("wizard level 3 uses full caster table", () => {

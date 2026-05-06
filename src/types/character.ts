@@ -1,4 +1,4 @@
-import type { Ability, Skill } from "../lib/dnd";
+import type { Ability, Skill } from "@/lib/dnd";
 
 export type EquippedItem = {
   id: string;

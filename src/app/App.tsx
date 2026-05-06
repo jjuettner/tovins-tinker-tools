@@ -1,10 +1,10 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import { AppLayout } from "./AppLayout";
-import { CharactersPage } from "../pages/Characters";
-import { PlayPage } from "../pages/Play";
-import { AuthGate } from "../components/features/auth/AuthGate";
-import { CampaignsPage } from "../pages/Campaigns";
-import { ResetPasswordPage } from "../pages/ResetPassword";
+import { AppLayout } from "@/app/AppLayout";
+import { CharactersPage } from "@/pages/Characters";
+import { PlayPage } from "@/pages/Play";
+import { AuthGate } from "@/components/features/auth/AuthGate";
+import { CampaignsPage } from "@/pages/Campaigns";
+import { ResetPasswordPage } from "@/pages/ResetPassword";
 
 const rawBase = import.meta.env.BASE_URL;
 const routerBasename = rawBase === "/" ? undefined : rawBase.replace(/\/$/, "");

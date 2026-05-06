@@ -1,32 +1,32 @@
 import { Crosshair, Droplet, Heart, Sword, Tent, X } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { useCharacters } from "../../../hooks/useCharacters";
-import { useActiveRulesetIds } from "../../../hooks/useActiveRulesetIds";
-import { useRemoteSpellSlots } from "../../../hooks/useRemoteSpellSlots";
-import { useRulesetSrdCatalog } from "../../../hooks/useRulesetSrdCatalog";
-import { useStoredState } from "../../../hooks/useStoredState";
-import { formatSigned } from "../../../lib/dnd";
-import { normalizeCharacter } from "../../../lib/characterNormalize";
+import { buttonClass, inputClass, smallLabelClass } from "@/components/ui/controlClasses";
+import { SkillCheckList } from "@/components/features/characters/SkillCheckList";
+import { useActiveRulesetIds } from "@/hooks/useActiveRulesetIds";
+import { useCharacters } from "@/hooks/useCharacters";
+import { useRemoteSpellSlots } from "@/hooks/useRemoteSpellSlots";
+import { useRulesetSrdCatalog } from "@/hooks/useRulesetSrdCatalog";
+import { useStoredState } from "@/hooks/useStoredState";
+import { normalizeCharacter } from "@/lib/character/normalize";
+import { STORAGE_KEYS } from "@/lib/appConstants";
 import {
   resolvedWeaponMasteryIndex,
   unarmedDamageBonus,
   unarmedToHit,
   weaponDamageSummary,
   weaponToHitBonus
-} from "../../../lib/combat";
-import { unlockedBaseClassFeaturesFromSrd } from "../../../lib/dndFeatures";
-import { dndClassByIndex, dndFeatByIndex, dndSpellByIndex, type DndSpell } from "../../../lib/dndData";
-import { dndEquipmentByIndex, isWeapon } from "../../../lib/dndEquipment";
-import { dndRaceByIndex } from "../../../lib/dndRaces";
-import { dndTraitByIndex } from "../../../lib/dndTraits";
-import { dndWeaponMasteryByIndex } from "../../../lib/dndWeaponMastery";
-import { computeSpellSlotsRemaining, emptySpellSlotsUsed, spellSlotMaximaForClass } from "../../../lib/spellSlots";
-import { STORAGE_KEYS } from "../../../lib/appConstants";
-import { splitEquipped } from "../../../lib/equippedLayout";
-import { buttonClass, inputClass, smallLabelClass } from "../../ui/controlClasses";
-import { SkillCheckList } from "../characters/SkillCheckList";
-import type { Character } from "../../../types/character";
+} from "@/lib/combat";
+import { formatSigned } from "@/lib/dnd";
+import { dndClassByIndex, dndFeatByIndex, dndSpellByIndex, type DndSpell } from "@/lib/dndData";
+import { unlockedBaseClassFeaturesFromSrd } from "@/lib/dndFeatures";
+import { dndEquipmentByIndex, isWeapon } from "@/lib/dndEquipment";
+import { splitEquipped } from "@/lib/equippedLayout";
+import { dndRaceByIndex } from "@/lib/dndRaces";
+import { dndTraitByIndex } from "@/lib/dndTraits";
+import { dndWeaponMasteryByIndex } from "@/lib/dndWeaponMastery";
+import { computeSpellSlotsRemaining, emptySpellSlotsUsed, spellSlotMaximaForClass } from "@/lib/spellSlots";
+import type { Character } from "@/types/character";
 
 const DAMAGE_TYPES = [
   "bludgeoning",
@@ -190,7 +190,11 @@ export function PlayFeature() {
   );
 }
 
-function GeneralTab(props: { c: Character; raceByIndex: Record<string, import("../../../lib/dndRaces").DndRace>; featByIndex: Record<string, import("../../../lib/dndData").DndFeat> }) {
+function GeneralTab(props: {
+  c: Character;
+  raceByIndex: Record<string, import("@/lib/dndRaces").DndRace>;
+  featByIndex: Record<string, import("@/lib/dndData").DndFeat>;
+}) {
   const raceTraits = useMemo(() => {
     const race = props.raceByIndex[props.c.raceIndex];
     if (!race?.traits?.length) return [];
@@ -293,7 +297,7 @@ function hpHeartClass(c: Character): string {
   return "text-red-600 dark:text-red-400";
 }
 
-function PlayHeader(props: { c: Character; onRest(): void; classByIndex: Record<string, import("../../../lib/dndData").DndClass> }) {
+function PlayHeader(props: { c: Character; onRest(): void; classByIndex: Record<string, import("@/lib/dndData").DndClass> }) {
   const clsName = props.classByIndex[props.c.classIndex]?.name ?? (props.c.classIndex || "Class");
   const hpCls = hpHeartClass(props.c);
 
@@ -640,8 +644,8 @@ function CastSpellModal(props: {
 
 function CombatTab(props: {
   c: Character;
-  weapons: import("../../../types/character").EquippedItem[];
-  featByIndex: Record<string, import("../../../lib/dndData").DndFeat>;
+  weapons: import("@/types/character").EquippedItem[];
+  featByIndex: Record<string, import("@/lib/dndData").DndFeat>;
   onPatch(next: Character): void;
 }) {
   const [rows, setRows] = useState<DamageRow[]>([{ type: "bludgeoning", amount: 0 }]);
@@ -802,8 +806,8 @@ function CombatTab(props: {
 
 function AttackRollModal(props: {
   c: Character;
-  ctx: { kind: "weapon"; weapon: import("../../../types/character").EquippedItem } | { kind: "unarmed" };
-  featByIndex: Record<string, import("../../../lib/dndData").DndFeat>;
+  ctx: { kind: "weapon"; weapon: import("@/types/character").EquippedItem } | { kind: "unarmed" };
+  featByIndex: Record<string, import("@/lib/dndData").DndFeat>;
   onClose(): void;
 }) {
   const toHit =

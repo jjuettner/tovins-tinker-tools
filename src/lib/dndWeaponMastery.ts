@@ -1,4 +1,4 @@
-import raw from "../data/PHB24/5e-SRD-Weapon-Mastery-Properties.json";
+import raw from "@/data/PHB24/5e-SRD-Weapon-Mastery-Properties.json";
 
 export type DndWeaponMastery = {
   index: string;

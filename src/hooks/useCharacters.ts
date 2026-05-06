@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
-import type { Character } from "../types/character";
-import { deleteCharacter, listCharacters, upsertCharacter } from "../lib/db/characters";
+import type { Character } from "@/types/character";
+import { deleteCharacter, listCharacters, upsertCharacter } from "@/lib/db/characters";
 
+/**
+ * CRUD hook for character list.
+ *
+ * @returns Reactive list + helpers (refresh/save/remove).
+ */
 export function useCharacters() {
   const [characters, setCharacters] = useState<Character[]>([]);
   const [loading, setLoading] = useState(true);

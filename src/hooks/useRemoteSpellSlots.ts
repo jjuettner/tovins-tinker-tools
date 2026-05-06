@@ -1,11 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
-import type { SpellSlotMaxima } from "../lib/spellSlots";
-import { fetchClassSpellSlots } from "../lib/db/srd";
+import { fetchClassSpellSlots } from "@/lib/db/srd";
+import type { SpellSlotMaxima } from "@/lib/spellSlots";
 
 type SlotPayload =
   | { kind: "standard"; perSpellLevel: number[] }
   | { kind: "pact"; max: number; slotSpellLevel: number };
 
+/**
+ * Load class spell-slot progressions from remote SRD tables.
+ *
+ * @param rulesetIds Active rulesets.
+ * @returns Loading state + resolver for maxima at (class, level).
+ */
 export function useRemoteSpellSlots(rulesetIds: string[]) {
   const [byClassLevel, setByClassLevel] = useState<Record<string, Record<number, SlotPayload>>>({});
   const [loading, setLoading] = useState(true);
@@ -40,6 +46,13 @@ export function useRemoteSpellSlots(rulesetIds: string[]) {
     };
   }, [key, rulesetIds]);
 
+  /**
+   * Resolve maxima payload for a class at a specific level.
+   *
+   * @param classSlug Class slug.
+   * @param level Character level.
+   * @returns Slot maxima, or null if missing.
+   */
   function maximaFor(classSlug: string, level: number): SpellSlotMaxima | null {
     const rows = byClassLevel[classSlug];
     if (!rows) return null;

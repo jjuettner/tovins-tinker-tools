@@ -1,10 +1,16 @@
 import { Check, Save, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { abilities, abilityMod, formatSigned, proficiencyBonus, skillAbility, skills } from "../../../lib/dnd";
-import type { Ability, Skill } from "../../../lib/dnd";
-import { computeArmorClass } from "../../../lib/armorClass";
-import { normalizeDraft } from "../../../lib/characterNormalize";
-import { dndArmorPieces, dndEquipmentByIndex, dndWeapons, isBodyArmor } from "../../../lib/dndEquipment";
+import { buttonClass, inputClass, smallLabelClass } from "@/components/ui/controlClasses";
+import { useRulesetSrdCatalog } from "@/hooks/useRulesetSrdCatalog";
+import { computeArmorClass } from "@/lib/character/armorClass";
+import { newEquippedItemId, normalizeDraft } from "@/lib/character/normalize";
+import { emptyWeapon, rebuildEquipped, splitEquipped } from "@/lib/equippedLayout";
+import { DND2024_RULESET_ID, listRulesets } from "@/lib/db/rulesets";
+import { listCampaignRulesets, listCampaigns } from "@/lib/db/campaigns";
+import { dndArmorPieces, dndEquipmentByIndex, dndWeapons, isBodyArmor } from "@/lib/dndEquipment";
+import { dndRaces } from "@/lib/dndRaces";
+import { abilities, abilityMod, formatSigned, proficiencyBonus, skillAbility, skills } from "@/lib/dnd";
+import type { Ability, Skill } from "@/lib/dnd";
 import {
   dndClasses,
   dndFeats,
@@ -12,17 +18,10 @@ import {
   dndSpellByIndex,
   spellsOnClassList,
   type DndSpell
-} from "../../../lib/dndData";
-import { dndRaces } from "../../../lib/dndRaces";
-import { DND2024_RULESET_ID, listRulesets } from "../../../lib/db/rulesets";
-import { listCampaignRulesets, listCampaigns } from "../../../lib/db/campaigns";
-import { useRulesetSrdCatalog } from "../../../hooks/useRulesetSrdCatalog";
-import { emptyWeapon, rebuildEquipped, splitEquipped } from "../../../lib/equippedLayout";
-import { newEquippedItemId } from "../../../lib/randomId";
-import { toggleInList } from "../../../lib/utils";
-import type { CharacterDraft, EquippedItem } from "../../../types/character";
-import { buttonClass, inputClass, smallLabelClass } from "../../ui/controlClasses";
-import { SkillCheckList } from "./SkillCheckList";
+} from "@/lib/dndData";
+import { toggleInList } from "@/lib/utils";
+import type { CharacterDraft, EquippedItem } from "@/types/character";
+import { SkillCheckList } from "@/components/features/characters/SkillCheckList";
 
 export function CharacterEditor(props: {
   draft: CharacterDraft;

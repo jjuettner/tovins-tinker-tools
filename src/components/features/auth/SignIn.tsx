@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { requestPasswordReset, sendMagicLink, signInWithPassword, signUpWithPassword } from "../../../lib/auth";
-import { buttonClass, inputClass, smallLabelClass } from "../../ui/controlClasses";
+import { requestPasswordReset, sendMagicLink, signInWithPassword, signUpWithPassword } from "@/lib/auth";
+import { buttonClass, inputClass, smallLabelClass } from "@/components/ui/controlClasses";
 
 export function SignIn() {
   const [mode, setMode] = useState<"magic" | "password">("magic");

@@ -1,10 +1,17 @@
-import type { Ability } from "./dnd";
-import { abilityMod, proficiencyBonus } from "./dnd";
-import type { Character, EquippedItem } from "../types/character";
-import type { DndEquipment } from "./dndEquipment";
-import { dndEquipmentByIndex, isWeapon, weaponIsFinesse, weaponIsRanged } from "./dndEquipment";
+import { abilityMod, proficiencyBonus, type Ability } from "@/lib/dnd";
+import type { DndEquipment } from "@/lib/dndEquipment";
+import { dndEquipmentByIndex, isWeapon, weaponIsFinesse, weaponIsRanged } from "@/lib/dndEquipment";
+import type { Character, EquippedItem } from "@/types/character";
 
-/** Saved mastery override, else weapon’s SRD mastery. */
+/**
+ * Resolve weapon mastery index for an equipped weapon.
+ *
+ * Prefers saved override when set; otherwise uses SRD mastery on the equipment row.
+ *
+ * @param weapon Equipped weapon instance.
+ * @param eq SRD equipment row for this weapon (if known).
+ * @returns Mastery index, or undefined if not proficient / missing.
+ */
 export function resolvedWeaponMasteryIndex(weapon: EquippedItem, eq: DndEquipment | undefined): string | undefined {
   if (!weapon.masteryProficient) return undefined;
   const o = weapon.masteryIndex?.trim();
@@ -12,6 +19,13 @@ export function resolvedWeaponMasteryIndex(weapon: EquippedItem, eq: DndEquipmen
   return eq?.mastery?.index;
 }
 
+/**
+ * Pick the ability used for an attack with a weapon, plus its modifier.
+ *
+ * @param stats Ability scores.
+ * @param eq SRD equipment row (weapon).
+ * @returns Selected ability and computed modifier.
+ */
 export function weaponAbilityAndMod(
   stats: Record<Ability, number>,
   eq: DndEquipment | undefined
@@ -30,6 +44,13 @@ export function weaponAbilityAndMod(
   return { ability: "STR", mod: abilityMod(stats.STR) };
 }
 
+/**
+ * Compute to-hit bonus for a weapon attack (including proficiency + weapon modifier).
+ *
+ * @param c Character.
+ * @param weapon Equipped weapon.
+ * @returns Total attack bonus.
+ */
 export function weaponToHitBonus(c: Character, weapon: EquippedItem): number {
   const eq = dndEquipmentByIndex[weapon.equipmentIndex];
   if (!eq || !isWeapon(eq)) return abilityMod(c.stats.STR) + proficiencyBonus(c.level);
@@ -37,6 +58,13 @@ export function weaponToHitBonus(c: Character, weapon: EquippedItem): number {
   return mod + proficiencyBonus(c.level) + weapon.modifier;
 }
 
+/**
+ * Summarize weapon damage dice, bonus, and type.
+ *
+ * @param c Character.
+ * @param weapon Equipped weapon.
+ * @returns Damage summary payload for UI.
+ */
 export function weaponDamageSummary(c: Character, weapon: EquippedItem): { dice: string; bonus: number; type: string } {
   const eq = dndEquipmentByIndex[weapon.equipmentIndex];
   if (!eq?.damage?.damage_dice) {
@@ -48,10 +76,22 @@ export function weaponDamageSummary(c: Character, weapon: EquippedItem): { dice:
   return { dice: eq.damage.damage_dice, bonus: mod + weapon.modifier, type };
 }
 
+/**
+ * Compute to-hit bonus for an unarmed strike.
+ *
+ * @param c Character.
+ * @returns Attack bonus.
+ */
 export function unarmedToHit(c: Character): number {
   return abilityMod(c.stats.STR) + proficiencyBonus(c.level);
 }
 
+/**
+ * Compute damage bonus for an unarmed strike.
+ *
+ * @param c Character.
+ * @returns Damage bonus (ability mod).
+ */
 export function unarmedDamageBonus(c: Character): number {
   return abilityMod(c.stats.STR);
 }

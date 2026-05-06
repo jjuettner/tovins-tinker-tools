@@ -1,5 +1,5 @@
-import type { Character } from "../../../types/character";
-import { dndClassByIndex } from "../../../lib/dndData";
+import { dndClassByIndex } from "@/lib/dndData";
+import type { Character } from "@/types/character";
 
 export function CharacterList(props: {
   characters: Character[];

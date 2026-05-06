@@ -1,5 +1,5 @@
-import { requireSupabase } from "../supabase";
-import type { Character } from "../../types/character";
+import { requireSupabase } from "@/lib/supabase";
+import type { Character } from "@/types/character";
 
 export type CharacterRow = {
   id: string;
@@ -11,10 +11,25 @@ export type CharacterRow = {
   updated_at: string;
 };
 
+/**
+ * Convert DB row into app `Character`.
+ *
+ * Assumption: `row.data` already matches `Character` shape.
+ *
+ * @param row DB row.
+ * @returns App character.
+ */
 export function characterFromRow(row: CharacterRow): Character {
   return { ...(row.data as Character), campaignId: row.campaign_id } as Character;
 }
 
+/**
+ * Convert app `Character` into DB upsert payload.
+ *
+ * @param c App character.
+ * @param ownerId User id.
+ * @returns Row payload for upsert.
+ */
 export function characterToRow(c: Character, ownerId: string) {
   return {
     id: c.id,
@@ -25,6 +40,11 @@ export function characterToRow(c: Character, ownerId: string) {
   } as const;
 }
 
+/**
+ * List characters for current user.
+ *
+ * @returns Characters sorted by name.
+ */
 export async function listCharacters(): Promise<Character[]> {
   const sb = requireSupabase();
   const { data, error } = await sb.from("characters").select("*").order("name", { ascending: true });
@@ -32,6 +52,13 @@ export async function listCharacters(): Promise<Character[]> {
   return (data as CharacterRow[]).map(characterFromRow);
 }
 
+/**
+ * Insert or update character for current user.
+ *
+ * @param c Character to upsert.
+ * @returns Nothing.
+ * @throws If not signed in.
+ */
 export async function upsertCharacter(c: Character): Promise<void> {
   const sb = requireSupabase();
   const { data: sessionData, error: sessionError } = await sb.auth.getSession();
@@ -44,6 +71,12 @@ export async function upsertCharacter(c: Character): Promise<void> {
   if (error) throw error;
 }
 
+/**
+ * Delete character by id.
+ *
+ * @param id Character id.
+ * @returns Nothing.
+ */
 export async function deleteCharacter(id: string): Promise<void> {
   const sb = requireSupabase();
   const { error } = await sb.from("characters").delete().eq("id", id);

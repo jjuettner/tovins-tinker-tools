@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { readStorage, writeStorage } from "../storage";
+import { readStorage, writeStorage } from "@/lib/storage";
 
 describe("storage", () => {
   it("writes then reads typed json", () => {

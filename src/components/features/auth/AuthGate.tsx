@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
-import { useSession } from "../../../lib/auth";
-import { useInitSrd } from "../../../hooks/useInitSrd";
-import { SignIn } from "./SignIn";
+import { useInitSrd } from "@/hooks/useInitSrd";
+import { useSession } from "@/lib/auth";
+import { SignIn } from "@/components/features/auth/SignIn";
 
 export function AuthGate({ children }: { children: ReactNode }) {
   const { session, loading } = useSession();

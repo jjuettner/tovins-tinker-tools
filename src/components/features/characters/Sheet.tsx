@@ -1,14 +1,14 @@
 import { Pencil, Trash2, UserCircle } from "lucide-react";
 import { useMemo } from "react";
-import { formatSigned, proficiencyBonus } from "../../../lib/dnd";
-import { dndClassByIndex, dndFeatByIndex, dndSpellByIndex, type DndSpell } from "../../../lib/dndData";
-import { dndRaceByIndex } from "../../../lib/dndRaces";
-import { dndTraitByIndex } from "../../../lib/dndTraits";
-import { buttonClass } from "../../ui/controlClasses";
-import type { Character } from "../../../types/character";
-import { SkillCheckList } from "./SkillCheckList";
-import { useActiveRulesetIds } from "../../../hooks/useActiveRulesetIds";
-import { useRulesetSrdCatalog } from "../../../hooks/useRulesetSrdCatalog";
+import { buttonClass } from "@/components/ui/controlClasses";
+import { useActiveRulesetIds } from "@/hooks/useActiveRulesetIds";
+import { formatSigned, proficiencyBonus } from "@/lib/dnd";
+import { dndClassByIndex, dndFeatByIndex, dndSpellByIndex, type DndSpell } from "@/lib/dndData";
+import { dndRaceByIndex } from "@/lib/dndRaces";
+import { dndTraitByIndex } from "@/lib/dndTraits";
+import type { Character } from "@/types/character";
+import { SkillCheckList } from "@/components/features/characters/SkillCheckList";
+import { useRulesetSrdCatalog } from "@/hooks/useRulesetSrdCatalog";
 
 function spellsGrouped(spellByIndex: Record<string, DndSpell>, indices: string[]): { level: number; spells: DndSpell[] }[] {
   const list = indices

@@ -1,7 +1,15 @@
-import type { EquippedItem } from "../types/character";
-import type { DndEquipment } from "./dndEquipment";
-import { dndEquipmentByIndex, isBodyArmor, isShield } from "./dndEquipment";
+import type { EquippedItem } from "@/types/character";
+import type { DndEquipment } from "@/lib/dndEquipment";
+import { dndEquipmentByIndex, isBodyArmor, isShield } from "@/lib/dndEquipment";
 
+/**
+ * Compute armor class contribution of a single armor item.
+ *
+ * @param eq Equipment row.
+ * @param dexMod Dexterity modifier.
+ * @param magicPlus Magic modifier to add to base AC.
+ * @returns Armor AC value (not including shields).
+ */
 function armorContribution(eq: DndEquipment, dexMod: number, magicPlus: number): number {
   const ac = eq.armor_class;
   if (!ac) return 0;
@@ -11,6 +19,15 @@ function armorContribution(eq: DndEquipment, dexMod: number, magicPlus: number):
   return base + Math.min(dexMod, cap);
 }
 
+/**
+ * Compute best armor class for equipped items.
+ *
+ * Uses best of: unarmored (10 + DEX) vs best body armor, plus sum of shields.
+ *
+ * @param equipped Equipped items (optional).
+ * @param dexMod Dexterity modifier.
+ * @returns Armor class.
+ */
 export function computeArmorClass(equipped: EquippedItem[] | undefined, dexMod: number): number {
   const items = equipped ?? [];
   const bestUnarmored = 10 + dexMod;
@@ -34,3 +51,4 @@ export function computeArmorClass(equipped: EquippedItem[] | undefined, dexMod: 
   const body = Math.max(bestUnarmored, bestArmor);
   return body + shield;
 }
+

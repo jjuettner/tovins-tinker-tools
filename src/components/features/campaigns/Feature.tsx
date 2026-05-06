@@ -1,8 +1,14 @@
 import { Plus, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { attachCampaignRuleset, createCampaign, detachCampaignRuleset, listCampaignRulesets, listCampaigns } from "../../../lib/db/campaigns";
-import { listRulesets } from "../../../lib/db/rulesets";
-import { buttonClass, inputClass, smallLabelClass } from "../../ui/controlClasses";
+import { buttonClass, inputClass, smallLabelClass } from "@/components/ui/controlClasses";
+import {
+  attachCampaignRuleset,
+  createCampaign,
+  detachCampaignRuleset,
+  listCampaignRulesets,
+  listCampaigns
+} from "@/lib/db/campaigns";
+import { listRulesets } from "@/lib/db/rulesets";
 
 type UiCampaign = {
   id: string;

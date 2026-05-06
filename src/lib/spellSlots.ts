@@ -1,5 +1,5 @@
-import raw from "../data/spell-slots.json";
-import type { DndClass } from "./dndData";
+import raw from "@/data/spell-slots.json";
+import type { DndClass } from "@/lib/dndData";
 
 type SlotRow = Record<string, number> & { level: number };
 
@@ -18,6 +18,12 @@ export type SpellSlotMaxima =
   | { kind: "standard"; maxBySpellLevel: Record<number, number> }
   | { kind: "pact"; max: number; slotSpellLevel: number };
 
+/**
+ * Convert a per-level slot row to a map keyed by spell level (1-9).
+ *
+ * @param row Slot row from JSON.
+ * @returns Max slots by spell level.
+ */
 function rowToMaxBySpellLevel(row: SlotRow): Record<number, number> {
   const out: Record<number, number> = {};
   SPELL_LEVEL_KEYS.forEach((k, i) => {
@@ -27,11 +33,25 @@ function rowToMaxBySpellLevel(row: SlotRow): Record<number, number> {
   return out;
 }
 
+/**
+ * Find a standard (full/half caster) slot row for the given character level.
+ *
+ * @param rows Slot rows.
+ * @param charLevel Character level (clamped to 1-20).
+ * @returns Matching row, or undefined.
+ */
 function findStandardRow(rows: SlotRow[], charLevel: number): SlotRow | undefined {
   const lv = Math.min(20, Math.max(1, Math.floor(charLevel)));
   return rows.find((r) => r.level === lv);
 }
 
+/**
+ * Compute maximum spell slots for a class at the given character level.
+ *
+ * @param dndClass SRD class (optional).
+ * @param charLevel Character level.
+ * @returns Slot maxima description (none/standard/pact).
+ */
 export function spellSlotMaximaForClass(dndClass: DndClass | undefined, charLevel: number): SpellSlotMaxima {
   if (!dndClass) return { kind: "none" };
   const name = dndClass.name.trim();
@@ -58,11 +78,24 @@ export function spellSlotMaximaForClass(dndClass: DndClass | undefined, charLeve
   return { kind: "none" };
 }
 
+/**
+ * Create an empty "used spell slots" map.
+ *
+ * @returns Empty map.
+ */
 export function emptySpellSlotsUsed(): Record<string, number> {
   return {};
 }
 
-/** Returns remaining slots per spell level (1–9). For pact magic, only `slotSpellLevel` has a pool. */
+/**
+ * Compute remaining spell slots per spell level.
+ *
+ * For pact magic, only `slotSpellLevel` has a pool.
+ *
+ * @param maxima Maxima definition.
+ * @param used Used slots keyed by spell level.
+ * @returns Rows for UI (spellLevel/remaining/max).
+ */
 export function computeSpellSlotsRemaining(
   maxima: SpellSlotMaxima,
   used: Partial<Record<string, number>> | undefined
@@ -86,6 +119,13 @@ export function computeSpellSlotsRemaining(
   return rows;
 }
 
+/**
+ * Find the highest available slot level usable to cast a spell of `spellLevel`.
+ *
+ * @param spellLevel Spell level to cast.
+ * @param maxima Max slot definition.
+ * @returns Highest usable slot level, or 0 if none.
+ */
 export function maxSpellSlotForSpell(spellLevel: number, maxima: SpellSlotMaxima): number {
   if (spellLevel <= 0) return 0;
   if (maxima.kind === "none") return 0;

@@ -1,4 +1,4 @@
-import type { ClassRow, EquipmentRow, FeatRow, RaceRow, SpellRow, WeaponMasteryRow } from "./db/srd";
+import type { ClassRow, EquipmentRow, FeatRow, RaceRow, SpellRow, WeaponMasteryRow } from "@/lib/db/srd";
 
 export type SrdState = {
   spells: SpellRow[];
@@ -12,10 +12,21 @@ export type SrdState = {
 
 let state: SrdState | null = null;
 
+/**
+ * Replace in-memory SRD cache.
+ *
+ * @param next Next SRD state.
+ * @returns Nothing.
+ */
 export function setSrdState(next: SrdState) {
   state = next;
 }
 
+/**
+ * Get current in-memory SRD cache.
+ *
+ * @returns SRD state, or null if not loaded.
+ */
 export function getSrdState(): SrdState | null {
   return state;
 }

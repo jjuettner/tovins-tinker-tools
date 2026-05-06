@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
-import { listCampaignRulesets } from "../lib/db/campaigns";
-import { DND2024_RULESET_ID, listRulesets } from "../lib/db/rulesets";
+import { listCampaignRulesets } from "@/lib/db/campaigns";
+import { DND2024_RULESET_ID, listRulesets } from "@/lib/db/rulesets";
 
 /**
  * For view/play screens (outside editor):
  * - if campaignId: use campaign rulesets (read-only)
  * - else: show all content (all rulesets)
+ *
+ * @param campaignId Campaign id (or null/undefined for "all rulesets").
+ * @returns Active ruleset ids for content filtering.
  */
 export function useActiveRulesetIds(campaignId: string | null | undefined) {
   const [allRuleIds, setAllRuleIds] = useState<string[] | null>(null);

@@ -1,3 +1,6 @@
+---
+alwaysApply: true
+---
 # Coding
 
 ts: strict. no `any`. no `as` casts without comment. infer where obvious.
@@ -6,11 +9,18 @@ naming:
   fns/vars/hooks: camelCase
   constants: SCREAMING_SNAKE
   types/interfaces: PascalCase, no I-prefix
+
 files: one component per file. filename = component name. hooks: use prefix.
 imports: alias @/ = src/. no relative ../../.
-fns: pure where possible. max 40 lines. single responsibility. early returns.
-components: max 100 lines. extract if larger.
+fns: pure where possible. keep short. single responsibility. early returns.
+components: arrow function notation. one component = one file
 no: any, ts-ignore, console.log, magic numbers, nested ternaries, default exports for utils.
 exports: named for utils/hooks/types. default for components/pages.
 errors: always handle. never silent catch. user-facing or rethrow.
 formatting: prettier default config. no manual formatting.
+docs:
+  src/lib/ and src/hooks/:
+    add TSDoc to exported functions and non-trivial helpers:
+      description: 1-2 lines. state intent/constraints.
+      params: document each param.
+      returns: document return value.

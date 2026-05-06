@@ -1,15 +1,15 @@
 import { Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { useCharacters } from "../../../hooks/useCharacters";
-import { useStoredState } from "../../../hooks/useStoredState";
-import { normalizeCharacter } from "../../../lib/characterNormalize";
-import { STORAGE_KEYS } from "../../../lib/appConstants";
-import type { Character, CharacterDraft } from "../../../types/character";
-import { buttonClass } from "../../ui/controlClasses";
-import { CharacterEditor } from "./Editor";
-import { CharacterList } from "./List";
-import { CharacterSheet } from "./Sheet";
-import { makeDraft } from "./characterDraft";
+import { buttonClass } from "@/components/ui/controlClasses";
+import { useCharacters } from "@/hooks/useCharacters";
+import { useStoredState } from "@/hooks/useStoredState";
+import { makeDraft } from "@/lib/character/draft";
+import { normalizeCharacter } from "@/lib/character/normalize";
+import { STORAGE_KEYS } from "@/lib/appConstants";
+import type { Character, CharacterDraft } from "@/types/character";
+import { CharacterEditor } from "@/components/features/characters/Editor";
+import { CharacterList } from "@/components/features/characters/List";
+import { CharacterSheet } from "@/components/features/characters/Sheet";
 
 function sortByName(a: Character, b: Character) {
   return a.name.localeCompare(b.name);

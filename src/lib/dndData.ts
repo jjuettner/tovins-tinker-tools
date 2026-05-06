@@ -1,6 +1,6 @@
-import rawClasses from "../data/PHB24/5e-SRD-Classes.json";
-import rawFeats from "../data/PHB24/5e-SRD-Feats.json";
-import rawSpells from "../data/PHB24/5e-SRD-Spells.json";
+import rawClasses from "@/data/PHB24/5e-SRD-Classes.json";
+import rawFeats from "@/data/PHB24/5e-SRD-Feats.json";
+import rawSpells from "@/data/PHB24/5e-SRD-Spells.json";
 
 export type DndClass = {
   index: string;
@@ -47,7 +47,14 @@ export const dndClassByIndex: Record<string, DndClass> = Object.fromEntries(dndC
 export const dndFeatByIndex: Record<string, DndFeat> = Object.fromEntries(dndFeats.map((f) => [f.index, f]));
 export const dndSpellByIndex: Record<string, DndSpell> = Object.fromEntries(dndSpells.map((s) => [s.index, s]));
 
-/** Spells whose `classes` includes this class index; if none match (bad data), returns full list. */
+/**
+ * Get spells whose `classes` includes this class index.
+ *
+ * If none match (bad data), falls back to the full spell list.
+ *
+ * @param classIndex SRD class index.
+ * @returns Spells on class list (or full list).
+ */
 export function spellsOnClassList(classIndex: string): DndSpell[] {
   const idx = classIndex.trim();
   if (!idx) return dndSpells;

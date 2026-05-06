@@ -1,8 +1,23 @@
 import { useEffect, useState } from "react";
-import { DND2024_RULESET_ID } from "../lib/db/rulesets";
-import { fetchClasses, fetchClassSpellSlots, fetchEquipment, fetchFeats, fetchRaces, fetchSpells, fetchWeaponMastery } from "../lib/db/srd";
-import { setSrdState } from "../lib/srdState";
+import { DND2024_RULESET_ID } from "@/lib/db/rulesets";
+import {
+  fetchClasses,
+  fetchClassSpellSlots,
+  fetchEquipment,
+  fetchFeats,
+  fetchRaces,
+  fetchSpells,
+  fetchWeaponMastery
+} from "@/lib/db/srd";
+import { setSrdState } from "@/lib/srdState";
 
+/**
+ * One-shot SRD bootstrap for the default ruleset.
+ *
+ * Loads SRD tables into in-memory state used by the app.
+ *
+ * @returns Loading + error state.
+ */
 export function useInitSrd() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
