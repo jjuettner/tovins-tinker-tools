@@ -124,6 +124,8 @@ Prerequisites / Subfeatures: Monster Compendium, Draft Mode, Play Mode
 
 ## Turn order bug
 - after npc death, pcs go first again
+- enities with initiative 0 should not move up the list, they should stay above "dead" entities until they get an initiative
+- add tests for all edge cases about turn order
 
 ### example
 - order pc1, pc2, enemy1, enemy2, enemy3

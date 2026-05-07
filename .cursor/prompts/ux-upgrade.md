@@ -8,23 +8,25 @@
 ## Draft
   - when adding enemy while encounter ongoing, new enemy no show up
 
-
-## player card
-  - short number input  with icon buttons 
-    - (drop) damage (-> opens damage form)
-    - cross (bold plus symbol) -> heal
-
-## Player avatar
-  - allow upload of image
-  - add image to character
-  - display avatar of selected character on top menu
-
 ## run encounter row
 - Avatar Frame
   - inspiration: hearthstone hero cards
   - Bottom: Flat
   - Top: half circle
   - position: lining up with left side of row, circular top part extending upward past the row itself 
+
+  - default pc avatars should have consistent background color. is not filled out entirely yet
+  - frames bigger. borders bigger. gold border for pc, silver border for enemy
+
+## Player avatar
+  - allow upload of image
+  - add image to character
+  - display avatar of selected character on top menu
+
+## player card
+  - short number input  with icon buttons 
+    - (drop) damage (-> opens damage form)
+    - cross (bold plus symbol) -> heal
 
 
 # General

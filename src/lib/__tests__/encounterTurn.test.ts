@@ -88,7 +88,13 @@ describe("rotateTurnOrder", () => {
     ];
     const r = rotateTurnOrder(entities);
     expect(r.activeEntityId).toBe("a");
-    expect(r.entities.map((x) => x.id)).toEqual(["standby", "a", "dead1"]);
+    expect(r.entities.map((x) => x.id)).toEqual(["a", "standby", "dead1"]);
+  });
+
+  it("pins standby (init 0) below all participants", () => {
+    const entities: EncounterEntity[] = [e({ id: "s1", initiative: 0 }), e({ id: "p1", initiative: 12 }), e({ id: "p2", initiative: 6 })];
+    const r = rotateTurnOrder(entities);
+    expect(r.entities.map((x) => x.id)).toEqual(["p2", "p1", "s1"]);
   });
 
   it("marks wrapped when next active is highest initiative", () => {
@@ -124,5 +130,34 @@ describe("normalizeEncounterQueue", () => {
     ];
     const n = normalizeEncounterQueue(entities, "a");
     expect(n.map((x) => x.id)).toEqual(["a", "c", "b", "dead1"]);
+  });
+
+  it("keeps initiative 0 (standby) above dead and below all participants", () => {
+    const entities: EncounterEntity[] = [
+      e({ id: "p1", initiative: 12 }),
+      e({ id: "s1", initiative: 0 }),
+      e({ id: "p2", initiative: 5 }),
+      { ...e({ id: "dead1", initiative: 99 }), status: "dead" }
+    ];
+    const n = normalizeEncounterQueue(entities, "p1");
+    expect(n.map((x) => x.id)).toEqual(["p1", "p2", "s1", "dead1"]);
+  });
+
+  it("preserves standby relative order", () => {
+    const entities: EncounterEntity[] = [
+      e({ id: "s2", initiative: 0 }),
+      e({ id: "p2", initiative: 5 }),
+      e({ id: "s1", initiative: 0 }),
+      e({ id: "p1", initiative: 15 }),
+      { ...e({ id: "dead1", initiative: 99 }), status: "dead" }
+    ];
+    const n = normalizeEncounterQueue(entities, "p1");
+    expect(n.map((x) => x.id)).toEqual(["p1", "p2", "s2", "s1", "dead1"]);
+  });
+
+  it("does not move standby to top even if activeEntityId points to it", () => {
+    const entities: EncounterEntity[] = [e({ id: "p1", initiative: 10 }), e({ id: "s1", initiative: 0 }), e({ id: "p2", initiative: 5 })];
+    const n = normalizeEncounterQueue(entities, "s1");
+    expect(n.map((x) => x.id)).toEqual(["p1", "p2", "s1"]);
   });
 });

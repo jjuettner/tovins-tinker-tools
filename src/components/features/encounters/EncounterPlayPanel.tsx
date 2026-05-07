@@ -12,6 +12,29 @@ import type { EncounterDataV1, EncounterEntity } from "@/types/encounter";
 
 type PreRow = { key: string; label: string };
 
+function initialsForName(name: string): string {
+  const parts = name
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function hashToHue(input: string): number {
+  // Deterministic tiny hash -> 0..359 for stable avatar colors.
+  let h = 0;
+  for (let i = 0; i < input.length; i++) h = (h * 31 + input.charCodeAt(i)) >>> 0;
+  return h % 360;
+}
+
+function avatarStyleForKey(key: string): { backgroundColor: string; color: string } {
+  const hue = hashToHue(key);
+  // Pastel-ish but readable.
+  return { backgroundColor: `hsl(${hue} 70% 40%)`, color: "white" };
+}
+
 function buildEntities(
   data: EncounterDataV1,
   initiative: Record<string, number>,
@@ -414,18 +437,49 @@ export default function EncounterPlayPanel(props: { campaignId: string; encounte
                     }}
                   >
                     <div className="flex flex-wrap items-center gap-3">
-                      <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950/20">
-                        {monsterAvatar ? (
-                          <img src={monsterAvatar} alt="" className="h-full w-full object-cover" />
-                        ) : pcIcon ? (
-                          <img
-                            src={pcIcon}
-                            alt=""
-                            className="h-full w-full object-contain p-1 opacity-90 dark:invert"
-                          />
-                        ) : (
-                          <div className="h-full w-full" />
-                        )}
+                      <div className="relative h-14 w-14 shrink-0">
+                        <div
+                          className={
+                            "pointer-events-none absolute left-0 top-[-14px] h-[64px] w-14 overflow-hidden border-2 shadow-sm " +
+                            "rounded-t-full rounded-b-none " +
+                            (isActive
+                              ? "bg-emerald-50 dark:bg-emerald-950/30"
+                              : isSelected
+                                ? "bg-zinc-50 dark:bg-zinc-950/25"
+                                : "bg-white dark:bg-zinc-950/20") +
+                            " " +
+                            (e.kind === "pc"
+                              ? "border-amber-300 dark:border-amber-500"
+                              : "border-zinc-300 dark:border-zinc-600")
+                          }
+                        >
+                          <div className="absolute inset-x-0 bottom-0 h-3 bg-zinc-950/10 dark:bg-white/10" />
+                          <div className="absolute inset-0 pb-1">
+                            {monsterAvatar ? (
+                              <img src={monsterAvatar} alt="" className="h-full w-full object-cover" />
+                            ) : pcIcon ? (
+                              <div
+                                className="h-full w-full"
+                                style={avatarStyleForKey(e.characterId ?? e.id)}
+                              >
+                                <img
+                                  src={pcIcon}
+                                  alt=""
+                                  className="h-full w-full object-contain p-1.5 opacity-95 dark:invert"
+                                />
+                              </div>
+                            ) : (
+                              <div
+                                className={
+                                  "grid h-full w-full place-items-center text-base font-semibold"
+                                }
+                                style={avatarStyleForKey((e.kind === "pc" ? e.characterId : e.monsterId) ?? e.id)}
+                              >
+                                {initialsForName(e.displayName)}
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">

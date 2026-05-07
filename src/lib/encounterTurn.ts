@@ -96,10 +96,22 @@ export function normalizeEncounterQueue(entities: EncounterEntity[], activeEntit
   const byId = new Map(alive.map((e) => [e.id, e] as const));
   const active = activeEntityId ? byId.get(activeEntityId) ?? null : null;
 
-  const rest = alive.filter((e) => e.id !== active?.id);
-  rest.sort((a, b) => b.initiative - a.initiative || a.id.localeCompare(b.id));
+  const restAlive = alive.filter((e) => e.id !== active?.id);
+  const participants = restAlive.filter(isTurnParticipant);
+  const standby = restAlive.filter((e) => !isTurnParticipant(e));
 
-  return [...(active ? [active] : []), ...rest, ...dead];
+  participants.sort((a, b) => b.initiative - a.initiative || a.id.localeCompare(b.id));
+
+  const activeIsParticipant = Boolean(active && isTurnParticipant(active));
+  const activeIsStandby = Boolean(active && !isDead(active) && !isTurnParticipant(active));
+
+  return [
+    ...(activeIsParticipant && active ? [active] : []),
+    ...participants,
+    ...(activeIsStandby && active ? [active] : []),
+    ...standby,
+    ...dead
+  ];
 }
 
 /**
@@ -129,7 +141,14 @@ export function rotateTurnOrder(entities: EncounterEntity[]): {
   const insertAt = deadStart < 0 ? display.length : deadStart;
   display.splice(insertAt, 0, first);
 
-  const nextActive = display.find(isTurnParticipant) ?? null;
+  // Enforce invariant: participants first, then standby (init 0), then dead.
+  const pinned = [
+    ...display.filter(isTurnParticipant),
+    ...display.filter((e) => !isDead(e) && !isTurnParticipant(e)),
+    ...display.filter(isDead)
+  ];
+
+  const nextActive = pinned.find(isTurnParticipant) ?? null;
   const wrapped = Boolean(highest && nextActive && nextActive.id === highest.id);
-  return { entities: display, activeEntityId: nextActive?.id ?? null, wrapped };
+  return { entities: pinned, activeEntityId: nextActive?.id ?? null, wrapped };
 }
