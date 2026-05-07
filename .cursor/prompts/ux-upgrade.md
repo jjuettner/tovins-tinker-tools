@@ -1,3 +1,14 @@
+
+## Compendium
+  - in draft mode: add button top right of detail window
+  - image: bigger, show more, normalize ratio so all look good
+  - image: when cropping vertically. show top part, not center
+  - image clickable -> show full in overlay
+
+## Draft
+  - when adding enemy while encounter ongoing, new enemy no show up
+
+
 ## player card
   - short number input  with icon buttons 
     - (drop) damage (-> opens damage form)
@@ -7,10 +18,6 @@
   - allow upload of image
   - add image to character
   - display avatar of selected character on top menu
-
-## Compendium
-  - in draft mode: add button top right of detail window
-  - image: bigger, show more, normalize ratio so all look good
 
 ## run encounter row
 - Avatar Frame

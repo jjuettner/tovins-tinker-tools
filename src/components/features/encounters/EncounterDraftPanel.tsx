@@ -2,9 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { buttonClass, inputClass, inputClassFull, smallLabelClass } from "@/components/ui/controlClasses";
 import { createEncounter, deleteEncounter, listEncounters, updateEncounter, type EncounterRow } from "@/lib/db/encounters";
 import { getMonstersByIds, type MonsterRow } from "@/lib/db/monsters";
+import { orderWithDeadAtBottom } from "@/lib/encounterTurn";
 import { listCharactersByCampaign } from "@/lib/db/characters";
 import type { Character } from "@/types/character";
-import type { EncounterDataV1 } from "@/types/encounter";
+import type { EncounterDataV1, EncounterEntity } from "@/types/encounter";
 import { emptyEncounterDataV1 } from "@/types/encounter";
 import MonsterCompendiumPanel from "@/components/features/encounters/MonsterCompendiumPanel";
 
@@ -72,9 +73,75 @@ export default function EncounterDraftPanel(props: { campaignId: string; onRunEn
     return sum;
   }, [selected, monsterById]);
 
+  async function applyOngoingAdditions(current: EncounterRow, next: EncounterDataV1): Promise<EncounterDataV1> {
+    if (current.status !== "ongoing") return next;
+    const existing = current.data.entities ?? [];
+    if (existing.length === 0) return next;
+
+    // Ensure we can resolve monster HP/name for new picks.
+    const wantMonsterIds = [...new Set(next.monsterPicks.map((p) => p.monsterId))];
+    const missing = wantMonsterIds.filter((id) => !monsterById.has(id));
+    const extraMonsters = missing.length > 0 ? await getMonstersByIds(missing) : new Map<string, MonsterRow>();
+    const getMonster = (id: string) => monsterById.get(id) ?? extraMonsters.get(id) ?? null;
+
+    const charById = new Map(chars.map((c) => [c.id, c] as const));
+
+    const added: EncounterEntity[] = [];
+
+    // Add missing PCs.
+    for (const p of next.players) {
+      const already = existing.some((e) => e.kind === "pc" && e.characterId === p.characterId);
+      if (already) continue;
+      const c = charById.get(p.characterId);
+      if (!c) continue;
+      added.push({
+        id: crypto.randomUUID(),
+        kind: "pc",
+        displayName: c.name || "Unnamed",
+        characterId: c.id,
+        initiative: 0,
+        maxHp: c.maxHp,
+        currentHp: c.currentHp
+      });
+    }
+
+    // Add new monster instances (by count diff).
+    const existingCountByMonsterId = new Map<string, number>();
+    for (const e of existing) {
+      if (e.kind !== "monster" || !e.monsterId) continue;
+      existingCountByMonsterId.set(e.monsterId, (existingCountByMonsterId.get(e.monsterId) ?? 0) + 1);
+    }
+
+    for (const pick of next.monsterPicks) {
+      const m = getMonster(pick.monsterId);
+      if (!m) continue;
+      const have = existingCountByMonsterId.get(pick.monsterId) ?? 0;
+      const want = Math.max(0, Math.floor(pick.count));
+      const toAdd = Math.max(0, want - have);
+      for (let i = 0; i < toAdd; i++) {
+        const n = have + i + 1;
+        added.push({
+          id: crypto.randomUUID(),
+          kind: "monster",
+          displayName: want > 1 ? `${m.name} ${n}` : m.name,
+          monsterId: m.id,
+          initiative: 0,
+          maxHp: m.hp,
+          currentHp: m.hp
+        });
+      }
+    }
+
+    if (added.length === 0) return next;
+
+    const merged = orderWithDeadAtBottom([...existing, ...added]);
+    return { ...next, entities: merged, activeEntityId: next.activeEntityId ?? current.data.activeEntityId ?? null };
+  }
+
   async function saveData(next: EncounterDataV1) {
     if (!selected) return;
-    await updateEncounter(selected.id, { data: next });
+    const patched = await applyOngoingAdditions(selected, next);
+    await updateEncounter(selected.id, { data: patched });
     await refresh();
   }
 
