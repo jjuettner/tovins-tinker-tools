@@ -9,5 +9,6 @@ export const STORAGE_KEYS = {
   themeDark: `${PREFIX}.theme.dark`,
   characters: `${PREFIX}.dnd.characters`,
   usedCharacterId: `${PREFIX}.dnd.usedCharacterId`,
-  usedCampaignId: `${PREFIX}.dnd.usedCampaignId`
+  usedCampaignId: `${PREFIX}.dnd.usedCampaignId`,
+  usedEncounterId: `${PREFIX}.dnd.usedEncounterId`
 } as const;

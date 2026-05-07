@@ -11,7 +11,11 @@ export function buttonClass(variant: "primary" | "ghost" | "danger" = "ghost") {
 }
 
 export function inputClass() {
-  return "w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50 dark:focus:border-zinc-500";
+  return "rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50 dark:focus:border-zinc-500";
+}
+
+export function inputClassFull() {
+  return inputClass() + " w-full";
 }
 
 export function smallLabelClass() {

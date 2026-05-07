@@ -1,6 +1,6 @@
 import { Plus, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { buttonClass, inputClass, smallLabelClass } from "@/components/ui/controlClasses";
+import { buttonClass, inputClassFull, smallLabelClass } from "@/components/ui/controlClasses";
 import {
   attachCampaignRuleset,
   createCampaign,
@@ -75,11 +75,11 @@ export function CampaignsFeature() {
         <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
           <label className="flex flex-col gap-1">
             <span className={smallLabelClass()}>Name</span>
-            <input className={inputClass()} value={newName} onChange={(e) => setNewName(e.target.value)} />
+            <input className={inputClassFull()} value={newName} onChange={(e) => setNewName(e.target.value)} />
           </label>
           <label className="flex flex-col gap-1 md:col-span-2">
             <span className={smallLabelClass()}>Description</span>
-            <input className={inputClass()} value={newDesc} onChange={(e) => setNewDesc(e.target.value)} />
+            <input className={inputClassFull()} value={newDesc} onChange={(e) => setNewDesc(e.target.value)} />
           </label>
         </div>
         <div className="mt-3">
@@ -135,7 +135,7 @@ export function CampaignsFeature() {
               <label className="mt-2 flex flex-col gap-1 sm:max-w-sm">
                 <span className={smallLabelClass()}>Attach ruleset</span>
                 <select
-                  className={inputClass()}
+                  className={inputClassFull()}
                   value=""
                   onChange={(e) => {
                     const rid = e.target.value;

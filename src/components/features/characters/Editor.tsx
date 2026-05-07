@@ -1,6 +1,6 @@
 import { Check, Save, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { buttonClass, inputClass, smallLabelClass } from "@/components/ui/controlClasses";
+import { buttonClass, inputClass, inputClassFull, smallLabelClass } from "@/components/ui/controlClasses";
 import { useRulesetSrdCatalog } from "@/hooks/useRulesetSrdCatalog";
 import { computeArmorClass } from "@/lib/character/armorClass";
 import { newEquippedItemId, normalizeDraft } from "@/lib/character/normalize";
@@ -307,7 +307,7 @@ export function CharacterEditor(props: {
           <input
             value={props.draft.name}
             onChange={(e) => props.onChange({ ...props.draft, name: e.target.value })}
-            className={inputClass()}
+            className={inputClassFull()}
             placeholder="Eldrin"
           />
         </label>
@@ -320,7 +320,7 @@ export function CharacterEditor(props: {
               const v = e.target.value;
               props.onChange({ ...props.draft, campaignId: v ? v : null });
             }}
-            className={inputClass()}
+            className={inputClassFull()}
           >
             <option value="">— None —</option>
             {campaigns.map((c) => (
@@ -336,7 +336,7 @@ export function CharacterEditor(props: {
           <select
             value={props.draft.raceIndex}
             onChange={(e) => props.onChange({ ...props.draft, raceIndex: e.target.value })}
-            className={inputClass()}
+            className={inputClassFull()}
           >
             <option value="">— Race —</option>
             {props.draft.raceIndex && !racesForSelect.some((r) => r.index === props.draft.raceIndex) ? (
@@ -357,7 +357,7 @@ export function CharacterEditor(props: {
           <select
             value={props.draft.classIndex}
             onChange={(e) => props.onChange({ ...props.draft, classIndex: e.target.value })}
-            className={inputClass()}
+            className={inputClassFull()}
           >
             <option value="" disabled>
               Choose…
@@ -388,7 +388,7 @@ export function CharacterEditor(props: {
             max={20}
             value={props.draft.level}
             onChange={(e) => props.onChange({ ...props.draft, level: Number(e.target.value) })}
-            className={inputClass()}
+            className={inputClassFull()}
           />
         </label>
       </div>
@@ -417,7 +417,7 @@ export function CharacterEditor(props: {
                   stats: { ...props.draft.stats, [ab]: Number(e.target.value) }
                 })
               }
-              className={inputClass()}
+              className={inputClassFull()}
             />
           </label>
         ))}
@@ -443,7 +443,7 @@ export function CharacterEditor(props: {
                 })
               )
             }
-            className={inputClass()}
+            className={inputClassFull()}
           />
         </label>
         <label className="flex flex-col gap-1">
@@ -460,7 +460,7 @@ export function CharacterEditor(props: {
                 })
               )
             }
-            className={inputClass()}
+            className={inputClassFull()}
           />
         </label>
         <label className="flex flex-col gap-1">
@@ -477,7 +477,7 @@ export function CharacterEditor(props: {
                 })
               )
             }
-            className={inputClass()}
+            className={inputClassFull()}
           />
         </label>
       </div>
@@ -532,7 +532,7 @@ export function CharacterEditor(props: {
             <label className="flex flex-col gap-1">
               <span className={smallLabelClass()}>Body armor</span>
               <select
-                className={inputClass()}
+                className={inputClassFull()}
                 value={bodyArmor?.equipmentIndex ?? ""}
                 onChange={(e) => {
                   const v = e.target.value;
@@ -559,7 +559,7 @@ export function CharacterEditor(props: {
                 <span className={smallLabelClass()}>Armor magic bonus</span>
                 <input
                   type="number"
-                  className={inputClass()}
+                  className={inputClassFull()}
                   value={bodyArmor.modifier}
                   onChange={(e) =>
                     commitEquipped(weapons, { ...bodyArmor, modifier: Number(e.target.value) }, shield)
@@ -592,7 +592,7 @@ export function CharacterEditor(props: {
               <span className={smallLabelClass()}>Shield magic bonus</span>
               <input
                 type="number"
-                className={inputClass()}
+                className={inputClassFull()}
                 value={shield.modifier}
                 onChange={(e) =>
                   commitEquipped(weapons, bodyArmor, { ...shield, modifier: Number(e.target.value) })

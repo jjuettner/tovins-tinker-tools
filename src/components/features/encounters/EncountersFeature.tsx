@@ -14,6 +14,7 @@ type Tab = "compendium" | "draft" | "play";
 export function EncountersFeature() {
   const { profile, loading: profileLoading } = useProfile();
   const { value: campaignId, setValue: setCampaignId } = useStoredState<string | null>(STORAGE_KEYS.usedCampaignId, null);
+  const { value: encounterId, setValue: setEncounterId } = useStoredState<string | null>(STORAGE_KEYS.usedEncounterId, null);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -160,8 +161,16 @@ export function EncountersFeature() {
       </div>
 
       {tab === "compendium" ? <MonsterCompendiumPanel /> : null}
-      {tab === "draft" ? <EncounterDraftPanel campaignId={campaignId} /> : null}
-      {tab === "play" ? <EncounterPlayPanel campaignId={campaignId} /> : null}
+      {tab === "draft" ? (
+        <EncounterDraftPanel
+          campaignId={campaignId}
+          onRunEncounter={(id) => {
+            setEncounterId(id);
+            setTab("play");
+          }}
+        />
+      ) : null}
+      {tab === "play" ? <EncounterPlayPanel campaignId={campaignId} encounterId={encounterId} /> : null}
     </div>
   );
 }

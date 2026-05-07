@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { buttonClass, inputClass, smallLabelClass } from "@/components/ui/controlClasses";
+import { buttonClass, inputClassFull, smallLabelClass } from "@/components/ui/controlClasses";
 import { listMonsters, type MonsterRow, type MonsterSort } from "@/lib/db/monsters";
 
 type Props = {
@@ -46,18 +46,18 @@ export default function MonsterCompendiumPanel(props: Props) {
         <div className="mt-3 flex flex-wrap items-end gap-2">
           <label className="flex min-w-[12rem] flex-1 flex-col gap-1">
             <span className={smallLabelClass()}>Search name</span>
-            <input className={inputClass()} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="e.g. dragon" />
+            <input className={inputClassFull()} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="e.g. dragon" />
           </label>
           <label className="flex flex-col gap-1">
             <span className={smallLabelClass()}>Sort</span>
-            <select className={inputClass()} value={sort} onChange={(e) => setSort(e.target.value as MonsterSort)}>
+            <select className={inputClassFull()} value={sort} onChange={(e) => setSort(e.target.value as MonsterSort)}>
               <option value="name">Name</option>
               <option value="cr">Challenge</option>
             </select>
           </label>
           <label className="flex flex-col gap-1">
             <span className={smallLabelClass()}>Order</span>
-            <select className={inputClass()} value={asc ? "asc" : "desc"} onChange={(e) => setAsc(e.target.value === "asc")}>
+            <select className={inputClassFull()} value={asc ? "asc" : "desc"} onChange={(e) => setAsc(e.target.value === "asc")}>
               <option value="asc">Ascending</option>
               <option value="desc">Descending</option>
             </select>

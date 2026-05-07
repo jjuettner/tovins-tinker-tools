@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { buttonClass, inputClass, smallLabelClass } from "@/components/ui/controlClasses";
+import { buttonClass, inputClass, inputClassFull, smallLabelClass } from "@/components/ui/controlClasses";
 import { createEncounter, deleteEncounter, listEncounters, updateEncounter, type EncounterRow } from "@/lib/db/encounters";
 import { getMonstersByIds, type MonsterRow } from "@/lib/db/monsters";
 import { listCharactersByCampaign } from "@/lib/db/characters";
@@ -8,13 +8,15 @@ import type { EncounterDataV1 } from "@/types/encounter";
 import { emptyEncounterDataV1 } from "@/types/encounter";
 import MonsterCompendiumPanel from "@/components/features/encounters/MonsterCompendiumPanel";
 
-export default function EncounterDraftPanel(props: { campaignId: string }) {
+export default function EncounterDraftPanel(props: { campaignId: string; onRunEncounter(encounterId: string): void }) {
   const [rows, setRows] = useState<EncounterRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [newName, setNewName] = useState("New encounter");
   const [chars, setChars] = useState<Character[]>([]);
+
+  const existingNames = useMemo(() => new Set(rows.map((r) => r.name.trim()).filter(Boolean)), [rows]);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -107,25 +109,44 @@ export default function EncounterDraftPanel(props: { campaignId: string }) {
     void saveData({ ...selected.data, monsterPicks: picks });
   }
 
+  function uniqueEncounterName(raw: string): string {
+    const base = raw.trim() || "Untitled";
+    if (!existingNames.has(base)) return base;
+    for (let i = 2; i < 1000; i++) {
+      const candidate = `${base} (${i})`;
+      if (!existingNames.has(candidate)) return candidate;
+    }
+    return `${base} (${Date.now()})`;
+  }
+
+  const overlay = loading ? (
+    <div className="pointer-events-none absolute inset-0 z-10 rounded-xl bg-white/50 backdrop-blur-sm dark:bg-zinc-950/30">
+      <div className="flex h-full items-center justify-center text-sm font-medium text-zinc-700 dark:text-zinc-200">
+        Loading…
+      </div>
+    </div>
+  ) : null;
+
   return (
-    <div className="flex flex-col gap-6">
+    <div className="relative flex flex-col gap-6">
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
-      {loading ? <p className="text-sm text-zinc-500">Loading…</p> : null}
+      {overlay}
       <section className="rounded-xl border border-zinc-200 bg-white/60 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
         <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Encounters</h2>
         <div className="mt-3 flex flex-wrap items-end gap-2">
           <label className="flex min-w-[12rem] flex-col gap-1">
             <span className={smallLabelClass()}>New name</span>
-            <input className={inputClass()} value={newName} onChange={(e) => setNewName(e.target.value)} disabled={loading} />
+            <input className={inputClassFull()} value={newName} onChange={(e) => setNewName(e.target.value)} disabled={loading} />
           </label>
           <button
             type="button"
             className={buttonClass("primary")}
             disabled={loading}
             onClick={async () => {
+              const name = uniqueEncounterName(newName);
               const row = await createEncounter({
                 campaignId: props.campaignId,
-                name: newName.trim() || "Untitled",
+                name,
                 data: emptyEncounterDataV1()
               });
               setNewName("New encounter");
@@ -147,8 +168,28 @@ export default function EncounterDraftPanel(props: { campaignId: string }) {
                     : "text-zinc-800 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800/60")
                 }
               >
-                <button type="button" className="min-w-0 flex-1 text-left text-sm font-medium" onClick={() => setSelectedId(r.id)}>
-                  <span className="truncate">{r.name}</span>
+                <button type="button" className="min-w-0 flex-1 text-left" onClick={() => setSelectedId(r.id)}>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                    <span className="truncate text-sm font-medium">{r.name}</span>
+                    <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                      {r.data.players.length} PC ·{" "}
+                      {r.data.monsterPicks.reduce((sum, p) => sum + Math.max(0, Math.floor(p.count)), 0)} enemy
+                    </span>
+                  </div>
+                  <div className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
+                    {new Date(r.created_at).toLocaleString()}
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  className={buttonClass("primary") + " h-8 px-2 py-0 text-xs"}
+                  disabled={loading}
+                  onClick={(ev) => {
+                    ev.stopPropagation();
+                    props.onRunEncounter(r.id);
+                  }}
+                >
+                  Run
                 </button>
                 <label className="flex items-center gap-1">
                   <span className="text-[11px] font-medium opacity-80">Status</span>
@@ -194,7 +235,7 @@ export default function EncounterDraftPanel(props: { campaignId: string }) {
               <label className="flex min-w-[12rem] flex-1 flex-col gap-1">
                 <span className={smallLabelClass()}>Encounter name</span>
                 <input
-                  className={inputClass()}
+                  className={inputClassFull()}
                   value={renameDraft}
                   onChange={(e) => setRenameDraft(e.target.value)}
                   disabled={loading}

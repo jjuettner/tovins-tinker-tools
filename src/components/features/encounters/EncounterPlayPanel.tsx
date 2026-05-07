@@ -1,8 +1,9 @@
-import { Skull } from "lucide-react";
+import { Droplet, Plus, Skull } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { buttonClass, inputClass, smallLabelClass } from "@/components/ui/controlClasses";
 import HpReadonlyBadge from "@/components/ui/HpReadonlyBadge";
-import { eligibleTurnOrder, normalizeEncounterQueue, rotateTurnOrder } from "@/lib/encounterTurn";
+import { eligibleTurnOrder, normalizeEncounterQueue, orderWithDeadAtBottom, rotateTurnOrder } from "@/lib/encounterTurn";
+import { classIconUrl } from "@/lib/classIcons";
 import { listCharactersByCampaign } from "@/lib/db/characters";
 import { listEncounters, updateEncounter, type EncounterRow } from "@/lib/db/encounters";
 import { getMonstersByIds, type MonsterRow } from "@/lib/db/monsters";
@@ -51,13 +52,13 @@ function buildEntities(
   return entities;
 }
 
-export default function EncounterPlayPanel(props: { campaignId: string }) {
+export default function EncounterPlayPanel(props: { campaignId: string; encounterId: string | null }) {
   const DEAD_STATUS: EncounterEntity["status"] = "dead";
   const [rows, setRows] = useState<EncounterRow[]>([]);
   const [chars, setChars] = useState<Character[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(props.encounterId);
   const [initDraft, setInitDraft] = useState<Record<string, number>>({});
   const [selectedEntityId, setSelectedEntityId] = useState<string | null>(null);
   const [dmgByEntity, setDmgByEntity] = useState<Record<string, string>>({});
@@ -79,6 +80,10 @@ export default function EncounterPlayPanel(props: { campaignId: string }) {
   useEffect(() => {
     void refresh();
   }, [refresh]);
+
+  useEffect(() => {
+    setSelectedId(props.encounterId);
+  }, [props.encounterId]);
 
   const selected = rows.find((r) => r.id === selectedId) ?? null;
 
@@ -170,6 +175,33 @@ export default function EncounterPlayPanel(props: { campaignId: string }) {
     };
   }, [expandedMonsterKey, expandedMonsterIds]);
 
+  const monsterIdsForAvatars = useMemo(() => {
+    const ids =
+      selected?.data.entities
+        ?.filter((e) => e.kind === "monster" && e.monsterId)
+        .map((e) => e.monsterId as string) ?? [];
+    return [...new Set(ids)];
+  }, [selected?.data.entities]);
+
+  const monsterIdsForAvatarsKey = useMemo(() => monsterIdsForAvatars.slice().sort().join(","), [monsterIdsForAvatars]);
+  const [monstersForAvatarsById, setMonstersForAvatarsById] = useState<Map<string, MonsterRow>>(new Map());
+
+  useEffect(() => {
+    if (monsterIdsForAvatars.length === 0) {
+      setMonstersForAvatarsById(new Map());
+      return;
+    }
+    let cancelled = false;
+    void getMonstersByIds(monsterIdsForAvatars).then((m) => {
+      if (!cancelled) setMonstersForAvatarsById(m);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [monsterIdsForAvatarsKey, monsterIdsForAvatars]);
+
+  const characterById = useMemo(() => new Map(chars.map((c) => [c.id, c] as const)), [chars]);
+
   async function persistData(enc: EncounterRow, data: EncounterDataV1) {
     await updateEncounter(enc.id, { data });
     await refresh();
@@ -232,7 +264,8 @@ export default function EncounterPlayPanel(props: { campaignId: string }) {
 
       return { ...e, currentHp: nextHp, status, deathSaves };
     });
-    const entities = normalizeEncounterQueue(entitiesRaw, selected.data.activeEntityId ?? null);
+    // HP changes (including deaths) should not reshuffle the live queue.
+    const entities = orderWithDeadAtBottom(entitiesRaw);
     await persistData(selected, { ...selected.data, entities });
     setDmgByEntity((d) => ({ ...d, [entityId]: "" }));
   }
@@ -260,7 +293,7 @@ export default function EncounterPlayPanel(props: { campaignId: string }) {
       if (next.successes >= 3) return { ...e, currentHp: 1, status: undefined, deathSaves: undefined };
       return { ...e, deathSaves: next };
     });
-    const updated = normalizeEncounterQueue(updatedRaw, selected.data.activeEntityId ?? null);
+    const updated = orderWithDeadAtBottom(updatedRaw);
 
     // Success/fail ends their turn immediately.
     const rotated = rotateTurnOrder(updated);
@@ -286,24 +319,11 @@ export default function EncounterPlayPanel(props: { campaignId: string }) {
     <div className="flex flex-col gap-6">
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
 
-      <section className="rounded-xl border border-zinc-200 bg-white/60 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
-        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Run encounter</h2>
-        <select
-          className={inputClass() + " mt-2 max-w-md"}
-          value={selectedId ?? ""}
-          onChange={(e) => {
-            setSelectedId(e.target.value || null);
-            setError(null);
-          }}
-        >
-          <option value="">Select encounter…</option>
-          {rows.map((r) => (
-            <option key={r.id} value={r.id}>
-              {r.name} ({r.status})
-            </option>
-          ))}
-        </select>
-      </section>
+      {!selectedId ? (
+        <section className="rounded-xl border border-zinc-200 bg-white/60 p-4 text-sm text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-300">
+          Select an encounter in the Draft tab, then click <span className="font-medium">Run</span>.
+        </section>
+      ) : null}
 
       {selected && selected.status === "draft" ? (
         <section className="rounded-xl border border-zinc-200 bg-white/60 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
@@ -345,7 +365,12 @@ export default function EncounterPlayPanel(props: { campaignId: string }) {
                 Round <span className="tabular-nums">{selected.data.round ?? 1}</span>
               </p>
               <div className="flex flex-wrap gap-2">
-                <button type="button" className={buttonClass("primary")} onClick={() => void nextTurn()}>
+                <button
+                  type="button"
+                  className={buttonClass("primary")}
+                  onClick={() => void nextTurn()}
+                  disabled={selected.status === "finished"}
+                >
                   Next turn
                 </button>
                 <button type="button" className={buttonClass("ghost")} onClick={() => void finishCombat()}>
@@ -369,6 +394,9 @@ export default function EncounterPlayPanel(props: { campaignId: string }) {
                 const isSelected = e.id === selectedEntityId;
                 const isExpanded = isActive || isSelected;
                 const dmgVal = dmgByEntity[e.id] ?? "";
+                const monsterAvatar = e.kind === "monster" && e.monsterId ? monstersForAvatarsById.get(e.monsterId)?.img_url ?? null : null;
+                const pcClassIndex = e.kind === "pc" && e.characterId ? characterById.get(e.characterId)?.classIndex ?? "" : "";
+                const pcIcon = e.kind === "pc" ? classIconUrl(pcClassIndex) : null;
                 return (
                   <li
                     key={e.id}
@@ -386,6 +414,19 @@ export default function EncounterPlayPanel(props: { campaignId: string }) {
                     }}
                   >
                     <div className="flex flex-wrap items-center gap-3">
+                      <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950/20">
+                        {monsterAvatar ? (
+                          <img src={monsterAvatar} alt="" className="h-full w-full object-cover" />
+                        ) : pcIcon ? (
+                          <img
+                            src={pcIcon}
+                            alt=""
+                            className="h-full w-full object-contain p-1 opacity-90 dark:invert"
+                          />
+                        ) : (
+                          <div className="h-full w-full" />
+                        )}
+                      </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{e.displayName}</span>
@@ -423,7 +464,7 @@ export default function EncounterPlayPanel(props: { campaignId: string }) {
                         <input
                           type="number"
                           min={0}
-                          className={inputClass() + " w-16"}
+                          className={inputClass() + " w-20"}
                           disabled={selected.status === "finished"}
                           placeholder="±"
                           value={dmgVal}
@@ -431,26 +472,30 @@ export default function EncounterPlayPanel(props: { campaignId: string }) {
                         />
                         <button
                           type="button"
-                          className={buttonClass("ghost") + " text-xs"}
+                          className={buttonClass("ghost") + " inline-flex items-center gap-1 text-xs"}
                           disabled={selected.status === "finished"}
                           onClick={() => {
                             const n = Math.max(0, Math.floor(Number(dmgVal)));
                             if (n <= 0) return;
                             void applyHpDelta(e.id, -n);
                           }}
+                          aria-label="Damage"
                         >
+                          <Droplet className="h-3.5 w-3.5 text-red-600" aria-hidden="true" />
                           DMG
                         </button>
                         <button
                           type="button"
-                          className={buttonClass("ghost") + " text-xs"}
+                          className={buttonClass("ghost") + " inline-flex items-center gap-1 text-xs"}
                           disabled={selected.status === "finished"}
                           onClick={() => {
                             const n = Math.max(0, Math.floor(Number(dmgVal)));
                             if (n <= 0) return;
                             void applyHpDelta(e.id, n);
                           }}
+                          aria-label="Heal"
                         >
+                          <Plus className="h-3.5 w-3.5 text-emerald-600" strokeWidth={7} aria-hidden="true" />
                           Heal
                         </button>
                       </div>

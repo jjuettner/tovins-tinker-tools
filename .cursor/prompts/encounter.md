@@ -90,3 +90,43 @@ Prerequisites / Subfeatures: Monster Compendium, Draft Mode, Play Mode
 
 
 - in draft mode, dont clear the search when adding monsters
+
+
+## Images and Avatars
+
+- select encounter from draft list
+  - add button for run encounter
+  - remove "run encounter" dropdown from play tab
+  - remember selected encounter and store it locally
+- in combat order row, add an avatar icon
+  - monsters: use image from compendium
+  - PCs: allow image upload (deferred)
+    - Fallback: class symbols from src/img per character class
+
+
+
+
+## UX Improvements
+- draft
+  - when adding monster, loading shows up shortly, wiggling the page
+    - remove inline loading, use overlay instead
+  - list: show more info in row
+    - PC and enemy count
+    - date created
+    - make duplicate names unique
+      - "new encounter" -> "new encounter (2)"
+
+- lock next turn when encounter finished
+- when dark mode, default pc icons should be white
+- heal "plus" stroke width 7
+
+
+
+## Turn order bug
+- after npc death, pcs go first again
+
+### example
+- order pc1, pc2, enemy1, enemy2, enemy3
+- pc1 done
+- pc2 kills enemy1
+- next turn: pc1 -> wrong

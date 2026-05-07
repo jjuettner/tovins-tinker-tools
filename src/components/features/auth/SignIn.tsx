@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { requestPasswordReset, sendMagicLink, signInWithPassword, signUpWithPassword } from "@/lib/auth";
-import { buttonClass, inputClass, smallLabelClass } from "@/components/ui/controlClasses";
+import { buttonClass, inputClassFull, smallLabelClass } from "@/components/ui/controlClasses";
 
 export function SignIn() {
   const [mode, setMode] = useState<"magic" | "password">("magic");
@@ -84,7 +84,7 @@ export function SignIn() {
         <label className="flex flex-col gap-1">
           <span className={smallLabelClass()}>Email</span>
           <input
-            className={inputClass()}
+            className={inputClassFull()}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             type="email"
@@ -98,7 +98,7 @@ export function SignIn() {
           <label className="flex flex-col gap-1">
             <span className={smallLabelClass()}>Password</span>
             <input
-              className={inputClass()}
+              className={inputClassFull()}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               type="password"

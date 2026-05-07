@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { updatePassword, useSession } from "@/lib/auth";
-import { buttonClass, inputClass, smallLabelClass } from "@/components/ui/controlClasses";
+import { buttonClass, inputClassFull, smallLabelClass } from "@/components/ui/controlClasses";
 
 export function ResetPassword() {
   const { session, loading } = useSession();
@@ -48,7 +48,7 @@ export function ResetPassword() {
         <label className="flex flex-col gap-1">
           <span className={smallLabelClass()}>New password</span>
           <input
-            className={inputClass()}
+            className={inputClassFull()}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             type="password"

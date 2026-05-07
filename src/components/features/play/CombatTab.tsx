@@ -1,6 +1,6 @@
 import { Crosshair, Droplet, Sword } from "lucide-react";
 import { useMemo, useState } from "react";
-import { buttonClass, inputClass, smallLabelClass } from "@/components/ui/controlClasses";
+import { buttonClass, inputClass, inputClassFull, smallLabelClass } from "@/components/ui/controlClasses";
 import { resolvedWeaponMasteryIndex, unarmedDamageBonus, unarmedToHit, weaponDamageSummary, weaponToHitBonus } from "@/lib/combat";
 import { formatSigned } from "@/lib/dnd";
 import { dndEquipmentByIndex, isWeapon } from "@/lib/dndEquipment";
@@ -164,7 +164,7 @@ export default function CombatTab(props: {
               <label className="flex flex-col gap-1">
                 <span className={smallLabelClass()}>Type</span>
                 <select
-                  className={inputClass()}
+                  className={inputClassFull()}
                   value={row.type}
                   onChange={(e) => setRows((r) => r.map((x, j) => (j === i ? { ...x, type: e.target.value } : x)))}
                 >

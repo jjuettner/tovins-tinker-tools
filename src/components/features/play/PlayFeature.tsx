@@ -1,7 +1,7 @@
 import { X } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { buttonClass, inputClass, smallLabelClass } from "@/components/ui/controlClasses";
+import { buttonClass, inputClassFull, smallLabelClass } from "@/components/ui/controlClasses";
 import CombatTab from "@/components/features/play/CombatTab";
 import GeneralTab from "@/components/features/play/GeneralTab";
 import PlayHeader from "@/components/features/play/PlayHeader";
@@ -247,7 +247,7 @@ function RestDialog(props: {
             </p>
             <label className="flex flex-col gap-1">
               <span className={smallLabelClass()}>HP recovered (optional)</span>
-              <input className={inputClass()} type="number" min={0} value={healHp} onChange={(e) => setHealHp(e.target.value)} />
+              <input className={inputClassFull()} type="number" min={0} value={healHp} onChange={(e) => setHealHp(e.target.value)} />
             </label>
             <button type="button" className={buttonClass("primary")} onClick={applyShort}>
               Apply short rest
