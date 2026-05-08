@@ -4,11 +4,26 @@ import CharacterAvatar from "@/components/ui/CharacterAvatar";
 
 export function CharacterList(props: {
   characters: Character[];
+  adminSections?: {
+    mine: Character[];
+    others: Array<{ ownerId: string; ownerLabel: string; characters: Character[] }>;
+  } | null;
   selectedId: string | null;
   usedCharacterId: string | null;
   campaignNameById: Map<string, string>;
   onSelect(id: string): void;
 }) {
+  const sections = props.adminSections
+    ? ([
+        { id: "mine", title: "My characters", characters: props.adminSections.mine },
+        ...props.adminSections.others.map((s) => ({
+          id: s.ownerId,
+          title: s.ownerLabel,
+          characters: s.characters
+        }))
+      ] as const)
+    : null;
+
   return (
     <aside className="rounded-2xl border border-zinc-200 bg-white/70 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
       <div className="flex items-center justify-between gap-2">
@@ -23,7 +38,24 @@ export function CharacterList(props: {
           </div>
         ) : null}
 
-        {props.characters.map((c) => {
+        {(sections
+          ? sections.flatMap((s) => [
+              { kind: "divider" as const, id: s.id, title: s.title, count: s.characters.length },
+              ...s.characters.map((c) => ({ kind: "character" as const, c }))
+            ])
+          : props.characters.map((c) => ({ kind: "character" as const, c }))
+        ).map((row) => {
+          if (row.kind === "divider") {
+            return (
+              <div key={`div-${row.id}`} className="pt-2">
+                <div className="flex items-center justify-between gap-2 border-t border-zinc-200 pt-3 text-xs dark:border-zinc-800">
+                  <span className="font-medium text-zinc-700 dark:text-zinc-200">{row.title}</span>
+                  <span className="text-zinc-500">{row.count}</span>
+                </div>
+              </div>
+            );
+          }
+          const c = row.c;
           const active = c.id === props.selectedId;
           const used = c.id === props.usedCharacterId;
           return (

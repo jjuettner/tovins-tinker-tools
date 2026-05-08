@@ -6,7 +6,7 @@ import { NumberInput } from "@/components/ui/NumberInput";
 import { eligibleTurnOrder, normalizeEncounterQueue, orderWithDeadAtBottom, rotateTurnOrder } from "@/lib/encounterTurn";
 import { classIconUrl } from "@/lib/classIcons";
 import { listCharactersByCampaign } from "@/lib/db/characters";
-import { listEncounters, updateEncounter, type EncounterRow } from "@/lib/db/encounters";
+import { getEncounter, listEncounters, updateEncounter, type EncounterRow } from "@/lib/db/encounters";
 import { getMonstersByIds, type MonsterRow } from "@/lib/db/monsters";
 import type { Character } from "@/types/character";
 import type { EncounterDataV1, EncounterEntity } from "@/types/encounter";
@@ -54,7 +54,8 @@ function buildEntities(
       characterId: c.id,
       initiative: initiative[key] ?? 0,
       maxHp: c.maxHp,
-      currentHp: c.currentHp
+      currentHp: c.currentHp,
+      tempHp: c.tempHp
     });
   }
   for (const pick of data.monsterPicks) {
@@ -76,7 +77,7 @@ function buildEntities(
   return entities;
 }
 
-export default function EncounterPlayPanel(props: { campaignId: string; encounterId: string | null }) {
+export default function EncounterPlayPanel(props: { campaignId: string; encounterId: string | null; canDm: boolean }) {
   const DEAD_STATUS: EncounterEntity["status"] = "dead";
   const [rows, setRows] = useState<EncounterRow[]>([]);
   const [chars, setChars] = useState<Character[]>([]);
@@ -260,11 +261,27 @@ export default function EncounterPlayPanel(props: { campaignId: string; encounte
 
   async function nextTurn() {
     if (!selected) return;
-    const entities = selected.data.entities ?? [];
-    const round = selected.data.round ?? 1;
+    if (!props.canDm) {
+      // Player cannot advance initiative order.
+      return;
+    }
+
+    // DM pulls latest PC HP from characters table, then rotates.
+    const [fresh, freshChars] = await Promise.all([getEncounter(selected.id), listCharactersByCampaign(props.campaignId)]);
+    const freshCharById = new Map(freshChars.map((c) => [c.id, c] as const));
+    const entities = (fresh.data.entities ?? []).map((e) => {
+      if (e.kind !== "pc" || !e.characterId) return e;
+      const ch = freshCharById.get(e.characterId);
+      if (!ch) return e;
+      return { ...e, currentHp: ch.currentHp, maxHp: ch.maxHp, tempHp: ch.tempHp };
+    });
+    const round = fresh.data.round ?? 1;
     const rotated = rotateTurnOrder(entities);
     const nextRound = rotated.wrapped ? round + 1 : round;
-    await persistData(selected, { ...selected.data, entities: rotated.entities, activeEntityId: rotated.activeEntityId, round: nextRound });
+    await updateEncounter(fresh.id, {
+      data: { ...fresh.data, entities: rotated.entities, activeEntityId: rotated.activeEntityId, round: nextRound }
+    });
+    await refresh();
   }
 
   async function finishCombat() {
@@ -275,6 +292,7 @@ export default function EncounterPlayPanel(props: { campaignId: string; encounte
 
   async function applyHpDelta(entityId: string, delta: number) {
     if (!selected) return;
+    if (!props.canDm) return;
     const entitiesRaw: EncounterEntity[] = (selected.data.entities ?? []).map((e) => {
       if (e.id !== entityId) return e;
       const nextHp = Math.min(e.maxHp, Math.max(0, e.currentHp + delta));
@@ -305,6 +323,7 @@ export default function EncounterPlayPanel(props: { campaignId: string; encounte
   async function applyDeathSave(kind: "success" | "fail") {
     if (!selected) return;
     if (!selected.data.entities || !selected.data.activeEntityId) return;
+    if (!props.canDm) return;
     const updatedRaw: EncounterEntity[] = selected.data.entities.map((e) => {
       if (e.id !== selected.data.activeEntityId) return e;
       if (e.kind !== "pc" || e.currentHp !== 0 || e.status === "dead") return e;
@@ -323,12 +342,7 @@ export default function EncounterPlayPanel(props: { campaignId: string; encounte
     const rotated = rotateTurnOrder(updated);
     const round = selected.data.round ?? 1;
     const nextRound = rotated.wrapped ? round + 1 : round;
-    await persistData(selected, {
-      ...selected.data,
-      entities: rotated.entities,
-      activeEntityId: rotated.activeEntityId,
-      round: nextRound
-    });
+    await persistData(selected, { ...selected.data, entities: rotated.entities, activeEntityId: rotated.activeEntityId, round: nextRound });
   }
 
   const sortedCombat = useMemo(() => {
@@ -353,6 +367,9 @@ export default function EncounterPlayPanel(props: { campaignId: string; encounte
         <section className="rounded-xl border border-zinc-200 bg-white/60 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
           <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Before start — set initiative</h3>
           <p className="mt-1 text-xs text-zinc-500">Initiative 0 = standby (skipped in turn order).</p>
+          {!props.canDm ? (
+            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">Waiting for the DM to start combat.</p>
+          ) : null}
           {preRows.length === 0 ? (
             <p className="mt-2 text-sm text-zinc-500">No participants yet. Use the Draft tab.</p>
           ) : (
@@ -370,15 +387,18 @@ export default function EncounterPlayPanel(props: { campaignId: string; encounte
                       value={initDraft[row.key] ?? 0}
                       onChange={(next) => setInitDraft((m) => ({ ...m, [row.key]: next ?? 0 }))}
                       ariaLabel={`Initiative for ${row.label}`}
+                      disabled={!props.canDm}
                     />
                   </label>
                 </li>
               ))}
             </ul>
           )}
-          <button type="button" className={buttonClass("primary") + " mt-4"} onClick={() => void startCombat()}>
-            Start combat
-          </button>
+          {props.canDm ? (
+            <button type="button" className={buttonClass("primary") + " mt-4"} onClick={() => void startCombat()}>
+              Start combat
+            </button>
+          ) : null}
         </section>
       ) : null}
 
@@ -394,13 +414,15 @@ export default function EncounterPlayPanel(props: { campaignId: string; encounte
                   type="button"
                   className={buttonClass("primary")}
                   onClick={() => void nextTurn()}
-                  disabled={selected.status === "finished"}
+                  disabled={selected.status === "finished" || !props.canDm}
                 >
                   Next turn
                 </button>
-                <button type="button" className={buttonClass("ghost")} onClick={() => void finishCombat()}>
-                  Finish
-                </button>
+                {props.canDm ? (
+                  <button type="button" className={buttonClass("ghost")} onClick={() => void finishCombat()}>
+                    Finish
+                  </button>
+                ) : null}
               </div>
             </div>
             <p className="mt-2 text-xs text-zinc-500">
@@ -501,7 +523,7 @@ export default function EncounterPlayPanel(props: { campaignId: string; encounte
                           ) : null}
                         </div>
                         <div className="mt-1">
-                          <HpReadonlyBadge currentHp={e.currentHp} maxHp={e.maxHp} />
+                          <HpReadonlyBadge currentHp={e.currentHp} maxHp={e.maxHp} tempHp={e.kind === "pc" ? e.tempHp ?? 0 : 0} />
                         </div>
                       </div>
                       <label className="flex items-center gap-1 text-sm text-zinc-600" onClick={(ev) => ev.stopPropagation()}>
@@ -655,18 +677,20 @@ function DeathSavesPanel(props: {
 
 function ExpandedMonsterCard(props: { monsterId: string; monstersById: Map<string, MonsterRow> }) {
   const m = props.monstersById.get(props.monsterId);
-  if (!m) return <div className="text-sm text-zinc-500">Loading…</div>;
+  const savingThrows = m?.saving_throws ?? null;
   const saveByAbbr = useMemo(() => {
     const out = new Map<string, string>();
-    if (!m.saving_throws) return out;
-    const parts = m.saving_throws.split(",").map((s) => s.trim()).filter(Boolean);
+    if (!savingThrows) return out;
+    const parts = savingThrows.split(",").map((s) => s.trim()).filter(Boolean);
     for (const p of parts) {
       const match = /^(STR|DEX|CON|INT|WIS|CHA)\s*([+-]\s*\d+)\b/i.exec(p);
       if (!match) continue;
       out.set(match[1].toUpperCase(), match[2].replace(/\s+/g, ""));
     }
     return out;
-  }, [m.saving_throws]);
+  }, [savingThrows]);
+
+  if (!m) return <div className="text-sm text-zinc-500">Loading…</div>;
 
   const abilities: Array<{ abbr: string; score: number | null; mod: number | null }> = [
     { abbr: "STR", score: m.str, mod: m.str_mod },

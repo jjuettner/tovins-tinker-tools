@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { inputClass } from "@/components/ui/controlClasses";
 import { createEncounter, deleteEncounter, listEncounters, updateEncounter, type EncounterRow } from "@/lib/db/encounters";
 import { getMonstersByIds, type MonsterRow } from "@/lib/db/monsters";
 import { orderWithDeadAtBottom } from "@/lib/encounterTurn";
@@ -103,7 +102,8 @@ export default function EncounterDraftPanel(props: { campaignId: string; onRunEn
         characterId: c.id,
         initiative: 0,
         maxHp: c.maxHp,
-        currentHp: c.currentHp
+        currentHp: c.currentHp,
+        tempHp: c.tempHp
       });
     }
 

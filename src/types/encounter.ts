@@ -8,6 +8,7 @@ export type EncounterEntity = {
   initiative: number;
   maxHp: number;
   currentHp: number;
+  tempHp?: number;
   status?: "dead";
   /** Only used for PCs at 0 HP. */
   deathSaves?: { successes: number; fails: number };

@@ -40,6 +40,11 @@ export function EncountersPage() {
 
   const activeCampaign = useMemo(() => campaigns.find((c) => c.id === campaignId) ?? null, [campaigns, campaignId]);
   const canDm = Boolean(profile && activeCampaign && (profile.is_admin || activeCampaign.dm === profile.id));
+  const tabs = (canDm ? (["draft", "play"] as const) : (["play"] as const)).map((id) => [id, id === "draft" ? "Draft" : "Play"] as const);
+
+  useEffect(() => {
+    if (!canDm && tab === "draft") setTab("play");
+  }, [canDm, tab]);
 
   if (profileLoading || loading) {
     return <p className="text-sm text-zinc-500">Loading…</p>;
@@ -103,18 +108,8 @@ export function EncountersPage() {
     );
   }
 
-  if (!canDm) {
-    return (
-      <div className="rounded-xl border border-zinc-200 bg-white/70 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
-        <p className="text-sm text-zinc-700 dark:text-zinc-200">
-          Encounters are available to the <span className="font-medium">campaign DM</span> or admins only.
-        </p>
-        <button type="button" className={buttonClass("primary") + " mt-3"} onClick={() => setCampaignId(null)}>
-          Choose a different campaign
-        </button>
-      </div>
-    );
-  }
+  // Non-DM campaign members may view the Play tab.
+  // DM/admin is still required for Draft controls and encounter lifecycle.
 
   return (
     <div className="flex flex-col gap-4">
@@ -134,12 +129,7 @@ export function EncountersPage() {
       </header>
 
       <div className="flex flex-wrap gap-2 border-b border-zinc-200 pb-2 dark:border-zinc-800">
-        {(
-          [
-            ["draft", "Draft"],
-            ["play", "Play"]
-          ] as const
-        ).map(([id, label]) => (
+        {tabs.map(([id, label]) => (
           <button
             key={id}
             type="button"
@@ -160,7 +150,7 @@ export function EncountersPage() {
           }}
         />
       ) : null}
-      {tab === "play" ? <EncounterPlayPanel campaignId={campaignId} encounterId={encounterId} /> : null}
+      {tab === "play" ? <EncounterPlayPanel campaignId={campaignId} encounterId={encounterId} canDm={canDm} /> : null}
     </div>
   );
 }

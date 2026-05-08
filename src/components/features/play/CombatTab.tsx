@@ -127,6 +127,8 @@ export default function CombatTab(props: {
   onPatch(next: Character): void;
 }) {
   const [rows, setRows] = useState<DamageRow[]>([{ type: "bludgeoning", amount: 0 }]);
+  const [healAmount, setHealAmount] = useState<string>("");
+  const [healAsTempHp, setHealAsTempHp] = useState(false);
   const [attackCtx, setAttackCtx] = useState<{ kind: "weapon"; weapon: EquippedItem } | { kind: "unarmed" } | null>(null);
 
   function addRow() {
@@ -147,56 +149,108 @@ export default function CombatTab(props: {
     setRows([{ type: "bludgeoning", amount: 0 }]);
   }
 
+  function applyHeal() {
+    const n = Math.max(0, Math.floor(Number(healAmount) || 0));
+    if (n <= 0) return;
+    if (healAsTempHp) {
+      props.onPatch({ ...props.c, tempHp: Math.max(0, props.c.tempHp + n) });
+    } else {
+      const cur = Math.min(props.c.maxHp, props.c.currentHp + n);
+      props.onPatch({ ...props.c, currentHp: cur });
+    }
+    setHealAmount("");
+    setHealAsTempHp(false);
+  }
+
   const uh = unarmedToHit(props.c);
   const ud = unarmedDamageBonus(props.c);
 
   return (
     <div className="space-y-8">
-      <section className="rounded-xl border border-zinc-200 bg-white/60 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
-        <div className="flex items-center gap-2">
-          <Droplet className="h-4 w-4 text-red-600" aria-hidden="true" />
-          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Take damage</h2>
-        </div>
-        <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-300">Temp HP is reduced first.</p>
-        <div className="mt-3 space-y-2">
-          {rows.map((row, i) => (
-            <div key={i} className="flex flex-wrap items-end gap-2">
-              <label className="flex flex-col gap-1">
-                <span className={smallLabelClass()}>Type</span>
-                <select
-                  className={inputClassFull()}
-                  value={row.type}
-                  onChange={(e) => setRows((r) => r.map((x, j) => (j === i ? { ...x, type: e.target.value } : x)))}
-                >
-                  {DAMAGE_TYPES.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="flex flex-col gap-1">
-                <span className={smallLabelClass()}>Amount</span>
-                <input
-                  type="number"
-                  min={0}
-                  className={inputClass() + " w-24"}
-                  value={row.amount || ""}
-                  onChange={(e) => setRows((r) => r.map((x, j) => (j === i ? { ...x, amount: Number(e.target.value) } : x)))}
-                />
-              </label>
-            </div>
-          ))}
-        </div>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <button type="button" className={buttonClass("ghost")} onClick={addRow} aria-label="Add damage type">
-            + row
-          </button>
-          <button type="button" className={buttonClass("primary")} onClick={applyDamage}>
-            Apply damage
-          </button>
-        </div>
-      </section>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch">
+        <section className="flex flex-col rounded-xl border border-zinc-200 bg-white/60 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
+          <div className="flex items-center gap-2">
+            <Droplet className="h-4 w-4 text-red-600" aria-hidden="true" />
+            <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Take damage</h2>
+          </div>
+          <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-300">Temp HP is reduced first.</p>
+          <div className="mt-3 grow space-y-2">
+            {rows.map((row, i) => (
+              <div key={i} className="flex flex-wrap items-end gap-2">
+                <label className="flex flex-col gap-1">
+                  <span className={smallLabelClass()}>Type</span>
+                  <select
+                    className={inputClassFull()}
+                    value={row.type}
+                    onChange={(e) => setRows((r) => r.map((x, j) => (j === i ? { ...x, type: e.target.value } : x)))}
+                  >
+                    {DAMAGE_TYPES.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className={smallLabelClass()}>Amount</span>
+                  <input
+                    type="number"
+                    min={0}
+                    className={inputClass() + " w-24"}
+                    value={row.amount || ""}
+                    onChange={(e) =>
+                      setRows((r) => r.map((x, j) => (j === i ? { ...x, amount: Number(e.target.value) } : x)))
+                    }
+                  />
+                </label>
+              </div>
+            ))}
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button type="button" className={buttonClass("ghost")} onClick={addRow} aria-label="Add damage type">
+              + row
+            </button>
+            <button type="button" className={buttonClass("primary")} onClick={applyDamage}>
+              Apply damage
+            </button>
+          </div>
+        </section>
+
+        <section className="flex flex-col rounded-xl border border-zinc-200 bg-white/60 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
+          <div className="flex items-center gap-2">
+            <Droplet className="h-4 w-4 text-emerald-700 dark:text-emerald-400" aria-hidden="true" />
+            <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Heal</h2>
+          </div>
+          <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-300">
+            Heal current HP, or add temp HP (checkbox resets after apply).
+          </p>
+          <div className="mt-3 grow" />
+          <div className="mt-3 flex flex-wrap items-end gap-2">
+            <label className="flex flex-col gap-1">
+              <span className={smallLabelClass()}>Amount</span>
+              <input
+                type="number"
+                min={0}
+                className={inputClass() + " w-24"}
+                value={healAmount}
+                onChange={(e) => setHealAmount(e.target.value)}
+              />
+            </label>
+            <label className="flex items-center gap-2 pb-2 text-xs text-zinc-700 dark:text-zinc-200">
+              <input
+                type="checkbox"
+                checked={healAsTempHp}
+                onChange={(e) => setHealAsTempHp(e.target.checked)}
+                aria-label="Heal as temp HP"
+              />
+              Temp HP
+            </label>
+            <button type="button" className={buttonClass("primary")} onClick={applyHeal}>
+              Apply heal
+            </button>
+          </div>
+        </section>
+      </div>
 
       <section className="rounded-xl border border-zinc-200 bg-white/60 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
         <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Attacks</h2>

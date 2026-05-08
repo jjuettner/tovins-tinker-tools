@@ -177,6 +177,13 @@ export function AppLayout() {
                     <Dice6 className="h-4 w-4" aria-hidden="true" />
                     Manage Characters
                   </NavLink>
+                  <NavLink
+                    to="/profile"
+                    className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-100 dark:text-zinc-100 dark:hover:bg-zinc-900/60"
+                  >
+                    <User className="h-4 w-4" aria-hidden="true" />
+                    Profile
+                  </NavLink>
                 </div>
               ) : null}
             </div>

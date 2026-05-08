@@ -1,7 +1,7 @@
 import { X } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { buttonClass, highlightButtonClass, inputClassFull, smallLabelClass } from "@/components/ui/controlClasses";
+import { buttonClass, highlightButtonClass } from "@/components/ui/controlClasses";
 import CombatTab from "@/components/features/play/CombatTab";
 import GeneralTab from "@/components/features/play/GeneralTab";
 import PlayHeader from "@/components/features/play/PlayHeader";
@@ -22,10 +22,12 @@ import type { Character } from "@/types/character";
 type Tab = "general" | "combat" | "spells";
 
 export function PlayPage() {
-  const { characters, save } = useCharacters();
+  const { characters: characterItems, save } = useCharacters();
   const { value: usedCharacterId } = useStoredState<string | null>(STORAGE_KEYS.usedCharacterId, null);
   const [tab, setTab] = useState<Tab>("general");
   const [restOpen, setRestOpen] = useState(false);
+
+  const characters = useMemo(() => characterItems.map((x) => x.character), [characterItems]);
 
   const c = useMemo(
     () => (usedCharacterId ? characters.find((ch) => ch.id === usedCharacterId) : undefined),
@@ -47,7 +49,9 @@ export function PlayPage() {
 
   const classByIndex = catalog.loading ? dndClassByIndex : catalog.classesByIndex;
   const spellByIndex = catalog.loading ? dndSpellByIndex : catalog.spellsByIndex;
-  const cls = classByIndex[c?.classIndex ?? ""];
+  const cls =
+    (c?.classIndex ? classByIndex[c.classIndex] : undefined) ??
+    (c?.classIndex ? dndClassByIndex[c.classIndex] : undefined);
 
   const maxima = useMemo(() => {
     if (!c) return { kind: "none" as const };
@@ -90,7 +94,7 @@ export function PlayPage() {
     if (!c) return false;
     const hasSlots = slotRows.length > 0;
     const knowsSpells = (c.spells ?? []).length > 0;
-    return hasSlots && knowsSpells;
+    return hasSlots || knowsSpells;
   }, [c, slotRows.length]);
 
   const effectiveTab: Tab = isCaster ? tab : tab === "spells" ? "general" : tab;
@@ -184,8 +188,8 @@ function RestDialog(props: {
   onClose(): void;
   onPatch(next: Character): void;
 }) {
-  const kind = props.maxima.kind;
-  void kind;
+  const [shortRestHeal, setShortRestHeal] = useState<string>("");
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div className="w-full max-w-lg rounded-2xl border border-zinc-200 bg-white p-4 shadow-xl dark:border-zinc-800 dark:bg-zinc-950">
@@ -196,37 +200,66 @@ function RestDialog(props: {
           </button>
         </div>
 
-        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">
-          Reset temp HP and optionally spell slots.
-        </p>
+        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">Pick short or long rest.</p>
 
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <label className="flex flex-col gap-1">
-            <span className={smallLabelClass()}>Temp HP</span>
-            <input
-              className={inputClassFull()}
-              type="number"
-              min={0}
-              value={props.c.tempHp}
-              onChange={(e) => props.onPatch({ ...props.c, tempHp: Math.max(0, Math.floor(Number(e.target.value) || 0)) })}
-            />
-          </label>
-          <div className="flex items-end">
-            <button
-              type="button"
-              className={buttonClass("primary")}
-              onClick={() => {
-                const next: Character = {
-                  ...props.c,
-                  tempHp: 0,
-                  spellSlotsUsed: emptySpellSlotsUsed()
-                };
-                props.onPatch(next);
-                props.onClose();
-              }}
-            >
-              Apply rest
-            </button>
+          <div className="rounded-xl border border-zinc-200 bg-white/60 p-3 dark:border-zinc-800 dark:bg-zinc-900/40">
+            <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Short rest</div>
+            <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-300">Heal HP. Temp HP unchanged.</p>
+            <div className="mt-3 flex items-end gap-2">
+              <label className="flex flex-col gap-1">
+                <span className="text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  HP healed
+                </span>
+                <input
+                  type="number"
+                  min={0}
+                  className="h-9 w-28 rounded-md border border-zinc-200 bg-white/70 px-3 text-sm text-zinc-900 dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-50"
+                  value={shortRestHeal}
+                  onChange={(e) => setShortRestHeal(e.target.value)}
+                />
+              </label>
+              <button
+                type="button"
+                className={buttonClass("ghost") + " justify-center"}
+                onClick={() => {
+                  const n = Math.max(0, Math.floor(Number(shortRestHeal) || 0));
+                  const next: Character = {
+                    ...props.c,
+                    currentHp: Math.min(props.c.maxHp, props.c.currentHp + n)
+                  };
+                  props.onPatch(next);
+                  props.onClose();
+                }}
+              >
+                Apply
+              </button>
+            </div>
+          </div>
+          <button
+            type="button"
+            className={buttonClass("primary") + " justify-center"}
+            onClick={() => {
+              const next: Character = {
+                ...props.c,
+                tempHp: 0,
+                currentHp: props.c.maxHp,
+                spellSlotsUsed: emptySpellSlotsUsed()
+              };
+              props.onPatch(next);
+              props.onClose();
+            }}
+          >
+            Long rest
+          </button>
+        </div>
+
+        <div className="mt-4 grid grid-cols-1 gap-2 text-xs text-zinc-600 dark:text-zinc-300">
+          <div>
+            <span className="font-medium text-zinc-800 dark:text-zinc-200">Short rest</span>: heal HP (temp HP unchanged).
+          </div>
+          <div>
+            <span className="font-medium text-zinc-800 dark:text-zinc-200">Long rest</span>: full HP + clear temp HP + reset spell slots.
           </div>
         </div>
       </div>

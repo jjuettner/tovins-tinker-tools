@@ -7,6 +7,7 @@ import { makeDraft } from "@/lib/character/draft";
 import { normalizeCharacter } from "@/lib/character/normalize";
 import { STORAGE_KEYS } from "@/lib/appConstants";
 import { listCampaigns } from "@/lib/db/campaigns";
+import { useProfile } from "@/lib/auth";
 import { CharacterEditor } from "@/components/features/characters/Editor";
 import { CharacterList } from "@/components/features/characters/List";
 import { CharacterSheet } from "@/components/features/characters/Sheet";
@@ -17,18 +18,42 @@ function sortByName(a: Character, b: Character) {
 }
 
 export function CharactersPage() {
-  const { characters, save, remove, loading, error } = useCharacters();
+  const { profile } = useProfile();
+  const { characters, ownerLabelById, save, remove, loading, error } = useCharacters();
   const { value: usedCharacterId, setValue: setUsedCharacterId } = useStoredState<string | null>(STORAGE_KEYS.usedCharacterId, null);
   const { setValue: setUsedCharacterName } = useStoredState<string | null>(STORAGE_KEYS.usedCharacterName, null);
   const { setValue: setUsedCharacterClassIndex } = useStoredState<string | null>(STORAGE_KEYS.usedCharacterClassIndex, null);
   const { setValue: setUsedCharacterAvatarUrl } = useStoredState<string | null>(STORAGE_KEYS.usedCharacterAvatarUrl, null);
-  const [selectedId, setSelectedId] = useState<string | null>(characters[0]?.id ?? null);
+  const [selectedId, setSelectedId] = useState<string | null>(characters[0]?.character.id ?? null);
   const [mode, setMode] = useState<"view" | "edit" | "create">("view");
   const [draft, setDraft] = useState<CharacterDraft>(() => makeDraft());
   const [campaignNameById, setCampaignNameById] = useState<Map<string, string>>(new Map());
 
-  const selected = useMemo(() => characters.find((c) => c.id === selectedId) ?? null, [characters, selectedId]);
-  const sorted = useMemo(() => [...characters].sort(sortByName), [characters]);
+  const selected = useMemo(() => characters.find((x) => x.character.id === selectedId)?.character ?? null, [characters, selectedId]);
+  const sorted = useMemo(() => [...characters].map((x) => x.character).sort(sortByName), [characters]);
+  const myId = profile?.id ?? null;
+  const adminSections = useMemo(() => {
+    if (!profile?.is_admin || !myId) return null;
+    const mine = characters.filter((x) => x.ownerId === myId).map((x) => x.character).sort(sortByName);
+    const others = characters.filter((x) => x.ownerId !== myId);
+    const byOwner = new Map<string, Character[]>();
+    for (const it of others) {
+      const list = byOwner.get(it.ownerId) ?? [];
+      list.push(it.character);
+      byOwner.set(it.ownerId, list);
+    }
+    const otherSections = Array.from(byOwner.entries())
+      .map(([ownerId, list]) => ({
+        ownerId,
+        ownerLabel: ownerLabelById.get(ownerId) ?? ownerId.slice(0, 8),
+        characters: list.sort(sortByName)
+      }))
+      .sort((a, b) => a.ownerLabel.localeCompare(b.ownerLabel));
+    return {
+      mine,
+      others: otherSections
+    };
+  }, [characters, myId, ownerLabelById, profile?.is_admin]);
 
   useEffect(() => {
     let cancelled = false;
@@ -141,6 +166,7 @@ export function CharactersPage() {
 
         <CharacterList
           characters={sorted}
+          adminSections={adminSections}
           selectedId={selectedId}
           usedCharacterId={usedCharacterId}
           campaignNameById={campaignNameById}

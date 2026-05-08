@@ -2,6 +2,7 @@ import { Plus, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { buttonClass, inputClassFull, smallLabelClass } from "@/components/ui/controlClasses";
 import { useSession } from "@/lib/auth";
+import { createCampaignInvite } from "@/lib/db/campaignInvites";
 import {
   attachCampaignRuleset,
   createCampaign,
@@ -24,6 +25,7 @@ export function CampaignsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { session, loading: sessionLoading } = useSession();
+  const [inviteByCampaignId, setInviteByCampaignId] = useState<Record<string, string>>({});
 
   const [newName, setNewName] = useState("");
   const [newDesc, setNewDesc] = useState("");
@@ -83,6 +85,7 @@ export function CampaignsPage() {
   }
 
   const rulesetName = useMemo(() => new Map(rulesets.map((r) => [r.id, r.name] as const)), [rulesets]);
+  const baseUrl = useMemo(() => window.location.origin + import.meta.env.BASE_URL, []);
 
   return (
     <div className="flex flex-col gap-6">
@@ -134,7 +137,29 @@ export function CampaignsPage() {
                 <div className="font-medium text-zinc-900 dark:text-zinc-50">{c.name}</div>
                 {c.description ? <div className="text-sm text-zinc-600 dark:text-zinc-300">{c.description}</div> : null}
               </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  className={buttonClass("ghost")}
+                  disabled={!session?.user?.id || sessionLoading}
+                  onClick={() =>
+                    void (async () => {
+                      const inv = await createCampaignInvite(c.id);
+                      const link = `${baseUrl}join?token=${encodeURIComponent(inv.token)}`;
+                      setInviteByCampaignId((prev) => ({ ...prev, [c.id]: link }));
+                      if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(link);
+                    })()
+                  }
+                >
+                  Create invite
+                </button>
+              </div>
             </div>
+            {inviteByCampaignId[c.id] ? (
+              <div className="mt-2 break-all rounded-lg border border-zinc-200 bg-white/50 px-3 py-2 text-xs text-zinc-700 dark:border-zinc-800 dark:bg-zinc-950/20 dark:text-zinc-200">
+                {inviteByCampaignId[c.id]}
+              </div>
+            ) : null}
 
             <div className="mt-3 flex flex-col gap-2">
               <div className={smallLabelClass()}>Rulesets</div>

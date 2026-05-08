@@ -33,7 +33,7 @@ export function CharacterEditor(props: {
   title: string;
 }) {
   const prof = proficiencyBonus(props.draft.level);
-  const canSave =
+  const baseCanSave =
     props.draft.name.trim().length > 0 &&
     props.draft.classIndex.trim().length > 0 &&
     props.draft.raceIndex.trim().length > 0;
@@ -125,6 +125,16 @@ export function CharacterEditor(props: {
 
   const catalog = useRulesetSrdCatalog(activeRuleIds);
 
+  const classAllowedByCampaign = useMemo(() => {
+    if (!campaignId) return true;
+    if (catalog.loading) return true;
+    const idx = props.draft.classIndex.trim();
+    if (!idx) return true;
+    return Boolean(catalog.classesByIndex[idx]);
+  }, [campaignId, catalog.classesByIndex, catalog.loading, props.draft.classIndex]);
+
+  const canSave = baseCanSave && classAllowedByCampaign;
+
   const racesForSelect = catalog.loading ? dndRaces : catalog.races;
   const classesForSelect = catalog.loading ? dndClasses : catalog.classes;
   const featsForSelect = catalog.loading ? dndFeats : catalog.feats;
@@ -215,7 +225,15 @@ export function CharacterEditor(props: {
             className={buttonClass("primary")}
             onClick={props.onSave}
             disabled={!canSave}
-            title={!canSave ? "Need name, race, and class" : undefined}
+            title={
+              !canSave
+                ? !baseCanSave
+                  ? "Need name, race, and class"
+                  : !classAllowedByCampaign
+                    ? "Campaign rulesets do not include this class"
+                    : "Cannot save"
+                : undefined
+            }
           >
             <Save className="h-4 w-4" aria-hidden="true" />
             Save

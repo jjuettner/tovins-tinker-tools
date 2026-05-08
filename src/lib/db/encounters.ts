@@ -47,6 +47,7 @@ function parseData(raw: unknown): EncounterDataV1 {
         initiative: e.initiative,
         maxHp: e.maxHp,
         currentHp: e.currentHp,
+        tempHp: typeof e.tempHp === "number" ? e.tempHp : undefined,
         status: e.status === "dead" ? "dead" : undefined,
         deathSaves:
           e.deathSaves &&
@@ -93,6 +94,20 @@ export async function listEncounters(campaignId: string): Promise<EncounterRow[]
     ...row,
     data: parseData(row.data)
   }));
+}
+
+/**
+ * Fetch an encounter by id.
+ *
+ * @param id Encounter id.
+ * @returns Encounter row.
+ */
+export async function getEncounter(id: string): Promise<EncounterRow> {
+  const sb = requireSupabase();
+  const { data, error } = await sb.from("encounters").select("*").eq("id", id).single();
+  if (error) throw error;
+  const row = data as Omit<EncounterRow, "data"> & { data: unknown };
+  return { ...row, data: parseData(row.data) };
 }
 
 /**
@@ -154,5 +169,21 @@ export async function updateEncounter(
 export async function deleteEncounter(id: string): Promise<void> {
   const sb = requireSupabase();
   const { error } = await sb.from("encounters").delete().eq("id", id);
+  if (error) throw error;
+}
+
+/**
+ * Persist PC state changes for the current user during an ongoing encounter.
+ *
+ * @param encounterId Encounter id.
+ * @param entities Minimal entity patches (id + fields to persist).
+ * @returns Nothing.
+ */
+export async function applyEncounterPcState(
+  encounterId: string,
+  entities: Array<Pick<EncounterEntity, "id" | "currentHp" | "status" | "deathSaves">>
+): Promise<void> {
+  const sb = requireSupabase();
+  const { error } = await sb.rpc("apply_encounter_pc_state", { p_encounter_id: encounterId, p_entities: entities });
   if (error) throw error;
 }

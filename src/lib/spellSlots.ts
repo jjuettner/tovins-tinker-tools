@@ -55,21 +55,35 @@ function findStandardRow(rows: SlotRow[], charLevel: number): SlotRow | undefine
 export function spellSlotMaximaForClass(dndClass: DndClass | undefined, charLevel: number): SpellSlotMaxima {
   if (!dndClass) return { kind: "none" };
   const name = dndClass.name.trim();
+  const idx = dndClass.index.trim();
   const lv = Math.min(20, Math.max(1, Math.floor(charLevel)));
 
-  if (data.pact_magic.classes.includes(name)) {
+  function norm(s: string): string {
+    return s.toLowerCase().replace(/[^a-z0-9]+/g, "");
+  }
+
+  function matches(list: string[]): boolean {
+    const nName = norm(name);
+    const nIdx = norm(idx);
+    return list.some((x) => {
+      const nx = norm(x);
+      return nx === nName || (nIdx ? nx === nIdx : false);
+    });
+  }
+
+  if (matches(data.pact_magic.classes)) {
     const row = data.pact_magic.slots_per_level.find((r) => r.level === lv);
     if (!row) return { kind: "none" };
     return { kind: "pact", max: row.slots, slotSpellLevel: row.slot_level };
   }
 
-  if (data.full_casters.classes.includes(name)) {
+  if (matches(data.full_casters.classes)) {
     const row = findStandardRow(data.full_casters.slots_per_level, lv);
     if (!row) return { kind: "none" };
     return { kind: "standard", maxBySpellLevel: rowToMaxBySpellLevel(row) };
   }
 
-  if (data.half_casters.classes.includes(name)) {
+  if (matches(data.half_casters.classes)) {
     const row = findStandardRow(data.half_casters.slots_per_level, lv);
     if (!row) return { kind: "none" };
     return { kind: "standard", maxBySpellLevel: rowToMaxBySpellLevel(row) };

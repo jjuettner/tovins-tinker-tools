@@ -11,6 +11,11 @@ export type CharacterRow = {
   updated_at: string;
 };
 
+export type CharacterListItem = {
+  character: Character;
+  ownerId: string;
+};
+
 /**
  * Convert DB row into app `Character`.
  *
@@ -45,11 +50,11 @@ export function characterToRow(c: Character, ownerId: string) {
  *
  * @returns Characters sorted by name.
  */
-export async function listCharacters(): Promise<Character[]> {
+export async function listCharacters(): Promise<CharacterListItem[]> {
   const sb = requireSupabase();
   const { data, error } = await sb.from("characters").select("*").order("name", { ascending: true });
   if (error) throw error;
-  return (data as CharacterRow[]).map(characterFromRow);
+  return (data as CharacterRow[]).map((r) => ({ character: characterFromRow(r), ownerId: r.owner }));
 }
 
 /**
