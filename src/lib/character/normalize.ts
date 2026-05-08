@@ -36,6 +36,7 @@ export function normalizeCharacter(c: Character): Character {
   const hitDie = cls?.hit_die ?? 8;
   const conMod = abilityMod(c.stats.CON);
   const dexMod = abilityMod(c.stats.DEX);
+  const avatarUrl = typeof c.avatarUrl === "string" && c.avatarUrl.trim().length > 0 ? c.avatarUrl.trim() : null;
 
   const equipped: EquippedItem[] = Array.isArray(c.equipped)
     ? c.equipped.map((e) => ({
@@ -66,6 +67,7 @@ export function normalizeCharacter(c: Character): Character {
 
   return {
     ...c,
+    avatarUrl,
     raceIndex: typeof c.raceIndex === "string" ? c.raceIndex.trim() : "",
     level,
     equipped,

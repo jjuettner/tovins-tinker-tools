@@ -1,10 +1,12 @@
 import { Check, Save, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { buttonClass, inputClass, inputClassFull, smallLabelClass } from "@/components/ui/controlClasses";
+import CharacterAvatar from "@/components/ui/CharacterAvatar";
 import { useRulesetSrdCatalog } from "@/hooks/useRulesetSrdCatalog";
 import { computeArmorClass } from "@/lib/character/armorClass";
 import { newEquippedItemId, normalizeDraft } from "@/lib/character/normalize";
 import { emptyWeapon, rebuildEquipped, splitEquipped } from "@/lib/equippedLayout";
+import { uploadCharacterAvatar } from "@/lib/db/characterAvatars";
 import { DND2024_RULESET_ID, listRulesets } from "@/lib/db/rulesets";
 import { listCampaignRulesets, listCampaigns } from "@/lib/db/campaigns";
 import { dndArmorPieces, dndEquipmentByIndex, dndWeapons, isBodyArmor } from "@/lib/dndEquipment";
@@ -43,6 +45,8 @@ export function CharacterEditor(props: {
   const [selectedRuleIds, setSelectedRuleIds] = useState<string[]>([DND2024_RULESET_ID]);
   const [rulesetPopupOpen, setRulesetPopupOpen] = useState(false);
   const [campaigns, setCampaigns] = useState<{ id: string; name: string }[]>([]);
+  const [avatarBusy, setAvatarBusy] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -311,6 +315,44 @@ export function CharacterEditor(props: {
             placeholder="Eldrin"
           />
         </label>
+
+        <div className="flex flex-col gap-1">
+          <span className={smallLabelClass()}>Avatar</span>
+          <div className="flex items-center gap-2">
+            <CharacterAvatar
+              characterId={props.draft.id}
+              name={props.draft.name || "Unnamed"}
+              classIndex={props.draft.classIndex}
+              avatarUrl={props.draft.avatarUrl}
+              disabled={avatarBusy}
+              onPickFile={(file) => {
+                setAvatarError(null);
+                setAvatarBusy(true);
+                void uploadCharacterAvatar(props.draft.id, file)
+                  .then((url) => {
+                    props.onChange({ ...props.draft, avatarUrl: url });
+                  })
+                  .catch((err: unknown) => {
+                    setAvatarError(err instanceof Error ? err.message : "Failed to upload avatar");
+                  })
+                  .finally(() => {
+                    setAvatarBusy(false);
+                  });
+              }}
+            />
+            {props.draft.avatarUrl ? (
+              <button
+                type="button"
+                className={buttonClass("ghost")}
+                disabled={avatarBusy}
+                onClick={() => props.onChange({ ...props.draft, avatarUrl: null })}
+              >
+                Remove
+              </button>
+            ) : null}
+          </div>
+          {avatarError ? <div className="text-xs text-red-700 dark:text-red-300">{avatarError}</div> : null}
+        </div>
 
         <label className="flex flex-col gap-1">
           <span className={smallLabelClass()}>Campaign</span>

@@ -14,6 +14,8 @@ export type EquippedItem = {
 export type Character = {
   id: string;
   name: string;
+  /** Optional public avatar URL (stored in `characters.data`). */
+  avatarUrl?: string | null;
   world: string;
   /**
    * Optional campaign context stored on the DB row (`characters.campaign_id`).

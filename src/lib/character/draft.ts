@@ -22,6 +22,7 @@ export function makeDraft(partial?: Partial<CharacterDraft>): CharacterDraft {
   const raw: CharacterDraft = {
     id: partial?.id ?? newId(),
     name: partial?.name ?? "",
+    avatarUrl: partial?.avatarUrl ?? null,
     world: partial?.world ?? "",
     campaignId: partial?.campaignId ?? null,
     raceIndex: partial?.raceIndex ?? "",

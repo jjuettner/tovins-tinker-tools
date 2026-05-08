@@ -1,6 +1,7 @@
 import { Pencil, Trash2, UserCircle } from "lucide-react";
 import { useMemo } from "react";
 import { buttonClass } from "@/components/ui/controlClasses";
+import CharacterAvatar from "@/components/ui/CharacterAvatar";
 import { useActiveRulesetIds } from "@/hooks/useActiveRulesetIds";
 import { formatSigned, proficiencyBonus } from "@/lib/dnd";
 import { dndClassByIndex, dndFeatByIndex, dndSpellByIndex, type DndSpell } from "@/lib/dndData";
@@ -65,32 +66,41 @@ export function CharacterSheet(props: {
   return (
     <section className="rounded-2xl border border-zinc-200 bg-white/70 p-5 dark:border-zinc-800 dark:bg-zinc-900/40">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="font-display text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-            {props.c.name || "Unnamed character"}
-          </h2>
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-300">
-            {props.c.world ? <span className="font-medium">{props.c.world}</span> : <span>World</span>}
-            <span className="px-2 text-zinc-400">·</span>
-            {raceName ? (
-              <>
-                <span className="font-medium">{raceName}</span>
-                <span className="px-2 text-zinc-400">·</span>
-              </>
-            ) : null}
-            <span className="font-medium">{className}</span>
-            <span className="px-2 text-zinc-400">·</span>
-            <span>Level {props.c.level}</span>
-            <span className="px-2 text-zinc-400">·</span>
-            <span>Proficiency {formatSigned(prof)}</span>
-            <span className="px-2 text-zinc-400">·</span>
-            <span>AC {props.c.armorClass ?? 10}</span>
-            <span className="px-2 text-zinc-400">·</span>
-            <span>
-              HP {props.c.currentHp ?? 0}/{props.c.maxHp ?? 0}
-              {(props.c.tempHp ?? 0) > 0 ? ` (+${props.c.tempHp} temp)` : ""}
-            </span>
-          </p>
+        <div className="flex min-w-0 items-start gap-3">
+          <CharacterAvatar
+            characterId={props.c.id}
+            name={props.c.name || "Unnamed"}
+            classIndex={props.c.classIndex}
+            avatarUrl={props.c.avatarUrl}
+            size="lg"
+          />
+          <div className="min-w-0">
+            <h2 className="font-display text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+              {props.c.name || "Unnamed character"}
+            </h2>
+            <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-300">
+              {props.c.world ? <span className="font-medium">{props.c.world}</span> : <span>World</span>}
+              <span className="px-2 text-zinc-400">·</span>
+              {raceName ? (
+                <>
+                  <span className="font-medium">{raceName}</span>
+                  <span className="px-2 text-zinc-400">·</span>
+                </>
+              ) : null}
+              <span className="font-medium">{className}</span>
+              <span className="px-2 text-zinc-400">·</span>
+              <span>Level {props.c.level}</span>
+              <span className="px-2 text-zinc-400">·</span>
+              <span>Proficiency {formatSigned(prof)}</span>
+              <span className="px-2 text-zinc-400">·</span>
+              <span>AC {props.c.armorClass ?? 10}</span>
+              <span className="px-2 text-zinc-400">·</span>
+              <span>
+                HP {props.c.currentHp ?? 0}/{props.c.maxHp ?? 0}
+                {(props.c.tempHp ?? 0) > 0 ? ` (+${props.c.tempHp} temp)` : ""}
+              </span>
+            </p>
+          </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <button

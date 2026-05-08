@@ -21,6 +21,9 @@ export function CharactersFeature() {
     STORAGE_KEYS.usedCharacterId,
     null
   );
+  const { setValue: setUsedCharacterName } = useStoredState<string | null>(STORAGE_KEYS.usedCharacterName, null);
+  const { setValue: setUsedCharacterClassIndex } = useStoredState<string | null>(STORAGE_KEYS.usedCharacterClassIndex, null);
+  const { setValue: setUsedCharacterAvatarUrl } = useStoredState<string | null>(STORAGE_KEYS.usedCharacterAvatarUrl, null);
   const [selectedId, setSelectedId] = useState<string | null>(characters[0]?.id ?? null);
   const [mode, setMode] = useState<"view" | "edit" | "create">("view");
   const [draft, setDraft] = useState<CharacterDraft>(() => makeDraft());
@@ -33,7 +36,13 @@ export function CharactersFeature() {
     const first = sorted[0]?.id;
     if (!first) return;
     setUsedCharacterId(first);
-  }, [sorted, usedCharacterId, setUsedCharacterId]);
+    const c = sorted.find((x) => x.id === first);
+    if (c) {
+      setUsedCharacterName(c.name || "Unnamed");
+      setUsedCharacterClassIndex(c.classIndex);
+      setUsedCharacterAvatarUrl(c.avatarUrl ?? null);
+    }
+  }, [sorted, usedCharacterId, setUsedCharacterAvatarUrl, setUsedCharacterClassIndex, setUsedCharacterId, setUsedCharacterName]);
 
   function startCreate() {
     setDraft(makeDraft());
@@ -67,6 +76,12 @@ export function CharactersFeature() {
     void save(next);
     setSelectedId(next.id);
     setMode("view");
+
+    if (next.id === usedCharacterId) {
+      setUsedCharacterName(next.name);
+      setUsedCharacterClassIndex(next.classIndex);
+      setUsedCharacterAvatarUrl(next.avatarUrl ?? null);
+    }
   }
 
   function removeSelected() {
@@ -126,7 +141,12 @@ export function CharactersFeature() {
               isPlayTarget={selected.id === usedCharacterId}
               onEdit={() => startEdit(selected)}
               onDelete={removeSelected}
-              onUseCharacter={() => setUsedCharacterId(selected.id)}
+              onUseCharacter={() => {
+                setUsedCharacterId(selected.id);
+                setUsedCharacterName(selected.name || "Unnamed");
+                setUsedCharacterClassIndex(selected.classIndex);
+                setUsedCharacterAvatarUrl(selected.avatarUrl ?? null);
+              }}
             />
           ) : (
             <section className="rounded-2xl border border-zinc-200 bg-white/70 p-8 text-sm text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-300">

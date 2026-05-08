@@ -419,6 +419,7 @@ export default function EncounterPlayPanel(props: { campaignId: string; encounte
                 const dmgVal = dmgByEntity[e.id] ?? "";
                 const monsterAvatar = e.kind === "monster" && e.monsterId ? monstersForAvatarsById.get(e.monsterId)?.img_url ?? null : null;
                 const pcClassIndex = e.kind === "pc" && e.characterId ? characterById.get(e.characterId)?.classIndex ?? "" : "";
+                const pcAvatarUrl = e.kind === "pc" && e.characterId ? characterById.get(e.characterId)?.avatarUrl ?? null : null;
                 const pcIcon = e.kind === "pc" ? classIconUrl(pcClassIndex) : null;
                 return (
                   <li
@@ -457,6 +458,8 @@ export default function EncounterPlayPanel(props: { campaignId: string; encounte
                           <div className="absolute inset-0 pb-1">
                             {monsterAvatar ? (
                               <img src={monsterAvatar} alt="" className="h-full w-full object-cover" />
+                            ) : pcAvatarUrl ? (
+                              <img src={pcAvatarUrl} alt="" className="h-full w-full object-cover" />
                             ) : pcIcon ? (
                               <div
                                 className="h-full w-full"

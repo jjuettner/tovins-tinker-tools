@@ -4,6 +4,7 @@ import { CharactersPage } from "@/pages/Characters";
 import { PlayPage } from "@/pages/Play";
 import { AuthGate } from "@/components/features/auth/AuthGate";
 import { CampaignsPage } from "@/pages/Campaigns";
+import { CompendiumPage } from "@/pages/Compendium";
 import { EncountersPage } from "@/pages/Encounters";
 import { ResetPasswordPage } from "@/pages/ResetPassword";
 
@@ -29,6 +30,14 @@ export function App() {
             element={
               <AuthGate>
                 <PlayPage />
+              </AuthGate>
+            }
+          />
+          <Route
+            path="compendium"
+            element={
+              <AuthGate>
+                <CompendiumPage />
               </AuthGate>
             }
           />

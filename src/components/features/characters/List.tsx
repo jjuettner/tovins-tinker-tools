@@ -1,5 +1,6 @@
 import { dndClassByIndex } from "@/lib/dndData";
 import type { Character } from "@/types/character";
+import CharacterAvatar from "@/components/ui/CharacterAvatar";
 
 export function CharacterList(props: {
   characters: Character[];
@@ -30,30 +31,37 @@ export function CharacterList(props: {
               type="button"
               onClick={() => props.onSelect(c.id)}
               className={
-                "flex w-full flex-col gap-0.5 rounded-lg border px-3 py-2 text-left transition " +
+                "flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left transition " +
                 (active
                   ? "border-zinc-300 bg-white text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
                   : "border-zinc-200 bg-white/50 text-zinc-700 hover:bg-white dark:border-zinc-800 dark:bg-zinc-950/20 dark:text-zinc-300 dark:hover:bg-zinc-950/40")
               }
             >
-              <span className="flex items-center gap-2">
-                {used ? (
-                  <span
-                    className="h-2 w-2 shrink-0 rounded-full bg-emerald-500 shadow-[0_0_0_1px_rgba(16,185,129,0.4)]"
-                    title="Play character"
-                    aria-label="Play character"
-                  />
-                ) : (
-                  <span
-                    className="h-2 w-2 shrink-0 rounded-full border border-zinc-300 dark:border-zinc-600"
-                    aria-hidden="true"
-                  />
-                )}
-                <span className="truncate text-sm font-semibold">{c.name || "Unnamed"}</span>
-              </span>
-              <span className="truncate pl-4 text-xs text-zinc-600 dark:text-zinc-400">
-                {c.world || "World"} · {dndClassByIndex[c.classIndex]?.name ?? (c.classIndex || "Class")} · L{c.level}
-              </span>
+              <div className="relative">
+                <CharacterAvatar
+                  characterId={c.id}
+                  name={c.name || "Unnamed"}
+                  classIndex={c.classIndex}
+                  avatarUrl={c.avatarUrl}
+                  size="sm"
+                />
+                <span
+                  className={
+                    "absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full " +
+                    (used
+                      ? "bg-emerald-500 shadow-[0_0_0_1px_rgba(16,185,129,0.4)]"
+                      : "border border-zinc-300 bg-white dark:border-zinc-600 dark:bg-zinc-900")
+                  }
+                  title={used ? "Play character" : undefined}
+                  aria-label={used ? "Play character" : "Not play character"}
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm font-semibold">{c.name || "Unnamed"}</div>
+                <div className="truncate text-xs text-zinc-600 dark:text-zinc-400">
+                  {c.world || "World"} · {dndClassByIndex[c.classIndex]?.name ?? (c.classIndex || "Class")} · L{c.level}
+                </div>
+              </div>
             </button>
           );
         })}
