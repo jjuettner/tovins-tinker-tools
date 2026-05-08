@@ -94,3 +94,32 @@
   - highlight and button colors: with less contrast -> white is too much
   - apply everywhere
   - define globally for easy edits
+
+
+  ## new account testing
+    - characters list loading error
+    - supabase urls: status 500
+      - response "{
+        "code": "54001",
+        "details": null,
+        "hint": "Increase the configuration parameter \"max_stack_depth\" (currently 2048kB), after ensuring the platform's stack depth limit is adequate.",
+        "message": "stack depth limit exceeded"
+    }"
+    - create campaign: response:
+      - {
+    "code": "42501",
+    "details": null,
+    "hint": null,
+    "message": "new row violates row-level security policy for table \"campaigns\""
+}
+
+## problem
+  - create campaign with new user
+  payload: {"name":"2","description":"asd"}
+  status: 403
+  result: {
+    "code": "42501",
+    "details": null,
+    "hint": null,
+    "message": "new row violates row-level security policy for table \"campaigns\""
+}

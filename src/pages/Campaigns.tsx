@@ -1,6 +1,7 @@
 import { Plus, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { buttonClass, inputClassFull, smallLabelClass } from "@/components/ui/controlClasses";
+import { useSession } from "@/lib/auth";
 import {
   attachCampaignRuleset,
   createCampaign,
@@ -22,6 +23,7 @@ export function CampaignsPage() {
   const [rulesets, setRulesets] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { session, loading: sessionLoading } = useSession();
 
   const [newName, setNewName] = useState("");
   const [newDesc, setNewDesc] = useState("");
@@ -52,12 +54,32 @@ export function CampaignsPage() {
   }, []);
 
   async function onCreate() {
+    if (sessionLoading) return;
+    if (!session?.user?.id) {
+      setError("Sign in to create a campaign.");
+      return;
+    }
     const name = newName.trim();
     if (!name) return;
-    await createCampaign({ name, description: newDesc.trim() || null });
-    setNewName("");
-    setNewDesc("");
-    await refresh();
+    setError(null);
+    try {
+      await createCampaign({ name, description: newDesc.trim() || null });
+      setNewName("");
+      setNewDesc("");
+      await refresh();
+    } catch (e) {
+      if (e instanceof Error) {
+        setError(e.message);
+        return;
+      }
+      if (typeof e === "object" && e !== null && "message" in e) {
+        const msg = typeof e.message === "string" ? e.message : "Failed to create campaign";
+        const code = "code" in e && typeof e.code === "string" ? e.code : null;
+        setError(code ? `${msg} (${code})` : msg);
+        return;
+      }
+      setError("Failed to create campaign");
+    }
   }
 
   const rulesetName = useMemo(() => new Map(rulesets.map((r) => [r.id, r.name] as const)), [rulesets]);
@@ -83,10 +105,18 @@ export function CampaignsPage() {
           </label>
         </div>
         <div className="mt-3">
-          <button type="button" className={buttonClass("primary")} onClick={() => void onCreate()}>
+          <button
+            type="button"
+            className={buttonClass("primary")}
+            onClick={() => void onCreate()}
+            disabled={!session?.user?.id || sessionLoading}
+          >
             <Plus className="h-4 w-4" aria-hidden="true" />
             Create campaign
           </button>
+          {!sessionLoading && !session?.user?.id ? (
+            <div className="mt-2 text-xs text-zinc-600 dark:text-zinc-300">Sign in required.</div>
+          ) : null}
         </div>
       </section>
 

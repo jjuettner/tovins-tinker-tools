@@ -30,23 +30,17 @@ export async function listCampaigns(): Promise<Campaign[]> {
  * Create campaign owned by current user.
  *
  * @param input Campaign create payload.
- * @returns Inserted campaign row.
+ * @returns Nothing.
  * @throws If not signed in.
  */
-export async function createCampaign(input: { name: string; description?: string | null }): Promise<Campaign> {
+export async function createCampaign(input: { name: string; description?: string | null }): Promise<void> {
   const sb = requireSupabase();
-  const { data: sessionData, error: sessionError } = await sb.auth.getSession();
-  if (sessionError) throw sessionError;
-  const uid = sessionData.session?.user?.id;
-  if (!uid) throw new Error("Not signed in");
+  const { data: userData, error: userError } = await sb.auth.getUser();
+  if (userError) throw userError;
+  if (!userData.user?.id) throw new Error("Not signed in");
 
-  const { data, error } = await sb
-    .from("campaigns")
-    .insert({ dm: uid, name: input.name, description: input.description ?? null })
-    .select("*")
-    .single();
+  const { error } = await sb.from("campaigns").insert({ name: input.name, description: input.description ?? null });
   if (error) throw error;
-  return data as Campaign;
 }
 
 /**
