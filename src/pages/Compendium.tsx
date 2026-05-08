@@ -1,4 +1,5 @@
 import MonsterCompendiumPanel from "@/components/features/encounters/MonsterCompendiumPanel";
+import { highlightButtonClass } from "@/components/ui/controlClasses";
 
 export function CompendiumPage() {
   return (
@@ -13,7 +14,7 @@ export function CompendiumPage() {
       <div className="flex flex-wrap gap-2 border-b border-zinc-200 pb-2 dark:border-zinc-800">
         <button
           type="button"
-          className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white transition dark:bg-zinc-100 dark:text-zinc-900"
+          className={highlightButtonClass(true)}
           aria-current="page"
         >
           Monsters

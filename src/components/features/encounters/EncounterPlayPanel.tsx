@@ -2,6 +2,7 @@ import { Droplet, Plus, Skull } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { buttonClass, inputClass, smallLabelClass } from "@/components/ui/controlClasses";
 import HpReadonlyBadge from "@/components/ui/HpReadonlyBadge";
+import { NumberInput } from "@/components/ui/NumberInput";
 import { eligibleTurnOrder, normalizeEncounterQueue, orderWithDeadAtBottom, rotateTurnOrder } from "@/lib/encounterTurn";
 import { classIconUrl } from "@/lib/classIcons";
 import { listCharactersByCampaign } from "@/lib/db/characters";
@@ -361,13 +362,14 @@ export default function EncounterPlayPanel(props: { campaignId: string; encounte
                   <span className="min-w-[10rem] font-medium text-zinc-900 dark:text-zinc-50">{row.label}</span>
                   <label className="flex items-center gap-1 text-zinc-600">
                     <span className={smallLabelClass()}>Init</span>
-                    <input
-                      type="number"
+                    <NumberInput
                       className={inputClass() + " w-20"}
+                      min={0}
+                      max={99}
+                      twoDigitUnder40={true}
                       value={initDraft[row.key] ?? 0}
-                      onChange={(e) =>
-                        setInitDraft((m) => ({ ...m, [row.key]: Number.isFinite(Number(e.target.value)) ? Number(e.target.value) : 0 }))
-                      }
+                      onChange={(next) => setInitDraft((m) => ({ ...m, [row.key]: next ?? 0 }))}
+                      ariaLabel={`Initiative for ${row.label}`}
                     />
                   </label>
                 </li>

@@ -1,7 +1,7 @@
 import { X } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { buttonClass, inputClassFull, smallLabelClass } from "@/components/ui/controlClasses";
+import { buttonClass, highlightButtonClass, inputClassFull, smallLabelClass } from "@/components/ui/controlClasses";
 import CombatTab from "@/components/features/play/CombatTab";
 import GeneralTab from "@/components/features/play/GeneralTab";
 import PlayHeader from "@/components/features/play/PlayHeader";
@@ -134,12 +134,9 @@ export function PlayPage() {
             key={id}
             type="button"
             className={
-              "rounded-md px-3 py-1.5 text-sm font-medium transition " +
-              (effectiveTab === id
-                ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
-                : id === "spells" && !isCaster
-                  ? "cursor-not-allowed text-zinc-400 dark:text-zinc-600"
-                  : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800")
+              id === "spells" && !isCaster
+                ? "rounded-md px-3 py-1.5 text-sm font-medium transition cursor-not-allowed text-zinc-400 dark:text-zinc-600"
+                : highlightButtonClass(effectiveTab === id)
             }
             onClick={() => {
               if (id === "spells" && !isCaster) return;

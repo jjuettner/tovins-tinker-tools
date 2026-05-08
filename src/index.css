@@ -5,10 +5,32 @@
 @layer base {
   :root {
     color-scheme: light;
+
+    /* Global UI tokens. Tune these for “softer” contrast. */
+    --tovin-primary-bg: #3f3f46; /* zinc-700-ish (less “black”) */
+    --tovin-primary-bg-hover: #52525b; /* zinc-600-ish */
+    --tovin-primary-fg: #f4f4f5; /* zinc-100-ish */
+    --tovin-primary-border: #e4e4e7; /* zinc-200-ish */
+
+    /* “Selected” highlight: blue tint, gray text (not black/white). */
+    --tovin-highlight-bg: rgba(59, 130, 246, 0.18); /* blue-500 @ alpha */
+    --tovin-highlight-bg-hover: rgba(59, 130, 246, 0.26);
+    --tovin-highlight-fg: #3f3f46; /* zinc-700 */
   }
 
   .dark {
     color-scheme: dark;
+
+    /* Primary: blue background (instead of white), gray text (instead of black). */
+    --tovin-primary-bg: #2563eb; /* blue-600 */
+    --tovin-primary-bg-hover: #3b82f6; /* blue-500 */
+    --tovin-primary-fg: #e5e7eb; /* zinc-200 */
+    --tovin-primary-border: rgba(59, 130, 246, 0.55); /* blue-500 @ alpha */
+
+    /* “Selected” highlight: blue tint, gray text (not white/black). */
+    --tovin-highlight-bg: rgba(59, 130, 246, 0.22);
+    --tovin-highlight-bg-hover: rgba(59, 130, 246, 0.3);
+    --tovin-highlight-fg: #e5e7eb; /* zinc-200 */
   }
 
   html {

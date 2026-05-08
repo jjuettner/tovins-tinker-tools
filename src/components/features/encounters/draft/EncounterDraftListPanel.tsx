@@ -1,4 +1,4 @@
-import { buttonClass, inputClassFull, smallLabelClass } from "@/components/ui/controlClasses";
+import { buttonClass, highlightButtonClass, inputClassFull, smallLabelClass } from "@/components/ui/controlClasses";
 import type { EncounterRow } from "@/lib/db/encounters";
 
 export default function EncounterDraftListPanel(props: {
@@ -34,10 +34,10 @@ export default function EncounterDraftListPanel(props: {
             <button
               type="button"
               className={
-                "w-full rounded-md px-2 py-2 text-left transition " +
+                "w-full px-2 py-2 text-left " +
                 (props.selectedId === r.id
-                  ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
-                  : "text-zinc-800 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800/60")
+                  ? highlightButtonClass(true)
+                  : "rounded-md text-zinc-800 hover:bg-[var(--tovin-highlight-bg-hover)] dark:text-zinc-200")
               }
               onClick={() => props.onSelectEncounter(r.id)}
             >

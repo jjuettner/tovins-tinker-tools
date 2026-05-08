@@ -1,6 +1,6 @@
 import { Swords } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { buttonClass } from "@/components/ui/controlClasses";
+import { buttonClass, highlightButtonClass } from "@/components/ui/controlClasses";
 import { useProfile } from "@/lib/auth";
 import { STORAGE_KEYS } from "@/lib/appConstants";
 import { listCampaigns, type Campaign } from "@/lib/db/campaigns";
@@ -143,12 +143,7 @@ export function EncountersPage() {
           <button
             key={id}
             type="button"
-            className={
-              "rounded-md px-3 py-1.5 text-sm font-medium transition " +
-              (tab === id
-                ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
-                : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800")
-            }
+            className={highlightButtonClass(tab === id)}
             onClick={() => setTab(id)}
           >
             {label}

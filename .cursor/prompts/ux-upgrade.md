@@ -89,3 +89,8 @@
     - ex. initiative, ability score
   - no leading zeroes
   - format on blur. no interfere while typing
+
+  ## Colors
+  - highlight and button colors: with less contrast -> white is too much
+  - apply everywhere
+  - define globally for easy edits

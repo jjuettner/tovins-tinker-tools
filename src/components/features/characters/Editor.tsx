@@ -2,6 +2,7 @@ import { Check, Save, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { buttonClass, inputClass, inputClassFull, smallLabelClass } from "@/components/ui/controlClasses";
 import CharacterAvatar from "@/components/ui/CharacterAvatar";
+import { NumberInput } from "@/components/ui/NumberInput";
 import { useRulesetSrdCatalog } from "@/hooks/useRulesetSrdCatalog";
 import { computeArmorClass } from "@/lib/character/armorClass";
 import { newEquippedItemId, normalizeDraft } from "@/lib/character/normalize";
@@ -447,18 +448,19 @@ export function CharacterEditor(props: {
                 ({formatSigned(abilityMod(props.draft.stats[ab]))})
               </span>
             </span>
-            <input
-              type="number"
+            <NumberInput
+              className={inputClassFull()}
               min={1}
               max={30}
+              twoDigitUnder40={true}
               value={props.draft.stats[ab]}
-              onChange={(e) =>
+              onChange={(next) =>
                 props.onChange({
                   ...props.draft,
-                  stats: { ...props.draft.stats, [ab]: Number(e.target.value) }
+                  stats: { ...props.draft.stats, [ab]: next ?? props.draft.stats[ab] }
                 })
               }
-              className={inputClassFull()}
+              ariaLabel={`${ab} score`}
             />
           </label>
         ))}
