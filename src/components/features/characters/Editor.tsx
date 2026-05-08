@@ -23,7 +23,6 @@ import {
 } from "@/lib/dndData";
 import { toggleInList } from "@/lib/utils";
 import type { CharacterDraft, EquippedItem } from "@/types/character";
-import { SkillCheckList } from "@/components/features/characters/SkillCheckList";
 
 export function CharacterEditor(props: {
   draft: CharacterDraft;
@@ -463,10 +462,6 @@ export function CharacterEditor(props: {
             />
           </label>
         ))}
-      </div>
-
-      <div className="mt-5">
-        <SkillCheckList c={props.draft} collapseByAbility />
       </div>
 
       <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">

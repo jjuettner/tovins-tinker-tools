@@ -28,6 +28,7 @@ function spellsGrouped(spellByIndex: Record<string, DndSpell>, indices: string[]
 
 export function CharacterSheet(props: {
   c: Character;
+  campaignName?: string | null;
   isPlayTarget?: boolean;
   onEdit(): void;
   onDelete(): void;
@@ -79,7 +80,13 @@ export function CharacterSheet(props: {
               {props.c.name || "Unnamed character"}
             </h2>
             <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-300">
-              {props.c.world ? <span className="font-medium">{props.c.world}</span> : <span>World</span>}
+              {props.c.campaignId && props.campaignName ? (
+                <span className="font-medium">{props.campaignName}</span>
+              ) : props.c.world ? (
+                <span className="font-medium">{props.c.world}</span>
+              ) : (
+                <span>World</span>
+              )}
               <span className="px-2 text-zinc-400">·</span>
               {raceName ? (
                 <>

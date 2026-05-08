@@ -149,7 +149,7 @@ export function AppLayout() {
             <div className="relative">
               <button
                 type="button"
-                className="hidden rounded-md sm:block"
+                className="rounded-md"
                 onClick={() => setUserMenuOpen((v) => !v)}
                 aria-label="User menu"
                 aria-expanded={userMenuOpen}

@@ -6,6 +6,7 @@ export function CharacterList(props: {
   characters: Character[];
   selectedId: string | null;
   usedCharacterId: string | null;
+  campaignNameById: Map<string, string>;
   onSelect(id: string): void;
 }) {
   return (
@@ -59,7 +60,8 @@ export function CharacterList(props: {
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-semibold">{c.name || "Unnamed"}</div>
                 <div className="truncate text-xs text-zinc-600 dark:text-zinc-400">
-                  {c.world || "World"} · {dndClassByIndex[c.classIndex]?.name ?? (c.classIndex || "Class")} · L{c.level}
+                  {(c.campaignId ? props.campaignNameById.get(c.campaignId) : null) || c.world || "World"} ·{" "}
+                  {dndClassByIndex[c.classIndex]?.name ?? (c.classIndex || "Class")} · L{c.level}
                 </div>
               </div>
             </button>
