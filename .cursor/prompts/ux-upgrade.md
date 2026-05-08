@@ -4,6 +4,7 @@
   - image: bigger, show more, normalize ratio so all look good
   - image: when cropping vertically. show top part, not center
   - image clickable -> show full in overlay
+  
 
 ## Draft
   - when adding enemy while encounter ongoing, new enemy no show up
@@ -17,6 +18,8 @@
 
   - default pc avatars should have consistent background color. is not filled out entirely yet
   - frames bigger. borders bigger. gold border for pc, silver border for enemy
+  - stat block in encouter row more compact
+    - 2 rows, aligned right, text left
 
 ## Player avatar
   - allow upload of image

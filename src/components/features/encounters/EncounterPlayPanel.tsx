@@ -651,40 +651,64 @@ function DeathSavesPanel(props: {
 function ExpandedMonsterCard(props: { monsterId: string; monstersById: Map<string, MonsterRow> }) {
   const m = props.monstersById.get(props.monsterId);
   if (!m) return <div className="text-sm text-zinc-500">Loading…</div>;
+  const saveByAbbr = useMemo(() => {
+    const out = new Map<string, string>();
+    if (!m.saving_throws) return out;
+    const parts = m.saving_throws.split(",").map((s) => s.trim()).filter(Boolean);
+    for (const p of parts) {
+      const match = /^(STR|DEX|CON|INT|WIS|CHA)\s*([+-]\s*\d+)\b/i.exec(p);
+      if (!match) continue;
+      out.set(match[1].toUpperCase(), match[2].replace(/\s+/g, ""));
+    }
+    return out;
+  }, [m.saving_throws]);
+
+  const abilities: Array<{ abbr: string; score: number | null; mod: number | null }> = [
+    { abbr: "STR", score: m.str, mod: m.str_mod },
+    { abbr: "DEX", score: m.dex, mod: m.dex_mod },
+    { abbr: "CON", score: m.con, mod: m.con_mod },
+    { abbr: "INT", score: m.int, mod: m.int_mod },
+    { abbr: "WIS", score: m.wis, mod: m.wis_mod },
+    { abbr: "CHA", score: m.cha, mod: m.cha_mod }
+  ];
   return (
-    <div className="space-y-3">
-      <div className="grid grid-cols-6 gap-2">
-        {[
-          { abbr: "STR", score: m.str, mod: m.str_mod },
-          { abbr: "DEX", score: m.dex, mod: m.dex_mod },
-          { abbr: "CON", score: m.con, mod: m.con_mod },
-          { abbr: "INT", score: m.int, mod: m.int_mod },
-          { abbr: "WIS", score: m.wis, mod: m.wis_mod },
-          { abbr: "CHA", score: m.cha, mod: m.cha_mod }
-        ].map((r) => (
-          <div key={r.abbr} className="rounded-lg border border-zinc-200 px-2 py-1 text-center dark:border-zinc-800">
-            <div className="text-[11px] font-semibold text-zinc-500">{r.abbr}</div>
-            <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{r.score ?? "—"}</div>
-            <div className="text-xs text-zinc-500">{r.mod === null ? "" : r.mod >= 0 ? `+${r.mod}` : `${r.mod}`}</div>
+    <div className="space-y-2">
+      <div className="w-full md:float-right md:ml-3 md:mb-2 md:w-[12.5rem]">
+        <div className="grid grid-cols-3 gap-2">
+          {abilities.map((a) => {
+            const save = saveByAbbr.get(a.abbr) ?? null;
+            return (
+              <div
+                key={a.abbr}
+                className="rounded-lg border border-zinc-200 bg-white/60 px-2 py-1 text-center dark:border-zinc-800 dark:bg-zinc-950/20"
+              >
+                <div className="text-[11px] font-semibold text-zinc-500">{a.abbr}</div>
+                <div className="text-sm font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">{a.score ?? "—"}</div>
+                <div className="text-xs tabular-nums text-zinc-500">
+                  {a.mod === null ? "" : a.mod >= 0 ? `+${a.mod}` : `${a.mod}`}
+                </div>
+                {save ? <div className="mt-0.5 text-[10px] font-medium tabular-nums text-zinc-500">save {save}</div> : null}
+              </div>
+            );
+          })}
+        </div>
+        {m.skills ? (
+          <div className="mt-1 grid justify-items-end gap-0.5 text-xs text-zinc-600 dark:text-zinc-300">
+            {m.skills ? (
+              <div className="max-w-full text-left">
+                <span className="font-semibold">Skills:</span> {m.skills}
+              </div>
+            ) : null}
           </div>
-        ))}
+        ) : null}
       </div>
-      {m.skills ? (
-        <p className="text-xs text-zinc-600 dark:text-zinc-300">
-          <span className="font-semibold">Skills:</span> {m.skills}
-        </p>
-      ) : null}
-      {m.saving_throws ? (
-        <p className="text-xs text-zinc-600 dark:text-zinc-300">
-          <span className="font-semibold">Saves:</span> {m.saving_throws}
-        </p>
-      ) : null}
       {m.actions_html ? (
         <div
           className="monster-html max-h-64 space-y-2 overflow-auto text-sm leading-relaxed text-zinc-700 dark:text-zinc-300 [&_p]:my-1"
           dangerouslySetInnerHTML={{ __html: m.actions_html }}
         />
       ) : null}
+      <div className="clear-both" />
     </div>
   );
 }
