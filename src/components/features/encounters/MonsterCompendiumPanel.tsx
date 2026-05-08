@@ -1,4 +1,4 @@
-import { X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { buttonClass, inputClassFull, smallLabelClass } from "@/components/ui/controlClasses";
 import { listMonsters, type MonsterRow, type MonsterSort } from "@/lib/db/monsters";
@@ -91,7 +91,12 @@ export default function MonsterCompendiumPanel(props: Props) {
                       <span className="ml-2 tabular-nums text-xs font-normal text-zinc-500">CR {m.cr}</span>
                     </button>
                     {props.onPickMonster ? (
-                      <button type="button" className={buttonClass("primary") + " shrink-0 text-xs"} onClick={() => props.onPickMonster?.(m)}>
+                      <button
+                        type="button"
+                        className={buttonClass("ghost") + " shrink-0 px-2 py-1.5 text-xs"}
+                        onClick={() => props.onPickMonster?.(m)}
+                      >
+                        <Plus className="mr-1 inline-block h-3.5 w-3.5" aria-hidden="true" />
                         {props.pickLabel ?? "Add"}
                       </button>
                     ) : null}
@@ -109,9 +114,10 @@ export default function MonsterCompendiumPanel(props: Props) {
           {selected && props.onPickMonster ? (
             <button
               type="button"
-              className={buttonClass("primary") + " h-8 px-2 py-0 text-xs"}
+              className={buttonClass("ghost") + " h-8 px-2 py-0 text-xs"}
               onClick={() => props.onPickMonster?.(selected)}
             >
+              <Plus className="mr-1 inline-block h-3.5 w-3.5" aria-hidden="true" />
               {props.pickLabel ?? "Add"}
             </button>
           ) : null}

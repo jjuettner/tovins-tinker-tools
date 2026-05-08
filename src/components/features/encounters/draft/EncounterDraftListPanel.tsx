@@ -11,7 +11,7 @@ export default function EncounterDraftListPanel(props: {
   onSelectEncounter(id: string): void;
 }) {
   return (
-    <section className="flex flex-col rounded-xl border border-zinc-200 bg-white/60 p-4 dark:border-zinc-800 dark:bg-zinc-900/40 [@media(min-width:1800px)]:sticky [@media(min-width:1800px)]:top-6 [@media(min-width:1800px)]:max-h-[calc(100dvh-10rem)]">
+    <section className="flex flex-col rounded-xl border border-zinc-200 bg-white/60 p-4 dark:border-zinc-800 dark:bg-zinc-900/40 lg:max-h-[600px] [@media(min-width:1800px)]:max-h-[calc(100dvh-10rem)] [@media(min-width:1800px)]:sticky [@media(min-width:1800px)]:top-6">
       <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Encounters</h2>
       <div className="mt-3 flex flex-wrap items-end gap-2">
         <label className="flex min-w-[12rem] flex-1 flex-col gap-1">

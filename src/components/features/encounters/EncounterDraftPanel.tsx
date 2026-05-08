@@ -201,69 +201,69 @@ export default function EncounterDraftPanel(props: { campaignId: string; onRunEn
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
       {overlay}
       <div className="flex flex-col gap-6 [@media(min-width:1800px)]:relative [@media(min-width:1800px)]:block [@media(min-width:1800px)]:min-h-[calc(100dvh-10rem)]">
-        <div className="[@media(min-width:1800px)]:absolute [@media(min-width:1800px)]:left-[calc(-1*max(0px,(100vw-72rem)/2)+16px)] [@media(min-width:1800px)]:top-0 [@media(min-width:1800px)]:w-[320px]">
-          <EncounterDraftListPanel
-            rows={rows}
-            selectedId={selectedId}
-            loading={loading}
-            newName={newName}
-            onChangeNewName={setNewName}
-            onCreateDraft={async () => {
-              const name = uniqueEncounterName(newName);
-              const row = await createEncounter({
-                campaignId: props.campaignId,
-                name,
-                data: emptyEncounterDataV1()
-              });
-              setNewName("New encounter");
-              await refresh();
-              setSelectedId(row.id);
-            }}
-            onSelectEncounter={setSelectedId}
-          />
+        <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[360px_minmax(0,1fr)] lg:items-start [@media(min-width:1800px)]:contents">
+          <div className="[@media(min-width:1800px)]:absolute [@media(min-width:1800px)]:left-[calc(-1*max(0px,(100vw-72rem)/2)+16px)] [@media(min-width:1800px)]:top-0 [@media(min-width:1800px)]:w-[320px]">
+            <EncounterDraftListPanel
+              rows={rows}
+              selectedId={selectedId}
+              loading={loading}
+              newName={newName}
+              onChangeNewName={setNewName}
+              onCreateDraft={async () => {
+                const name = uniqueEncounterName(newName);
+                const row = await createEncounter({
+                  campaignId: props.campaignId,
+                  name,
+                  data: emptyEncounterDataV1()
+                });
+                setNewName("New encounter");
+                await refresh();
+                setSelectedId(row.id);
+              }}
+              onSelectEncounter={setSelectedId}
+            />
+          </div>
+
+          <div className="[@media(min-width:1800px)]:absolute [@media(min-width:1800px)]:right-[calc(-1*max(0px,(100vw-72rem)/2)+16px)] [@media(min-width:1800px)]:top-0 [@media(min-width:1800px)]:w-[320px]">
+            <EncounterDraftInfoPanel
+              selected={selected}
+              loading={loading}
+              chars={chars}
+              monsterById={monsterById}
+              renameDraft={renameDraft}
+              onChangeRenameDraft={setRenameDraft}
+              onCommitRename={async (raw) => {
+                if (!selected) return;
+                const t = raw.trim();
+                if (!t || t === selected.name) return;
+                await updateEncounter(selected.id, { name: t });
+                await refresh();
+              }}
+              crTotal={crTotal}
+              onRunEncounter={() => {
+                if (!selected) return;
+                props.onRunEncounter(selected.id);
+              }}
+              onChangeStatus={async (next) => {
+                if (!selected) return;
+                await updateEncounter(selected.id, { status: next });
+                await refresh();
+              }}
+              onDeleteEncounter={async () => {
+                if (!selected) return;
+                if (!window.confirm("Delete this encounter?")) return;
+                await deleteEncounter(selected.id);
+                setSelectedId(null);
+                await refresh();
+              }}
+              onTogglePlayer={togglePlayer}
+              onSetPickCount={setPickCount}
+              onRemovePick={removePick}
+            />
+          </div>
         </div>
 
-        <div className="[@media(min-width:1800px)]:absolute [@media(min-width:1800px)]:right-[calc(-1*max(0px,(100vw-72rem)/2)+16px)] [@media(min-width:1800px)]:top-0 [@media(min-width:1800px)]:w-[320px]">
-          <EncounterDraftInfoPanel
-            selected={selected}
-            loading={loading}
-            chars={chars}
-            monsterById={monsterById}
-            renameDraft={renameDraft}
-            onChangeRenameDraft={setRenameDraft}
-            onCommitRename={async (raw) => {
-              if (!selected) return;
-              const t = raw.trim();
-              if (!t || t === selected.name) return;
-              await updateEncounter(selected.id, { name: t });
-              await refresh();
-            }}
-            crTotal={crTotal}
-            onRunEncounter={() => {
-              if (!selected) return;
-              props.onRunEncounter(selected.id);
-            }}
-            onChangeStatus={async (next) => {
-              if (!selected) return;
-              await updateEncounter(selected.id, { status: next });
-              await refresh();
-            }}
-            onDeleteEncounter={async () => {
-              if (!selected) return;
-              if (!window.confirm("Delete this encounter?")) return;
-              await deleteEncounter(selected.id);
-              setSelectedId(null);
-              await refresh();
-            }}
-            onTogglePlayer={togglePlayer}
-            onSetPickCount={setPickCount}
-            onRemovePick={removePick}
-          />
-        </div>
-
-        <div className="[@media(min-width:1800px)]">
-          <MonsterCompendiumPanel onPickMonster={(m) => addMonsterPick(m.id)} pickLabel="Add" />
-        </div>
+        <MonsterCompendiumPanel onPickMonster={(m) => addMonsterPick(m.id)} pickLabel="Add" />
       </div>
     </div>
   );

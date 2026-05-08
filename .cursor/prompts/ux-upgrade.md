@@ -28,8 +28,8 @@
       - sidebar positioning is good, but take more vertical space
       - center content (monsters): take up entire with of main content area
 
-      - remove margin around monster compendium
-      - make sidebars wider
+      - remove standalone compendium tab from draft
+      - compendium add buttons: add plus icon and change button to be darker
 
 ## run encounter row
 - Avatar Frame

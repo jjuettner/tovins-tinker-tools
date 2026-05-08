@@ -7,9 +7,7 @@ import { listCampaigns, type Campaign } from "@/lib/db/campaigns";
 import { useStoredState } from "@/hooks/useStoredState";
 import EncounterDraftPanel from "@/components/features/encounters/EncounterDraftPanel";
 import EncounterPlayPanel from "@/components/features/encounters/EncounterPlayPanel";
-import MonsterCompendiumPanel from "@/components/features/encounters/MonsterCompendiumPanel";
-
-type Tab = "compendium" | "draft" | "play";
+type Tab = "draft" | "play";
 
 export function EncountersFeature() {
   const { profile, loading: profileLoading } = useProfile();
@@ -18,7 +16,7 @@ export function EncountersFeature() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [tab, setTab] = useState<Tab>("compendium");
+  const [tab, setTab] = useState<Tab>("draft");
 
   useEffect(() => {
     let cancelled = false;
@@ -139,7 +137,6 @@ export function EncountersFeature() {
       <div className="flex flex-wrap gap-2 border-b border-zinc-200 pb-2 dark:border-zinc-800">
         {(
           [
-            ["compendium", "Compendium"],
             ["draft", "Draft"],
             ["play", "Play"]
           ] as const
@@ -160,7 +157,6 @@ export function EncountersFeature() {
         ))}
       </div>
 
-      {tab === "compendium" ? <MonsterCompendiumPanel /> : null}
       {tab === "draft" ? (
         <EncounterDraftPanel
           campaignId={campaignId}

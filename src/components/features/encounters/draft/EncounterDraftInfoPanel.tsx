@@ -30,7 +30,7 @@ export default function EncounterDraftInfoPanel(props: {
 
   return (
     <div className="flex flex-col gap-6">
-      <section className="rounded-xl border border-zinc-200 bg-white/60 p-4 dark:border-zinc-800 dark:bg-zinc-900/40 [@media(min-width:1800px)]:sticky [@media(min-width:1800px)]:top-6 [@media(min-width:1800px)]:max-h-[calc(100dvh-10rem)] [@media(min-width:1800px)]:overflow-auto">
+      <section className="rounded-xl border border-zinc-200 bg-white/60 p-4 dark:border-zinc-800 dark:bg-zinc-900/40 lg:max-h-[600px] lg:overflow-auto [@media(min-width:1800px)]:max-h-[calc(100dvh-10rem)] [@media(min-width:1800px)]:sticky [@media(min-width:1800px)]:top-6">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <label className="flex min-w-[12rem] flex-1 flex-col gap-1">
             <span className={smallLabelClass()}>Encounter name</span>
