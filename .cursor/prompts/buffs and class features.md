@@ -18,3 +18,16 @@ characters can get buffs
 
 - need to display on character sheet / apply bonuses
 
+- show speed in playerheader and character sheet
+
+- apply class features
+	- barbarian
+		- unarmored defense
+		
+- rest and conditions buttons in playerheader : put on top right
+
+- make subclass selectable in character editor
+	- find in classes.data.subclasses
+
+- consider unarmored defense when calculating barbarian ac
+- show reckless attack option when attacking with a weapon as barbarian lv >= 2

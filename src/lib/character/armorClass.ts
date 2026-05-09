@@ -2,6 +2,14 @@ import type { EquippedItem } from "@/types/character";
 import type { DndEquipment } from "@/lib/dndEquipment";
 import { dndEquipmentByIndex, isBodyArmor, isShield } from "@/lib/dndEquipment";
 
+/** Optional character context for class-specific unarmored AC (e.g. barbarian). */
+export type ArmorClassContext = {
+  /** Ruleset class slug, e.g. `barbarian`. */
+  classIndex: string;
+  /** Constitution modifier (floored), same as used on the sheet. */
+  conMod: number;
+};
+
 /**
  * Compute armor class contribution of a single armor item.
  *
@@ -22,16 +30,22 @@ function armorContribution(eq: DndEquipment, dexMod: number, magicPlus: number):
 /**
  * Compute best armor class for equipped items.
  *
- * Uses best of: unarmored (10 + DEX) vs best body armor, plus sum of shields.
+ * With **body armor** equipped, AC is that armor (plus shields), not Unarmored Defense.
+ * With **no body armor**, uses **10 + DEX** (or **10 + DEX + CON** for barbarian Unarmored Defense), plus shields.
  *
  * @param equipped Equipped items (optional).
  * @param dexMod Dexterity modifier.
+ * @param context When set for a barbarian with no body armor, adds CON to the unarmored baseline.
  * @returns Armor class.
  */
-export function computeArmorClass(equipped: EquippedItem[] | undefined, dexMod: number): number {
+export function computeArmorClass(
+  equipped: EquippedItem[] | undefined,
+  dexMod: number,
+  context?: ArmorClassContext | null
+): number {
   const items = equipped ?? [];
-  const bestUnarmored = 10 + dexMod;
   let bestArmor = 0;
+  let hasBodyArmor = false;
   let shield = 0;
 
   for (const item of items) {
@@ -44,11 +58,18 @@ export function computeArmorClass(equipped: EquippedItem[] | undefined, dexMod: 
     }
 
     if (isBodyArmor(eq)) {
+      hasBodyArmor = true;
       bestArmor = Math.max(bestArmor, armorContribution(eq, dexMod, item.modifier));
     }
   }
 
-  const body = Math.max(bestUnarmored, bestArmor);
+  const barbarianUd =
+    !hasBodyArmor &&
+    context &&
+    context.classIndex.trim().toLowerCase() === "barbarian";
+  const bestUnarmored = barbarianUd ? 10 + dexMod + context.conMod : 10 + dexMod;
+
+  const body = hasBodyArmor ? bestArmor : bestUnarmored;
   return body + shield;
 }
 

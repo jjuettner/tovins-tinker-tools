@@ -28,6 +28,14 @@ export type EquipmentRow = RulesetScoped<{
 
 export type WeaponMasteryRow = RulesetScoped<{ description: string | null; data: unknown }>;
 
+/** Class / subclass feature row from `public.features`. */
+export type FeatureRow = RulesetScoped<{
+  class_slug: string | null;
+  subclass_slug: string | null;
+  level: number | null;
+  data: unknown;
+}>;
+
 export type ConditionRow = {
   slug: string;
   name: string;
@@ -127,6 +135,16 @@ export function fetchEquipment(rulesetIds: string[]) {
  */
 export function fetchWeaponMastery(rulesetIds: string[]) {
   return fetchByRulesets<WeaponMasteryRow>("weapon_mastery_properties", rulesetIds);
+}
+
+/**
+ * Fetch class and subclass features scoped to the given rulesets.
+ *
+ * @param rulesetIds Ruleset ids.
+ * @returns Feature rows (may include duplicates across rulesets).
+ */
+export function fetchFeatures(rulesetIds: string[]) {
+  return fetchByRulesets<FeatureRow>("features", rulesetIds);
 }
 
 /**

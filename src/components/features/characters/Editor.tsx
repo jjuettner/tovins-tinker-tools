@@ -10,11 +10,12 @@ import { emptyWeapon, rebuildEquipped, splitEquipped } from "@/lib/equippedLayou
 import { uploadCharacterAvatar } from "@/lib/db/characterAvatars";
 import { DND2024_RULESET_ID, listRulesets } from "@/lib/db/rulesets";
 import { listCampaignRulesets, listCampaigns } from "@/lib/db/campaigns";
-import { dndArmorPieces, dndEquipmentByIndex, dndWeapons, isBodyArmor } from "@/lib/dndEquipment";
+import { armorAcRulesText, dndArmorPieces, dndEquipmentByIndex, dndWeapons, isBodyArmor } from "@/lib/dndEquipment";
 import { dndRaces } from "@/lib/dndRaces";
 import { abilities, abilityMod, formatSigned, proficiencyBonus, skillAbility, skills } from "@/lib/dnd";
 import type { Ability, Skill } from "@/lib/dnd";
 import {
+  dndClassByIndex,
   dndClasses,
   dndFeats,
   dndFeatByIndex,
@@ -138,6 +139,7 @@ export function CharacterEditor(props: {
 
   const racesForSelect = catalog.loading ? dndRaces : catalog.races;
   const classesForSelect = catalog.loading ? dndClasses : catalog.classes;
+  const classesByIndexForEditor = catalog.loading ? dndClassByIndex : catalog.classesByIndex;
   const featsForSelect = catalog.loading ? dndFeats : catalog.feats;
   const spellsForPool = catalog.loading ? null : catalog.spells;
   const spellByIndex = catalog.loading ? dndSpellByIndex : catalog.spellsByIndex;
@@ -145,6 +147,14 @@ export function CharacterEditor(props: {
 
   const [spellQuery, setSpellQuery] = useState("");
   const [featQuery, setFeatQuery] = useState("");
+
+  const selectedClassDef = useMemo(() => {
+    const idx = props.draft.classIndex.trim();
+    if (!idx) return undefined;
+    return classesByIndexForEditor[idx];
+  }, [classesByIndexForEditor, props.draft.classIndex]);
+
+  const subclassOptions = selectedClassDef?.subclasses ?? [];
   const classSpellPool = useMemo(() => {
     if (!spellsForPool) return spellsOnClassList(props.draft.classIndex);
     const idx = props.draft.classIndex.trim();
@@ -189,8 +199,12 @@ export function CharacterEditor(props: {
 
   const dexMod = abilityMod(props.draft.stats.DEX);
   const liveAc = useMemo(
-    () => computeArmorClass(props.draft.equipped, dexMod),
-    [props.draft.equipped, dexMod]
+    () =>
+      computeArmorClass(props.draft.equipped, dexMod, {
+        classIndex: props.draft.classIndex,
+        conMod: abilityMod(props.draft.stats.CON)
+      }),
+    [props.draft.classIndex, props.draft.equipped, props.draft.stats.CON, dexMod]
   );
 
   const bodyArmorOptions = useMemo(() => dndArmorPieces.filter((e) => isBodyArmor(e)), []);
@@ -417,7 +431,15 @@ export function CharacterEditor(props: {
           <span className={smallLabelClass()}>Class</span>
           <select
             value={props.draft.classIndex}
-            onChange={(e) => props.onChange({ ...props.draft, classIndex: e.target.value })}
+            onChange={(e) => {
+              const nextClass = e.target.value;
+              const cls = (catalog.loading ? dndClassByIndex : catalog.classesByIndex)[nextClass];
+              const subs = cls?.subclasses ?? [];
+              const cur = props.draft.subclassIndex?.trim() ?? "";
+              const keep =
+                cur.length > 0 && subs.some((s) => s.index === cur) ? props.draft.subclassIndex : null;
+              props.onChange({ ...props.draft, classIndex: nextClass, subclassIndex: keep });
+            }}
             className={inputClassFull()}
           >
             <option value="" disabled>
@@ -438,6 +460,38 @@ export function CharacterEditor(props: {
             <p className="text-xs text-amber-700 dark:text-amber-300">
               Selected class not available under current ruleset filters. Re-enable its ruleset or choose another.
             </p>
+          ) : null}
+        </label>
+
+        <label className="flex flex-col gap-1">
+          <span className={smallLabelClass()}>Subclass</span>
+          <select
+            value={props.draft.subclassIndex ?? ""}
+            onChange={(e) => {
+              const v = e.target.value.trim();
+              props.onChange({ ...props.draft, subclassIndex: v.length > 0 ? v : null });
+            }}
+            disabled={!props.draft.classIndex.trim() || subclassOptions.length === 0}
+            className={inputClassFull()}
+          >
+            <option value="">— None —</option>
+            {(() => {
+              const subId = props.draft.subclassIndex?.trim() ?? "";
+              if (!subId || subclassOptions.some((s) => s.index === subId)) return null;
+              return (
+                <option value={subId}>
+                  Unknown / not listed: {subId}
+                </option>
+              );
+            })()}
+            {subclassOptions.map((s) => (
+              <option key={s.index} value={s.index}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+          {props.draft.classIndex.trim() && subclassOptions.length === 0 ? (
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">No subclasses in catalog for this class.</p>
           ) : null}
         </label>
 
@@ -605,11 +659,14 @@ export function CharacterEditor(props: {
                 }}
               >
                 <option value="">None (10 + DEX)</option>
-                {bodyArmorOptions.map((a) => (
-                  <option key={a.index} value={a.index}>
-                    {a.name}
-                  </option>
-                ))}
+                {bodyArmorOptions.map((a) => {
+                  const acBit = armorAcRulesText(a);
+                  return (
+                    <option key={a.index} value={a.index}>
+                      {acBit ? `${a.name} (${acBit})` : a.name}
+                    </option>
+                  );
+                })}
               </select>
             </label>
             {bodyArmor ? (

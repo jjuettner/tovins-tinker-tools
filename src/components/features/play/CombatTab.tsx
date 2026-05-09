@@ -1,7 +1,14 @@
 import { Crosshair, Droplet, Sword } from "lucide-react";
 import { useMemo, useState } from "react";
 import { buttonClass, inputClass, inputClassFull, smallLabelClass } from "@/components/ui/controlClasses";
-import { resolvedWeaponMasteryIndex, unarmedDamageBonus, unarmedToHit, weaponDamageSummary, weaponToHitBonus } from "@/lib/combat";
+import {
+  canUseRecklessAttack,
+  resolvedWeaponMasteryIndex,
+  unarmedDamageBonus,
+  unarmedToHit,
+  weaponDamageSummary,
+  weaponToHitBonus
+} from "@/lib/combat";
 import { formatSigned } from "@/lib/dnd";
 import { renderDbDescription } from "@/lib/renderDbDescription";
 import { dndEquipmentByIndex, isWeapon } from "@/lib/dndEquipment";
@@ -34,6 +41,8 @@ function AttackRollModal(props: {
 }) {
   const toHit = props.ctx.kind === "unarmed" ? unarmedToHit(props.c) : weaponToHitBonus(props.c, props.ctx.weapon);
   const [step, setStep] = useState<"roll" | "hit">("roll");
+  const [reckless, setReckless] = useState(false);
+  const canReckless = props.ctx.kind === "weapon" && canUseRecklessAttack(props.c, props.ctx.weapon);
 
   const combatFeatHints = useMemo(() => {
     return (props.c.feats ?? [])
@@ -68,8 +77,26 @@ function AttackRollModal(props: {
               <Crosshair className="h-4 w-4 shrink-0 opacity-90" aria-hidden="true" />
               <span>
                 d20 <span className="font-semibold tabular-nums">{formatSigned(toHit)}</span>
+                {canReckless && reckless ? (
+                  <span className="ml-1 font-semibold text-amber-800 dark:text-amber-200"> (advantage)</span>
+                ) : null}
               </span>
             </p>
+            {canReckless ? (
+              <label className="mt-3 flex cursor-pointer items-start gap-2 text-xs text-zinc-700 dark:text-zinc-200">
+                <input
+                  type="checkbox"
+                  className="mt-0.5"
+                  checked={reckless}
+                  onChange={(e) => setReckless(e.target.checked)}
+                />
+                <span>
+                  <span className="font-semibold text-zinc-900 dark:text-zinc-50">Reckless Attack</span> — advantage on
+                  this melee weapon attack (roll 2d20, keep higher on the d20). Until your next turn, attack rolls
+                  against you have advantage.
+                </span>
+              </label>
+            ) : null}
             <div className="mt-4 flex gap-2">
               <button
                 type="button"
@@ -94,6 +121,11 @@ function AttackRollModal(props: {
                 {dmg.bonus !== 0 ? ` ${formatSigned(dmg.bonus)}` : ""} {dmg.type}
               </span>
             </p>
+            {reckless ? (
+              <p className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-2 py-1.5 text-xs text-amber-950 dark:border-amber-800/80 dark:bg-amber-950/40 dark:text-amber-100">
+                Reckless: enemies have advantage on attack rolls against you until your next turn.
+              </p>
+            ) : null}
             {masteryInfo ? (
               <div className="mt-3 rounded-lg border border-zinc-200 bg-zinc-50/80 p-3 text-xs dark:border-zinc-700 dark:bg-zinc-950/40">
                 <div className="font-semibold text-zinc-900 dark:text-zinc-50">Mastery: {masteryInfo.name}</div>
@@ -174,7 +206,7 @@ export default function CombatTab(props: {
 
   return (
     <div className="space-y-8">
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch">
+      <div className="grid grid-cols-1 gap-4 min-[700px]:grid-cols-2 min-[700px]:items-stretch">
         <section className="flex flex-col rounded-xl border border-zinc-200 bg-white/60 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
           <div className="flex items-center gap-2">
             <Droplet className="h-4 w-4 text-red-600" aria-hidden="true" />

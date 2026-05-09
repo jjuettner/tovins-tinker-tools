@@ -78,6 +78,25 @@ export function isBodyArmor(eq: DndEquipment): boolean {
   return equipmentHasCategory(eq, "armor") && !isShield(eq);
 }
 
+/**
+ * Short armor AC formula for labels (e.g. select options).
+ *
+ * @param eq Equipment row with `armor_class` (armor or shield).
+ * @returns Text like `18`, `11 + DEX`, or `15 + DEX (max +2)`; empty if no AC block.
+ */
+export function armorAcRulesText(eq: DndEquipment): string {
+  const ac = eq.armor_class;
+  if (!ac) return "";
+  const { base, dex_bonus: dexBonus, max_bonus: maxBonus } = ac;
+  if (dexBonus === false) {
+    return String(base);
+  }
+  if (maxBonus == null) {
+    return `${base} + DEX`;
+  }
+  return `${base} + DEX (max +${maxBonus})`;
+}
+
 export const dndWeapons: DndEquipment[] = dndEquipment.filter(isWeapon);
 
 export const dndArmorPieces: DndEquipment[] = dndEquipment.filter(

@@ -1,14 +1,18 @@
 import { useMemo } from "react";
 import { SkillCheckList } from "@/components/features/characters/SkillCheckList";
+import { buildSheetPassiveEntries } from "@/lib/character/sheetPassives";
 import { dndTraitByIndex } from "@/lib/dndTraits";
-import { unlockedBaseClassFeatures } from "@/lib/dndFeatures";
+import type { FeatureRow } from "@/lib/db/rulesetCatalog";
 import { renderDbDescription } from "@/lib/renderDbDescription";
 import type { Character } from "@/types/character";
+import RulesetFeatureDescription from "@/components/features/play/RulesetFeatureDescription";
 
 export default function GeneralTab(props: {
   c: Character;
   raceByIndex: Record<string, import("@/lib/dndRaces").DndRace>;
   featByIndex: Record<string, import("@/lib/dndData").DndFeat>;
+  catalogFeatures: FeatureRow[];
+  catalogLoading: boolean;
 }) {
   const raceTraits = useMemo(() => {
     const race = props.raceByIndex[props.c.raceIndex];
@@ -30,35 +34,53 @@ export default function GeneralTab(props: {
     [props.c.feats, props.featByIndex]
   );
 
-  const bundledClassFeatures = useMemo(
-    () => unlockedBaseClassFeatures(props.c.classIndex, props.c.level),
-    [props.c.classIndex, props.c.level]
+  const passiveEntries = useMemo(
+    () => buildSheetPassiveEntries(props.c, props.catalogFeatures),
+    [props.c, props.catalogFeatures]
   );
+
+  const rulesetClassFeatures = useMemo(
+    () => passiveEntries.filter((e) => e.kind === "ruleset-class-feature"),
+    [passiveEntries]
+  );
+
+  const showRulesetFeaturesBlock = props.catalogLoading || rulesetClassFeatures.length > 0;
 
   return (
     <div className="space-y-8">
       <SkillCheckList c={props.c} twoColumnAbilityGridFrom="md" />
 
-      {bundledClassFeatures.length > 0 ? (
+      {showRulesetFeaturesBlock ? (
         <section className="rounded-xl border border-zinc-200 bg-white/60 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
-          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Class features</h2>
+          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Class and subclass features</h2>
           <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-            From bundled PHB24 feature JSON for your class and level. Subclass paths omitted until a subclass is stored on the character.
+            From your campaign rulesets (catalog). Unlocks by class, subclass, and level.
           </p>
-          <ul className="mt-3 space-y-3 text-sm text-zinc-700 dark:text-zinc-200">
-            {bundledClassFeatures.map((row) => (
-              <li key={row.index}>
-                <div className="font-medium text-zinc-900 dark:text-zinc-50">
-                  <span className="text-zinc-500 dark:text-zinc-400">Lv {row.level}</span> · {row.name}
-                </div>
-                {row.desc?.length ? (
-                  <p className="mt-1 whitespace-pre-wrap text-xs leading-relaxed text-zinc-600 dark:text-zinc-300">
-                    {renderDbDescription(row.desc.join("\n\n"))}
-                  </p>
-                ) : null}
-              </li>
-            ))}
-          </ul>
+          {props.catalogLoading && passiveEntries.length === 0 ? (
+            <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">Loading catalog…</p>
+          ) : null}
+
+          {rulesetClassFeatures.length > 0 ? (
+            <ul className="mt-4 space-y-4 text-sm text-zinc-700 dark:text-zinc-200">
+              {rulesetClassFeatures.map((row) => (
+                <li key={row.slug}>
+                  <div className="flex flex-wrap items-baseline gap-x-2 font-medium text-zinc-900 dark:text-zinc-50">
+                    <span>
+                      <span className="text-zinc-500 dark:text-zinc-400">Lv {row.level}</span>
+                      {" · "}
+                      {row.name}
+                    </span>
+                    {row.subclassPathName ? (
+                      <span className="border-l-2 border-teal-500/70 pl-2 text-[11px] font-normal tracking-wide text-teal-900 dark:border-teal-400/80 dark:text-teal-300/95">
+                        {row.subclassPathName}
+                      </span>
+                    ) : null}
+                  </div>
+                  {row.description ? <RulesetFeatureDescription text={row.description} /> : null}
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </section>
       ) : null}
 
@@ -102,4 +124,3 @@ export default function GeneralTab(props: {
     </div>
   );
 }
-

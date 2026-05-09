@@ -42,9 +42,12 @@ export function CharacterSheet(props: {
   const className =
     (catalog.loading ? dndClassByIndex : catalog.classesByIndex)[props.c.classIndex]?.name ??
     (props.c.classIndex ? props.c.classIndex : "Class");
-  const raceName =
-    (catalog.loading ? dndRaceByIndex : catalog.racesByIndex)[props.c.raceIndex]?.name ??
-    (props.c.raceIndex ? props.c.raceIndex : null);
+  const raceForSheet = (catalog.loading ? dndRaceByIndex : catalog.racesByIndex)[props.c.raceIndex];
+  const raceName = raceForSheet?.name ?? (props.c.raceIndex ? props.c.raceIndex : null);
+  const speedFt = useMemo(() => {
+    const s = raceForSheet?.speed;
+    return typeof s === "number" && Number.isFinite(s) ? Math.floor(s) : null;
+  }, [raceForSheet]);
 
   const spellByIndex = catalog.loading ? dndSpellByIndex : catalog.spellsByIndex;
   const spellGroups = useMemo(() => spellsGrouped(spellByIndex, props.c.spells ?? []), [spellByIndex, props.c.spells]);
@@ -102,6 +105,8 @@ export function CharacterSheet(props: {
               <span>Proficiency {formatSigned(prof)}</span>
               <span className="px-2 text-zinc-400">·</span>
               <span>AC {props.c.armorClass ?? 10}</span>
+              <span className="px-2 text-zinc-400">·</span>
+              <span>Speed {speedFt !== null ? `${speedFt} ft.` : "—"}</span>
               <span className="px-2 text-zinc-400">·</span>
               <span>
                 HP {props.c.currentHp ?? 0}/{props.c.maxHp ?? 0}

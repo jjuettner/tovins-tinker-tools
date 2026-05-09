@@ -63,7 +63,10 @@ export function normalizeCharacter(c: Character): Character {
 
   const spellSlotsUsed = c.spellSlotsUsed && typeof c.spellSlotsUsed === "object" ? { ...c.spellSlotsUsed } : {};
 
-  const armorClass = computeArmorClass(equipped, dexMod);
+  const armorClass = computeArmorClass(equipped, dexMod, {
+    classIndex: c.classIndex,
+    conMod: abilityMod(c.stats.CON)
+  });
 
   const rawSub = typeof c.subclassIndex === "string" ? c.subclassIndex.trim() : "";
   const subclassIndex = rawSub.length > 0 ? rawSub : null;

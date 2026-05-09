@@ -59,6 +59,21 @@ export function weaponToHitBonus(c: Character, weapon: EquippedItem): number {
 }
 
 /**
+ * Whether barbarian Reckless Attack can apply to this weapon attack (level 2+, melee, STR-based).
+ *
+ * @param c Character sheet.
+ * @param weapon Equipped weapon row.
+ * @returns True when UI should offer Reckless Attack for this swing.
+ */
+export function canUseRecklessAttack(c: Character, weapon: EquippedItem): boolean {
+  if (c.classIndex.trim().toLowerCase() !== "barbarian" || c.level < 2) return false;
+  const eq = dndEquipmentByIndex[weapon.equipmentIndex];
+  if (!eq || !isWeapon(eq) || weaponIsRanged(eq)) return false;
+  const { ability } = weaponAbilityAndMod(c.stats, eq);
+  return ability === "STR";
+}
+
+/**
  * Summarize weapon damage dice, bonus, and type.
  *
  * @param c Character.

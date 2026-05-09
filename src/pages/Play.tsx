@@ -54,7 +54,21 @@ export function PlayPage() {
   const { maximaFor } = useRemoteSpellSlots(activeRuleIds);
 
   const classByIndex = catalog.loading ? dndClassByIndex : catalog.classesByIndex;
+  const raceByIndex = catalog.loading ? dndRaceByIndex : catalog.racesByIndex;
   const spellByIndex = catalog.loading ? dndSpellByIndex : catalog.spellsByIndex;
+  const speedFt = useMemo(() => {
+    if (!c) return null;
+    const s = raceByIndex[c.raceIndex]?.speed;
+    return typeof s === "number" && Number.isFinite(s) ? Math.floor(s) : null;
+  }, [c, raceByIndex]);
+
+  const subclassDisplayName = useMemo(() => {
+    if (!c?.subclassIndex?.trim()) return null;
+    const slug = c.subclassIndex.trim();
+    const cls = classByIndex[c.classIndex];
+    const match = cls?.subclasses?.find((s) => s.index === slug);
+    return match?.name ?? null;
+  }, [c, classByIndex]);
   const cls =
     (c?.classIndex ? classByIndex[c.classIndex] : undefined) ??
     (c?.classIndex ? dndClassByIndex[c.classIndex] : undefined);
@@ -144,6 +158,8 @@ export function PlayPage() {
     <div className="flex flex-col gap-4">
       <PlayHeader
         c={c}
+        subclassDisplayName={subclassDisplayName}
+        speedFt={speedFt}
         onRest={() => setRestOpen(true)}
         onOpenConditions={() => setConditionsOpen(true)}
         classByIndex={classByIndex}
@@ -222,6 +238,8 @@ export function PlayPage() {
           c={c}
           raceByIndex={catalog.loading ? dndRaceByIndex : catalog.racesByIndex}
           featByIndex={catalog.loading ? dndFeatByIndex : catalog.featsByIndex}
+          catalogFeatures={catalog.features}
+          catalogLoading={catalog.loading}
         />
       ) : null}
       {effectiveTab === "combat" ? (

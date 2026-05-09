@@ -1,9 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
+import { subclassesFromClassData } from "@/lib/ruleset/classSubclasses";
+import type { DndRace } from "@/lib/dndRaces";
+import { raceSpeedFeetFromCatalogData } from "@/lib/dndRaces";
 import type { DndClass, DndFeat, DndSpell } from "@/lib/dndData";
 import type { DndEquipment } from "@/lib/dndEquipment";
-import type { DndRace } from "@/lib/dndRaces";
 import type { DndWeaponMastery } from "@/lib/dndWeaponMastery";
-import { fetchClasses, fetchEquipment, fetchFeats, fetchRaces, fetchSpells, fetchWeaponMastery } from "@/lib/db/rulesetCatalog";
+import {
+  fetchClasses,
+  fetchEquipment,
+  fetchFeatures,
+  fetchFeats,
+  fetchRaces,
+  fetchSpells,
+  fetchWeaponMastery,
+  type FeatureRow
+} from "@/lib/db/rulesetCatalog";
 
 export type RulesetCatalog = {
   loading: boolean;
@@ -14,6 +25,8 @@ export type RulesetCatalog = {
   feats: DndFeat[];
   equipment: DndEquipment[];
   weaponMasteries: DndWeaponMastery[];
+  /** Raw `public.features` rows for active rulesets. */
+  features: FeatureRow[];
   racesByIndex: Record<string, DndRace>;
   classesByIndex: Record<string, DndClass>;
   spellsByIndex: Record<string, DndSpell>;
@@ -35,27 +48,35 @@ function toDndSchoolIndex(s: string): string {
 /**
  * Map race rows to client `DndRace` shapes sorted by name.
  *
- * @param rows Race rows from the database.
+ * @param rows Race rows from the database (`slug`, `name`, optional `data` for speed).
  * @returns Race list for UI.
  */
-function transformRaces(rows: { slug: string; name: string }[]) {
+function transformRaces(rows: { slug: string; name: string; data?: unknown }[]) {
   return rows
-    .map((r) => ({ index: r.slug, name: r.name } satisfies DndRace))
+    .map((r) => {
+      const speed = raceSpeedFeetFromCatalogData(r.data);
+      return {
+        index: r.slug,
+        name: r.name,
+        ...(speed !== null ? { speed } : {})
+      } satisfies DndRace;
+    })
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
 /**
  * Map class rows to client class shapes sorted by name.
  *
- * @param rows Class rows from the database.
+ * @param rows Class rows from the database (`data` holds `subclasses` array when seeded).
  * @returns Class list for UI.
  */
-function transformClasses(rows: { slug: string; name: string; hit_die: number | null }[]) {
+function transformClasses(rows: { slug: string; name: string; hit_die: number | null; data?: unknown }[]) {
   return rows
     .map((c) => ({
       index: c.slug,
       name: c.name,
-      hit_die: typeof c.hit_die === "number" ? c.hit_die : 8
+      hit_die: typeof c.hit_die === "number" ? c.hit_die : 8,
+      subclasses: subclassesFromClassData(c.data)
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
 }
@@ -199,6 +220,7 @@ export function useRulesetCatalog(rulesetIds: string[]): Omit<
   featsByIndex: Record<string, DndFeat>;
   equipmentByIndex: Record<string, DndEquipment>;
   weaponMasteryByIndex: Record<string, DndWeaponMastery>;
+  features: FeatureRow[];
 } {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -208,6 +230,7 @@ export function useRulesetCatalog(rulesetIds: string[]): Omit<
   const [feats, setFeats] = useState<DndFeat[]>([]);
   const [equipment, setEquipment] = useState<DndEquipment[]>([]);
   const [weaponMasteries, setWeaponMasteries] = useState<DndWeaponMastery[]>([]);
+  const [features, setFeatures] = useState<FeatureRow[]>([]);
 
   const key = useMemo(() => [...rulesetIds].sort().join(","), [rulesetIds]);
 
@@ -225,23 +248,27 @@ export function useRulesetCatalog(rulesetIds: string[]): Omit<
             setFeats([]);
             setEquipment([]);
             setWeaponMasteries([]);
+            setFeatures([]);
           }
           return;
         }
 
-        const [racesRows, classesRows, spellsRows, featsRows, equipmentRows, weaponMasteryRows] = await Promise.all([
+        const [racesRows, classesRows, spellsRows, featsRows, equipmentRows, weaponMasteryRows, featureRows] = await Promise.all([
           fetchRaces(rulesetIds),
           fetchClasses(rulesetIds),
           fetchSpells(rulesetIds),
           fetchFeats(rulesetIds),
           fetchEquipment(rulesetIds),
-          fetchWeaponMastery(rulesetIds)
+          fetchWeaponMastery(rulesetIds),
+          fetchFeatures(rulesetIds)
         ]);
 
         if (cancelled) return;
 
-        const racesUi = transformRaces(racesRows.map((r) => ({ slug: r.slug, name: r.name })));
-        const classesUi = transformClasses(classesRows.map((c) => ({ slug: c.slug, name: c.name, hit_die: c.hit_die })));
+        const racesUi = transformRaces(racesRows.map((r) => ({ slug: r.slug, name: r.name, data: r.data })));
+        const classesUi = transformClasses(
+          classesRows.map((c) => ({ slug: c.slug, name: c.name, hit_die: c.hit_die, data: c.data }))
+        );
         const featsUi = transformFeats(featsRows.map((f) => ({ slug: f.slug, name: f.name, feat_type: f.feat_type, repeatable: f.repeatable, description: f.description })));
         const spellsUi = transformSpells(
           spellsRows.map((s) => ({
@@ -278,6 +305,7 @@ export function useRulesetCatalog(rulesetIds: string[]): Omit<
         setFeats(featsUi);
         setEquipment(equipmentUi);
         setWeaponMasteries(weaponMasteryUi);
+        setFeatures(featureRows);
         setLoading(false);
       } catch (e) {
         if (cancelled) return;
@@ -307,6 +335,7 @@ export function useRulesetCatalog(rulesetIds: string[]): Omit<
     feats,
     equipment,
     weaponMasteries,
+    features,
     racesByIndex,
     classesByIndex,
     spellsByIndex,
