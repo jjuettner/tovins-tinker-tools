@@ -10,7 +10,7 @@ import { NumberInput } from "@/components/ui/NumberInput";
 import { eligibleTurnOrder, normalizeEncounterQueue, orderWithDeadAtBottom, rotateTurnOrder } from "@/lib/encounterTurn";
 import { classIconUrl } from "@/lib/classIcons";
 import { listCharactersByCampaign } from "@/lib/db/characters";
-import { getEncounter, listEncounters, updateEncounter, type EncounterRow } from "@/lib/db/encounters";
+import { dmUpdatePcFromEncounter, getEncounter, listEncounters, updateEncounter, type EncounterRow } from "@/lib/db/encounters";
 import { getMonstersByIds, type MonsterRow } from "@/lib/db/monsters";
 import type { Character } from "@/types/character";
 import type { EncounterDataV1, EncounterEntity } from "@/types/encounter";
@@ -99,6 +99,8 @@ export default function EncounterPlayPanel(props: { campaignId: string; encounte
   const { items: conditionCatalog } = useConditions();
   const [monsterConditionPickerForId, setMonsterConditionPickerForId] = useState<string | null>(null);
   const [monsterConditionDetail, setMonsterConditionDetail] = useState<{ entityId: string; slug: string } | null>(null);
+  const [pcConditionPickerForEntityId, setPcConditionPickerForEntityId] = useState<string | null>(null);
+  const [pcConditionDetail, setPcConditionDetail] = useState<{ entityId: string; characterId: string; slug: string } | null>(null);
 
   /**
    * Reload encounters + campaign characters from Supabase.
@@ -273,6 +275,19 @@ export default function EncounterPlayPanel(props: { campaignId: string; encounte
     };
   }, [monsterConditionDetail, conditionCatalog, conditionLabelBySlug]);
 
+  const pcConditionDetailResolved = useMemo(() => {
+    if (!pcConditionDetail) {
+      return { slug: null as string | null, name: "", description: "" };
+    }
+    const key = pcConditionDetail.slug.toLowerCase();
+    const row = conditionCatalog.find((it) => it.slug.toLowerCase() === key);
+    return {
+      slug: pcConditionDetail.slug,
+      name: row?.name ?? conditionLabelBySlug.get(key) ?? pcConditionDetail.slug,
+      description: row?.description ?? ""
+    };
+  }, [pcConditionDetail, conditionCatalog, conditionLabelBySlug]);
+
   async function persistData(enc: EncounterRow, data: EncounterDataV1) {
     await updateEncounter(enc.id, { data });
     await refresh({ silent: true });
@@ -313,6 +328,39 @@ export default function EncounterPlayPanel(props: { campaignId: string; encounte
     const cur = normalizeEncounterConditionSlugs(row.conditionSlugs).filter((s) => s !== drop);
     await persistMonsterConditionSlugs(entityId, cur);
     setMonsterConditionDetail(null);
+  }
+
+  async function persistPcConditionSlugs(entityId: string, characterId: string, nextSlugs: string[]) {
+    if (!props.canDm || !selectedId) return;
+    const normalized = normalizeEncounterConditionSlugs(nextSlugs);
+    const currentHp = (selected?.data.entities ?? []).find((x) => x.id === entityId)?.currentHp;
+    const safeHp = typeof currentHp === "number" ? currentHp : 0;
+    await dmUpdatePcFromEncounter({
+      encounterId: selectedId,
+      entityId,
+      currentHp: safeHp,
+      conditionSlugs: normalized
+    });
+    await refresh({ silent: true });
+  }
+
+  async function addPcCondition(entityId: string, characterId: string, slug: string) {
+    const key = slug.trim().toLowerCase();
+    if (!key || !props.canDm) return;
+    const cur = normalizeEncounterConditionSlugs(characterById.get(characterId)?.conditionSlugs);
+    if (cur.includes(key)) {
+      setPcConditionPickerForEntityId(null);
+      return;
+    }
+    await persistPcConditionSlugs(entityId, characterId, [...cur, key]);
+    setPcConditionPickerForEntityId(null);
+  }
+
+  async function removePcCondition(entityId: string, characterId: string, slug: string) {
+    const drop = slug.toLowerCase();
+    const cur = normalizeEncounterConditionSlugs(characterById.get(characterId)?.conditionSlugs).filter((s) => s !== drop);
+    await persistPcConditionSlugs(entityId, characterId, cur);
+    setPcConditionDetail(null);
   }
 
   async function startCombat() {
@@ -376,6 +424,18 @@ export default function EncounterPlayPanel(props: { campaignId: string; encounte
   async function applyHpDelta(entityId: string, delta: number) {
     if (!selected) return;
     if (!props.canDm) return;
+    const pcEntity = (selected.data.entities ?? []).find((x) => x.id === entityId);
+    if (pcEntity?.kind === "pc" && pcEntity.characterId && selectedId) {
+      const nextHp = Math.min(pcEntity.maxHp, Math.max(0, pcEntity.currentHp + delta));
+      await dmUpdatePcFromEncounter({
+        encounterId: selectedId,
+        entityId,
+        currentHp: nextHp
+      });
+      await refresh({ silent: true });
+      setDmgByEntity((d) => ({ ...d, [entityId]: "" }));
+      return;
+    }
     const entitiesRaw: EncounterEntity[] = (selected.data.entities ?? []).map((e) => {
       if (e.id !== entityId) return e;
       const nextHp = Math.min(e.maxHp, Math.max(0, e.currentHp + delta));
@@ -439,6 +499,9 @@ export default function EncounterPlayPanel(props: { campaignId: string; encounte
   const pickerMonster = selected?.data.entities?.find((x) => x.id === monsterConditionPickerForId);
   const pickerExistingSlugs =
     pickerMonster?.kind === "monster" ? normalizeEncounterConditionSlugs(pickerMonster.conditionSlugs) : [];
+  const pickerPc = selected?.data.entities?.find((x) => x.id === pcConditionPickerForEntityId);
+  const pickerPcExistingSlugs =
+    pickerPc?.kind === "pc" && pickerPc.characterId ? characterById.get(pickerPc.characterId)?.conditionSlugs ?? [] : [];
 
   return (
     <div className="flex flex-col gap-6">
@@ -460,6 +523,26 @@ export default function EncounterPlayPanel(props: { campaignId: string; encounte
         onRemove={() => {
           if (!monsterConditionDetail) return;
           void removeMonsterCondition(monsterConditionDetail.entityId, monsterConditionDetail.slug);
+        }}
+      />
+      <ConditionPickerDialog
+        open={pcConditionPickerForEntityId !== null && selected?.status === "ongoing"}
+        onClose={() => setPcConditionPickerForEntityId(null)}
+        items={conditionCatalog}
+        existingSlugs={pickerPcExistingSlugs}
+        onAdd={(slug) => {
+          if (!pickerPc || pickerPc.kind !== "pc" || !pickerPc.characterId) return;
+          void addPcCondition(pickerPc.id, pickerPc.characterId, slug);
+        }}
+      />
+      <ConditionDetailDialog
+        slug={pcConditionDetailResolved.slug}
+        name={pcConditionDetailResolved.name}
+        description={pcConditionDetailResolved.description}
+        onClose={() => setPcConditionDetail(null)}
+        onRemove={() => {
+          if (!pcConditionDetail) return;
+          void removePcCondition(pcConditionDetail.entityId, pcConditionDetail.characterId, pcConditionDetail.slug);
         }}
       />
 
@@ -560,7 +643,8 @@ export default function EncounterPlayPanel(props: { campaignId: string; encounte
                 const slugsShown = e.kind === "pc" ? pcSlugs : monsterSlugs;
                 const combatCanEditMonster =
                   props.canDm && selected.status === "ongoing" && e.kind === "monster";
-                const showConditionRow = slugsShown.length > 0 || combatCanEditMonster;
+                const combatCanEditPc = props.canDm && selected.status === "ongoing" && e.kind === "pc" && !!e.characterId;
+                const showConditionRow = slugsShown.length > 0 || combatCanEditMonster || combatCanEditPc;
                 return (
                   <li
                     key={e.id}
@@ -669,7 +753,13 @@ export default function EncounterPlayPanel(props: { campaignId: string; encounte
                                 onPillClick={
                                   combatCanEditMonster
                                     ? (slug) => setMonsterConditionDetail({ entityId: e.id, slug })
-                                    : undefined
+                                    : combatCanEditPc
+                                      ? (slug) => {
+                                          const characterId = e.characterId;
+                                          if (!characterId) return;
+                                          setPcConditionDetail({ entityId: e.id, characterId, slug });
+                                        }
+                                      : undefined
                                 }
                               />
                             ) : null}
@@ -681,6 +771,20 @@ export default function EncounterPlayPanel(props: { campaignId: string; encounte
                                 onClick={(ev) => {
                                   ev.stopPropagation();
                                   setMonsterConditionPickerForId(e.id);
+                                }}
+                              >
+                                <CirclePlus className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                                Condition
+                              </button>
+                            ) : null}
+                            {combatCanEditPc && e.characterId ? (
+                              <button
+                                type="button"
+                                className={buttonClass("ghost") + " inline-flex h-8 items-center gap-1 px-2 text-[11px]"}
+                                aria-label="Add condition to PC"
+                                onClick={(ev) => {
+                                  ev.stopPropagation();
+                                  setPcConditionPickerForEntityId(e.id);
                                 }}
                               >
                                 <CirclePlus className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />

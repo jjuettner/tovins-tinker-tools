@@ -191,3 +191,30 @@ export async function applyEncounterPcState(
   const { error } = await sb.rpc("apply_encounter_pc_state", { p_encounter_id: encounterId, p_entities: entities });
   if (error) throw error;
 }
+
+/**
+ * DM-only: patch a PC during an ongoing encounter, and persist the result to the linked character row.
+ *
+ * Constraint: requires caller to be campaign DM (or admin). Uses a security definer RPC.
+ *
+ * @param encounterId Encounter id.
+ * @param entityId Encounter entity id for the PC.
+ * @param currentHp New current HP (clamped server-side to [0, maxHp]).
+ * @param conditionSlugs Optional full list of condition slugs to persist onto the character.
+ */
+export async function dmUpdatePcFromEncounter(input: {
+  encounterId: string;
+  entityId: string;
+  currentHp: number;
+  conditionSlugs?: string[] | undefined;
+}): Promise<void> {
+  const sb = requireSupabase();
+  const conditionSlugsCsv = input.conditionSlugs ? input.conditionSlugs.join(",") : null;
+  const { error } = await sb.rpc("dm_update_pc_from_encounter", {
+    p_encounter_id: input.encounterId,
+    p_entity_id: input.entityId,
+    p_current_hp: input.currentHp,
+    p_condition_slugs: conditionSlugsCsv
+  });
+  if (error) throw error;
+}

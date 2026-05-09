@@ -63,3 +63,7 @@
 - acc2 sees character from acc1 in character list
 	- should not be the case
 	- character is part of acc2's campaign
+
+ - encounter turn order
+	- change health with dmg/heal should update character
+	- dm can add/remove conditions for pcs
