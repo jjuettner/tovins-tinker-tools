@@ -35,11 +35,12 @@ export default function EncounterDraftInfoPanel(props: {
           <label className="flex min-w-[12rem] flex-1 flex-col gap-1">
             <span className={smallLabelClass()}>Encounter name</span>
             <input
-              className={inputClassFull()}
+              className={inputClassFull() + " text-left"}
               value={props.renameDraft}
               onChange={(e) => props.onChangeRenameDraft(e.target.value)}
               disabled={props.loading}
               onBlur={() => props.onCommitRename(props.renameDraft)}
+              dir="ltr"
             />
           </label>
           <div className="flex flex-wrap items-center gap-2">

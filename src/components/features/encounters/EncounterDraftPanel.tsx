@@ -263,7 +263,13 @@ export default function EncounterDraftPanel(props: { campaignId: string; onRunEn
           </div>
         </div>
 
-        <MonsterCompendiumPanel onPickMonster={(m) => addMonsterPick(m.id)} pickLabel="Add" />
+        {selected ? (
+          <MonsterCompendiumPanel onPickMonster={(m) => addMonsterPick(m.id)} pickLabel="Add" />
+        ) : (
+          <section className="rounded-xl border border-zinc-200 bg-white/40 p-6 text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950/20 dark:text-zinc-400">
+            Select an encounter to browse the monster compendium.
+          </section>
+        )}
       </div>
     </div>
   );

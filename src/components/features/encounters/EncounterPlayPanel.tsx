@@ -9,7 +9,7 @@ import HpReadonlyBadge from "@/components/ui/HpReadonlyBadge";
 import { NumberInput } from "@/components/ui/NumberInput";
 import { eligibleTurnOrder, normalizeEncounterQueue, orderWithDeadAtBottom, rotateTurnOrder } from "@/lib/encounterTurn";
 import { classIconUrl } from "@/lib/classIcons";
-import { listCharactersByCampaign } from "@/lib/db/characters";
+import { listCharactersByCampaignWithOwners } from "@/lib/db/characters";
 import { dmUpdatePcFromEncounter, getEncounter, listEncounters, updateEncounter, type EncounterRow } from "@/lib/db/encounters";
 import { getMonstersByIds, type MonsterRow } from "@/lib/db/monsters";
 import type { Character } from "@/types/character";
@@ -98,6 +98,7 @@ export default function EncounterPlayPanel(props: { campaignId: string; encounte
   const DEAD_STATUS: EncounterEntity["status"] = "dead";
   const [rows, setRows] = useState<EncounterRow[]>([]);
   const [chars, setChars] = useState<Character[]>([]);
+  const [ownerLabelByCharacterId, setOwnerLabelByCharacterId] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(props.encounterId);
@@ -122,9 +123,10 @@ export default function EncounterPlayPanel(props: { campaignId: string; encounte
       setError(null);
     }
     try {
-      const [encs, ch] = await Promise.all([listEncounters(props.campaignId), listCharactersByCampaign(props.campaignId)]);
+      const [encs, ch] = await Promise.all([listEncounters(props.campaignId), listCharactersByCampaignWithOwners(props.campaignId)]);
       setRows(encs);
-      setChars(ch);
+      setChars(ch.map((x) => x.character));
+      setOwnerLabelByCharacterId(new Map(ch.map((x) => [x.character.id, x.ownerLabel] as const)));
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Failed to load";
       setError(msg);
@@ -198,6 +200,16 @@ export default function EncounterPlayPanel(props: { campaignId: string; encounte
   }, [selected, chars, monsterById]);
 
   const activeEntityId = selected?.data.activeEntityId ?? null;
+  const ownerSuffix = useCallback(
+    (characterId: string | null | undefined) => {
+      const id = typeof characterId === "string" ? characterId : "";
+      if (!id) return null;
+      const label = ownerLabelByCharacterId.get(id);
+      if (!label) return null;
+      return `· ${label}`;
+    },
+    [ownerLabelByCharacterId]
+  );
   const expandedEntityIds = useMemo(() => {
     const ids: string[] = [];
     if (activeEntityId) ids.push(activeEntityId);
@@ -210,6 +222,12 @@ export default function EncounterPlayPanel(props: { campaignId: string; encounte
     const byId = new Map(selected.data.entities.map((e) => [e.id, e] as const));
     return expandedEntityIds.map((id) => byId.get(id)).filter((e): e is EncounterEntity => Boolean(e));
   }, [expandedEntityIds, selected?.data.entities]);
+
+  const activeEntity = useMemo(() => {
+    const id = selected?.data.activeEntityId ?? null;
+    if (!id) return null;
+    return (selected?.data.entities ?? []).find((e) => e.id === id) ?? null;
+  }, [selected?.data.activeEntityId, selected?.data.entities]);
 
   const expandedMonsterIds = useMemo(() => {
     return expandedEntities
@@ -406,8 +424,11 @@ export default function EncounterPlayPanel(props: { campaignId: string; encounte
     }
 
     // DM pulls latest PC HP from characters table, then rotates.
-    const [fresh, freshChars] = await Promise.all([getEncounter(selected.id), listCharactersByCampaign(props.campaignId)]);
-    const freshCharById = new Map(freshChars.map((c) => [c.id, c] as const));
+    const [fresh, freshChars] = await Promise.all([
+      getEncounter(selected.id),
+      listCharactersByCampaignWithOwners(props.campaignId)
+    ]);
+    const freshCharById = new Map(freshChars.map((x) => [x.character.id, x.character] as const));
     const entities = (fresh.data.entities ?? []).map((e) => {
       if (e.kind !== "pc" || !e.characterId) return e;
       const ch = freshCharById.get(e.characterId);
@@ -627,8 +648,11 @@ export default function EncounterPlayPanel(props: { campaignId: string; encounte
             <p className="mt-2 text-xs text-zinc-500">
               Active:{" "}
               <span className="font-medium text-zinc-800 dark:text-zinc-200">
-                {(selected.data.entities ?? []).find((e) => e.id === selected.data.activeEntityId)?.displayName ?? "—"}
+                {activeEntity?.displayName ?? "—"}
               </span>
+              {activeEntity?.kind === "pc" && activeEntity.characterId ? (
+                <span className="ml-1 text-zinc-400">{ownerSuffix(activeEntity.characterId)}</span>
+              ) : null}
             </p>
           </section>
 
@@ -744,6 +768,9 @@ export default function EncounterPlayPanel(props: { campaignId: string; encounte
                       <div className="min-w-0 flex-[0.9]">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{e.displayName}</span>
+                          {e.kind === "pc" && e.characterId ? (
+                            <span className="text-xs font-normal text-zinc-400">{ownerSuffix(e.characterId)}</span>
+                          ) : null}
                           {e.status === "dead" ? (
                             <span className="inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[11px] font-medium text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
                               <Skull className="h-3.5 w-3.5" aria-hidden="true" /> dead

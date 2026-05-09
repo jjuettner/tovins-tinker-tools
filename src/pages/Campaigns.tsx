@@ -6,6 +6,7 @@ import { createCampaignInvite } from "@/lib/db/campaignInvites";
 import {
   attachCampaignRuleset,
   createCampaign,
+  deleteCampaignCascade,
   detachCampaignRuleset,
   listCampaignRulesets,
   listCampaigns
@@ -155,6 +156,32 @@ export function CampaignsPage() {
                   }
                 >
                   Create invite
+                </button>
+                <button
+                  type="button"
+                  className={buttonClass("danger")}
+                  disabled={!session?.user?.id || sessionLoading}
+                  onClick={() => {
+                    const ok = window.confirm(
+                      `Delete campaign "${c.name}"?\n\nThis deletes encounters, members, invites, and ruleset links. Characters are NOT deleted; they will be unlinked from the campaign. This cannot be undone.`
+                    );
+                    if (!ok) return;
+                    void (async () => {
+                      try {
+                        await deleteCampaignCascade(c.id);
+                        setInviteByCampaignId((prev) => {
+                          const { [c.id]: _, ...rest } = prev;
+                          void _;
+                          return rest;
+                        });
+                        await refresh();
+                      } catch (e) {
+                        setError(e instanceof Error ? e.message : "Failed to delete campaign");
+                      }
+                    })();
+                  }}
+                >
+                  Delete
                 </button>
               </div>
             </div>

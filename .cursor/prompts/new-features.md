@@ -13,3 +13,7 @@ include icons for gp ep pp etc
 make add/spend the same form, with both buttons: add and remove
 
 do not convert upwards when receiving, only convert downwards (change) or when spending
+
+in encounter turn ui, display the owner of each character behind their character name
+
+

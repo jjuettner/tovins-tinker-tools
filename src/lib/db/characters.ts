@@ -18,6 +18,12 @@ export type CharacterListItem = {
   ownerId: string;
 };
 
+export type CharacterWithOwnerLabel = {
+  character: Character;
+  ownerId: string;
+  ownerLabel: string;
+};
+
 /**
  * Convert DB row into app `Character`.
  *
@@ -82,6 +88,17 @@ export async function listCharacters(): Promise<CharacterListItem[]> {
  * @returns Characters sorted by name.
  */
 export async function listCharactersByCampaign(campaignId: string): Promise<Character[]> {
+  const items = await listCharactersByCampaignWithOwners(campaignId);
+  return items.map((x) => x.character);
+}
+
+/**
+ * List characters linked to a campaign, including owner display name.
+ *
+ * @param campaignId Campaign id.
+ * @returns Characters with owner labels, sorted by character name.
+ */
+export async function listCharactersByCampaignWithOwners(campaignId: string): Promise<CharacterWithOwnerLabel[]> {
   const sb = requireSupabase();
   const { data, error } = await sb
     .from("characters")
@@ -89,7 +106,15 @@ export async function listCharactersByCampaign(campaignId: string): Promise<Char
     .eq("campaign_id", campaignId)
     .order("name", { ascending: true });
   if (error) throw error;
-  return (data as CharacterRow[]).map(characterFromRow);
+  const rows = (data as CharacterRow[]) ?? [];
+  const ownerIds = rows.map((r) => r.owner).filter(Boolean);
+  const profiles = await getProfilesByIds(ownerIds);
+  return rows.map((r) => {
+    const owner = r.owner;
+    const profile = profiles.get(owner);
+    const ownerLabel = profile?.display_name?.trim() || owner.slice(0, 8);
+    return { character: characterFromRow(r), ownerId: owner, ownerLabel };
+  });
 }
 
 /**

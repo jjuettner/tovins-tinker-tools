@@ -86,3 +86,15 @@ export async function detachCampaignRuleset(campaignId: string, rulesetId: strin
   if (error) throw error;
 }
 
+/**
+ * Delete a campaign and all related data (including characters linked to it).
+ *
+ * @param campaignId Campaign id.
+ * @returns Nothing.
+ */
+export async function deleteCampaignCascade(campaignId: string): Promise<void> {
+  const sb = requireSupabase();
+  const { error } = await sb.rpc("delete_campaign_cascade", { p_campaign_id: campaignId });
+  if (error) throw error;
+}
+
