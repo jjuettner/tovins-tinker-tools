@@ -17,3 +17,16 @@ do not convert upwards when receiving, only convert downwards (change) or when s
 in encounter turn ui, display the owner of each character behind their character name
 
 
+
+
+
+
+invite link does not work on github pages - 404
+refreshing the site causes 404
+
+make a spell compendium, that you can filter by class
+
+cap char stats at 20 in editor
+proficiency bonus in player head
+
+

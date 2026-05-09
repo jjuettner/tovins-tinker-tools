@@ -1,9 +1,10 @@
 import { useState } from "react";
 import EquipmentCompendiumPanel from "@/components/features/compendium/EquipmentCompendiumPanel";
+import SpellCompendiumPanel from "@/components/features/compendium/SpellCompendiumPanel";
 import MonsterCompendiumPanel from "@/components/features/encounters/MonsterCompendiumPanel";
 import { highlightButtonClass } from "@/components/ui/controlClasses";
 
-type CompendiumTab = "monsters" | "equipment";
+type CompendiumTab = "monsters" | "equipment" | "spells";
 
 export function CompendiumPage() {
   const [tab, setTab] = useState<CompendiumTab>("monsters");
@@ -38,9 +39,18 @@ export function CompendiumPage() {
         >
           Equipment
         </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === "spells"}
+          className={highlightButtonClass(tab === "spells")}
+          onClick={() => setTab("spells")}
+        >
+          Spells
+        </button>
       </div>
 
-      {tab === "monsters" ? <MonsterCompendiumPanel /> : <EquipmentCompendiumPanel />}
+      {tab === "monsters" ? <MonsterCompendiumPanel /> : tab === "equipment" ? <EquipmentCompendiumPanel /> : <SpellCompendiumPanel />}
     </div>
   );
 }

@@ -88,6 +88,7 @@ export function CampaignsPage() {
 
   const rulesetName = useMemo(() => new Map(rulesets.map((r) => [r.id, r.name] as const)), [rulesets]);
   const baseUrl = useMemo(() => window.location.origin + import.meta.env.BASE_URL, []);
+  const inviteBase = useMemo(() => (import.meta.env.BASE_URL === "/" ? baseUrl : `${baseUrl}#/`), [baseUrl]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -149,7 +150,7 @@ export function CampaignsPage() {
                   onClick={() =>
                     void (async () => {
                       const inv = await createCampaignInvite(c.id);
-                      const link = `${baseUrl}join?token=${encodeURIComponent(inv.token)}`;
+                      const link = `${inviteBase}join?token=${encodeURIComponent(inv.token)}`;
                       setInviteByCampaignId((prev) => ({ ...prev, [c.id]: link }));
                       if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(link);
                     })()
