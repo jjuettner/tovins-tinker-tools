@@ -2,6 +2,7 @@ import type { Character, CharacterDraft, EquippedItem } from "@/types/character"
 import { abilityMod, clampLevel } from "@/lib/dnd";
 import { dndClassByIndex } from "@/lib/dndData";
 import { computeArmorClass } from "@/lib/character/armorClass";
+import { parseCurrencyPouch } from "@/lib/character/currency";
 import { newEquippedItemId } from "@/lib/randomId";
 
 export { newEquippedItemId } from "@/lib/randomId";
@@ -80,6 +81,8 @@ export function normalizeCharacter(c: Character): Character {
     )
   );
 
+  const currency = parseCurrencyPouch((c as Character & { currency?: unknown }).currency);
+
   return {
     ...c,
     avatarUrl,
@@ -92,7 +95,8 @@ export function normalizeCharacter(c: Character): Character {
     tempHp,
     armorClass,
     spellSlotsUsed,
-    conditionSlugs
+    conditionSlugs,
+    currency
   };
 }
 
@@ -115,7 +119,8 @@ export function normalizeDraft(d: CharacterDraft): CharacterDraft {
     tempHp: n.tempHp,
     armorClass: n.armorClass,
     spellSlotsUsed: n.spellSlotsUsed,
-    conditionSlugs: n.conditionSlugs
+    conditionSlugs: n.conditionSlugs,
+    currency: n.currency
   };
 }
 

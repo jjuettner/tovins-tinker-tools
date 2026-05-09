@@ -1,5 +1,14 @@
 import type { Ability, Skill } from "@/lib/dnd";
 
+/** Coin pouch (five denominations); total value canonicalized via copper math. */
+export type CurrencyPouch = {
+  pp: number;
+  gp: number;
+  ep: number;
+  sp: number;
+  cp: number;
+};
+
 export type EquippedItem = {
   id: string;
   equipmentIndex: string;
@@ -43,6 +52,7 @@ export type Character = {
   spellSlotsUsed: Partial<Record<string, number>>;
   /** Active condition slugs (e.g. `blinded`). */
   conditionSlugs?: string[];
+  currency: CurrencyPouch;
   createdAt: number;
   updatedAt: number;
 };

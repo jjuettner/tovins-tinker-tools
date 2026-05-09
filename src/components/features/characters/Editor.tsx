@@ -1,10 +1,11 @@
-import { Check, Save, Trash2, X } from "lucide-react";
+import { Check, Save, Trash2, Wallet, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { buttonClass, inputClass, inputClassFull, smallLabelClass } from "@/components/ui/controlClasses";
 import CharacterAvatar from "@/components/ui/CharacterAvatar";
 import { NumberInput } from "@/components/ui/NumberInput";
 import { useRulesetCatalog } from "@/hooks/useRulesetCatalog";
 import { computeArmorClass } from "@/lib/character/armorClass";
+import { CURRENCY_DENOMINATIONS } from "@/lib/character/currencyDisplay";
 import { newEquippedItemId, normalizeDraft } from "@/lib/character/normalize";
 import { emptyWeapon, rebuildEquipped, splitEquipped } from "@/lib/equippedLayout";
 import { uploadCharacterAvatar } from "@/lib/db/characterAvatars";
@@ -715,6 +716,49 @@ export function CharacterEditor(props: {
               />
             </label>
           ) : null}
+        </div>
+      </div>
+
+      <div className="mt-5 rounded-xl border border-zinc-200 bg-zinc-50/70 p-4 dark:border-zinc-800 dark:bg-zinc-950/30">
+        <div className="flex flex-wrap items-center gap-2">
+          <Wallet className="h-4 w-4 shrink-0 text-emerald-700 dark:text-emerald-400" aria-hidden="true" />
+          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Starting currency</h3>
+        </div>
+        <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-300">
+          Adding never carries up. Spending makes change down to CP. Exchange: 1 pp = 10 gp · 1 gp = 10 sp · 1 sp = 10 cp · 1 ep = 5 sp.
+        </p>
+        <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-5">
+          {CURRENCY_DENOMINATIONS.map((d) => (
+            <label key={d.key} className="flex flex-col gap-1">
+              <span className={smallLabelClass()}>
+                <span
+                  className={
+                    "mr-1 inline-flex h-5 w-5 items-center justify-center rounded-full align-middle text-[9px] font-bold " +
+                    d.chip
+                  }
+                  title={d.full}
+                  aria-hidden="true"
+                >
+                  {d.abbrev}
+                </span>
+                {d.full}
+              </span>
+              <input
+                type="number"
+                min={0}
+                className={inputClassFull()}
+                value={props.draft.currency[d.key]}
+                onChange={(e) =>
+                  props.onChange(
+                    normalizeDraft({
+                      ...props.draft,
+                      currency: { ...props.draft.currency, [d.key]: Number(e.target.value) }
+                    })
+                  )
+                }
+              />
+            </label>
+          ))}
         </div>
       </div>
 

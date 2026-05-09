@@ -6,6 +6,7 @@ import { ConditionDetailDialog } from "@/components/features/play/ConditionDetai
 import { ConditionPickerDialog } from "@/components/features/play/ConditionPickerDialog";
 import CombatTab from "@/components/features/play/CombatTab";
 import GeneralTab from "@/components/features/play/GeneralTab";
+import InventoryTab from "@/components/features/play/InventoryTab";
 import PlayHeader from "@/components/features/play/PlayHeader";
 import SpellsTab from "@/components/features/play/SpellsTab";
 import { useActiveRulesetIds } from "@/hooks/useActiveRulesetIds";
@@ -14,6 +15,7 @@ import { useRemoteSpellSlots } from "@/hooks/useRemoteSpellSlots";
 import { useRulesetCatalog } from "@/hooks/useRulesetCatalog";
 import { useConditions } from "@/hooks/useConditions";
 import { useStoredState } from "@/hooks/useStoredState";
+import { effectiveWalkSpeedFeet } from "@/lib/character/effectiveWalkSpeed";
 import { normalizeCharacter } from "@/lib/character/normalize";
 import { STORAGE_KEYS } from "@/lib/appConstants";
 import { dndClassByIndex, dndFeatByIndex, dndSpellByIndex, type DndSpell } from "@/lib/dndData";
@@ -22,7 +24,7 @@ import { dndRaceByIndex } from "@/lib/dndRaces";
 import { computeSpellSlotsRemaining, emptySpellSlotsUsed, spellSlotMaximaForClass } from "@/lib/spellSlots";
 import type { Character } from "@/types/character";
 
-type Tab = "general" | "combat" | "spells";
+type Tab = "general" | "combat" | "inventory" | "spells";
 
 export function PlayPage() {
   const { characters: characterItems, save } = useCharacters();
@@ -59,7 +61,8 @@ export function PlayPage() {
   const speedFt = useMemo(() => {
     if (!c) return null;
     const s = raceByIndex[c.raceIndex]?.speed;
-    return typeof s === "number" && Number.isFinite(s) ? Math.floor(s) : null;
+    const base = typeof s === "number" && Number.isFinite(s) ? Math.floor(s) : null;
+    return effectiveWalkSpeedFeet(c, base);
   }, [c, raceByIndex]);
 
   const subclassDisplayName = useMemo(() => {
@@ -211,6 +214,7 @@ export function PlayPage() {
           [
             ["general", "General"],
             ["combat", "Combat"],
+            ["inventory", "Inventory"],
             ["spells", "Spells"]
           ] as const
         ).map(([id, label]) => (
@@ -249,6 +253,9 @@ export function PlayPage() {
           featByIndex={catalog.loading ? dndFeatByIndex : catalog.featsByIndex}
           onPatch={(next) => patch(c.id, () => next)}
         />
+      ) : null}
+      {effectiveTab === "inventory" ? (
+        <InventoryTab c={c} onPatch={(next) => patch(c.id, () => next)} />
       ) : null}
       {effectiveTab === "spells" ? (
         <SpellsTab

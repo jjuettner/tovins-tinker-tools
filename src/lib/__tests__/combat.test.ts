@@ -23,6 +23,7 @@ function testCharacter(over: Partial<Character>): Character {
     equipped: [],
     spellSlotsUsed: {},
     conditionSlugs: [],
+    currency: { pp: 0, gp: 0, ep: 0, sp: 0, cp: 0 },
     createdAt: 0,
     updatedAt: 0,
     ...over

@@ -1,3 +1,4 @@
+import { normalizeCharacter } from "@/lib/character/normalize";
 import { requireSupabase } from "@/lib/supabase";
 import { getProfilesByIds } from "@/lib/db/profiles";
 import type { Character } from "@/types/character";
@@ -26,7 +27,8 @@ export type CharacterListItem = {
  * @returns App character.
  */
 export function characterFromRow(row: CharacterRow): Character {
-  return { ...(row.data as Character), campaignId: row.campaign_id } as Character;
+  const merged: Character = { ...(row.data as Character), campaignId: row.campaign_id };
+  return normalizeCharacter(merged);
 }
 
 /**

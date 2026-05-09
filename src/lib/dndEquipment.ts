@@ -10,6 +10,8 @@ export type DndEquipment = {
   index: string;
   name: string;
   equipment_categories?: DndEquipmentCategory[];
+  cost?: { quantity: number; unit: string };
+  description?: string;
   damage?: {
     damage_dice: string;
     damage_type?: { index: string; name: string };
@@ -76,6 +78,16 @@ export function isShield(eq: DndEquipment): boolean {
  */
 export function isBodyArmor(eq: DndEquipment): boolean {
   return equipmentHasCategory(eq, "armor") && !isShield(eq);
+}
+
+/**
+ * Heavy body armor category (bars barbarian Fast Movement and similar rules).
+ *
+ * @param eq Equipment row.
+ * @returns True when body armor is heavy.
+ */
+export function isHeavyBodyArmor(eq: DndEquipment): boolean {
+  return isBodyArmor(eq) && equipmentHasCategory(eq, "heavy-armor");
 }
 
 /**

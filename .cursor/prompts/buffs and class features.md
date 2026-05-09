@@ -31,3 +31,6 @@ characters can get buffs
 
 - consider unarmored defense when calculating barbarian ac
 - show reckless attack option when attacking with a weapon as barbarian lv >= 2
+- implement fast movement barbarian feature
+
+- add compendium tab for equipment

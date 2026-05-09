@@ -5,6 +5,7 @@ import CharacterAvatar from "@/components/ui/CharacterAvatar";
 import { useActiveRulesetIds } from "@/hooks/useActiveRulesetIds";
 import { formatSigned, proficiencyBonus } from "@/lib/dnd";
 import { dndClassByIndex, dndFeatByIndex, dndSpellByIndex, type DndSpell } from "@/lib/dndData";
+import { effectiveWalkSpeedFeet } from "@/lib/character/effectiveWalkSpeed";
 import { dndRaceByIndex } from "@/lib/dndRaces";
 import { renderDbDescription } from "@/lib/renderDbDescription";
 import { dndTraitByIndex } from "@/lib/dndTraits";
@@ -46,8 +47,9 @@ export function CharacterSheet(props: {
   const raceName = raceForSheet?.name ?? (props.c.raceIndex ? props.c.raceIndex : null);
   const speedFt = useMemo(() => {
     const s = raceForSheet?.speed;
-    return typeof s === "number" && Number.isFinite(s) ? Math.floor(s) : null;
-  }, [raceForSheet]);
+    const base = typeof s === "number" && Number.isFinite(s) ? Math.floor(s) : null;
+    return effectiveWalkSpeedFeet(props.c, base);
+  }, [raceForSheet, props.c]);
 
   const spellByIndex = catalog.loading ? dndSpellByIndex : catalog.spellsByIndex;
   const spellGroups = useMemo(() => spellsGrouped(spellByIndex, props.c.spells ?? []), [spellByIndex, props.c.spells]);

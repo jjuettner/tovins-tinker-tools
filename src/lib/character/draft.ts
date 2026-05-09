@@ -1,4 +1,5 @@
 import type { Ability } from "@/lib/dnd";
+import { parseCurrencyPouch } from "@/lib/character/currency";
 import { normalizeDraft } from "@/lib/character/normalize";
 import type { Character, CharacterDraft } from "@/types/character";
 import { newId } from "@/lib/randomId";
@@ -40,7 +41,8 @@ export function makeDraft(partial?: Partial<CharacterDraft>): CharacterDraft {
     armorClass: partial?.armorClass ?? 10,
     equipped: partial?.equipped ?? [],
     spellSlotsUsed: partial?.spellSlotsUsed ?? {},
-    conditionSlugs: partial?.conditionSlugs ?? []
+    conditionSlugs: partial?.conditionSlugs ?? [],
+    currency: parseCurrencyPouch(partial?.currency)
   };
   return normalizeDraft(raw);
 }
