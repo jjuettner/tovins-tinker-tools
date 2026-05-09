@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { DND2024_RULESET_ID } from "@/lib/db/rulesets";
+import { setRulesetCatalogCache } from "@/lib/catalogCache";
 import {
   fetchClasses,
   fetchClassSpellSlots,
@@ -8,17 +8,17 @@ import {
   fetchRaces,
   fetchSpells,
   fetchWeaponMastery
-} from "@/lib/db/srd";
-import { setSrdState } from "@/lib/srdState";
+} from "@/lib/db/rulesetCatalog";
+import { DND2024_RULESET_ID } from "@/lib/db/rulesets";
 
 /**
- * One-shot SRD bootstrap for the default ruleset.
+ * Prefetch bundled default ruleset tables into shared in-memory cache.
  *
- * Loads SRD tables into in-memory state used by the app.
+ * Loads ruleset catalog rows via Supabase once on mount for the builtin D&D 2024 ruleset.
  *
  * @returns Loading + error state.
  */
-export function useInitSrd() {
+export function useBootstrapCatalog() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,11 +39,11 @@ export function useInitSrd() {
           fetchClassSpellSlots(rulesetIds)
         ]);
         if (cancelled) return;
-        setSrdState({ spells, classes, races, feats, equipment, weaponMastery, classSpellSlots });
+        setRulesetCatalogCache({ spells, classes, races, feats, equipment, weaponMastery, classSpellSlots });
         setLoading(false);
       } catch (e) {
         if (cancelled) return;
-        setError(e instanceof Error ? e.message : "Failed to load SRD");
+        setError(e instanceof Error ? e.message : "Failed to load ruleset catalog");
         setLoading(false);
       }
     }
@@ -55,4 +55,3 @@ export function useInitSrd() {
 
   return { loading, error } as const;
 }
-

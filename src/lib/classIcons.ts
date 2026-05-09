@@ -13,9 +13,9 @@ import Warlock from "@/img/Class Icon - Warlock.svg";
 import Wizard from "@/img/Class Icon - Wizard.svg";
 
 /**
- * Map SRD class indexes to bundled class icon images.
+ * Map ruleset class slugs to bundled class icon images.
  *
- * @param classIndex SRD class index (e.g. `wizard`).
+ * @param classIndex Class slug (e.g. `wizard`).
  * @returns Image URL or null if unknown.
  */
 export function classIconUrl(classIndex: string): string | null {

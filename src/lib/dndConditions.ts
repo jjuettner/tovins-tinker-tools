@@ -1,4 +1,4 @@
-import rawConditions from "@/data/PHB24/5e-SRD-Conditions.json";
+import rawConditions from "@/data/PHB24/5e-Conditions.json";
 
 export type DndCondition = {
   index: string;
@@ -16,7 +16,7 @@ const list = (rawConditions as unknown as DndCondition[])
   .sort((a, b) => a.name.localeCompare(b.name));
 
 /**
- * SRD conditions bundled with the app (fallback when DB catalog is empty).
+ * Builtin PHB24 conditions bundled with the app (fallback when DB catalog is empty).
  */
 export const dndConditions: DndCondition[] = list;
 

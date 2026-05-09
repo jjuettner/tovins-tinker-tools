@@ -10,7 +10,7 @@ import { renderDbDescription } from "@/lib/renderDbDescription";
 import { dndTraitByIndex } from "@/lib/dndTraits";
 import type { Character } from "@/types/character";
 import { SkillCheckList } from "@/components/features/characters/SkillCheckList";
-import { useRulesetSrdCatalog } from "@/hooks/useRulesetSrdCatalog";
+import { useRulesetCatalog } from "@/hooks/useRulesetCatalog";
 
 function spellsGrouped(spellByIndex: Record<string, DndSpell>, indices: string[]): { level: number; spells: DndSpell[] }[] {
   const list = indices
@@ -37,7 +37,7 @@ export function CharacterSheet(props: {
 }) {
   const prof = proficiencyBonus(props.c.level);
   const { activeRuleIds } = useActiveRulesetIds(props.c.campaignId ?? null);
-  const catalog = useRulesetSrdCatalog(activeRuleIds);
+  const catalog = useRulesetCatalog(activeRuleIds);
 
   const className =
     (catalog.loading ? dndClassByIndex : catalog.classesByIndex)[props.c.classIndex]?.name ??

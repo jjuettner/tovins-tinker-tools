@@ -1,4 +1,4 @@
--- SRD tables (ruleset-scoped) + RLS
+-- Ruleset catalog tables (ruleset-scoped) + RLS
 -- Pattern: extracted columns + data jsonb tail, unique (ruleset_id, slug)
 
 create extension if not exists pgcrypto;

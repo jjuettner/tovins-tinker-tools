@@ -138,4 +138,3 @@ export function fetchWeaponMastery(rulesetIds: string[]) {
 export function fetchClassSpellSlots(rulesetIds: string[]) {
   return fetchByRulesets<ClassSpellSlotsRow>("class_spell_slots", rulesetIds);
 }
-

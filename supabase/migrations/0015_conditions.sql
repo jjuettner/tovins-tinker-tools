@@ -1,4 +1,4 @@
--- Global SRD conditions reference (not ruleset-scoped; same text for all campaigns).
+-- Global conditions catalog (not ruleset-scoped; same text for all campaigns).
 
 create table if not exists public.conditions (
   slug text primary key,

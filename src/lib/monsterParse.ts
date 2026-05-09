@@ -1,5 +1,5 @@
 /**
- * Parse SRD-style "Challenge" strings from compendium JSON into numeric CR and XP.
+ * Parse 5e-style "Challenge" strings from compendium JSON into numeric CR and XP.
  *
  * @param raw Value of the "Challenge" field (e.g. `"10 (5,900 XP)"`, `"1/4 (50 XP)"`).
  * @returns CR as decimal (e.g. 0.125 for 1/8) and XP (0 if absent).

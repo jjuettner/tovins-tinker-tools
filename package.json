@@ -11,7 +11,7 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "seed:dnd2024": "tsx scripts/seedDnd2024.ts",
-    "seed:conditions": "tsx scripts/seedSrdConditions.ts",
+    "seed:conditions": "tsx scripts/seedConditions.ts",
     "seed:monsters": "tsx scripts/seedMonsters.ts",
     "import:tce": "tsx scripts/importRulesetTCE.ts",
     "test": "vitest run",

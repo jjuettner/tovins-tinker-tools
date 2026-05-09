@@ -11,11 +11,11 @@ export function stripMarkdownBoldMarkers(text: string): string {
 }
 
 /**
- * Turns paired `**` markers into `<strong>` segments (SRD-style emphasis in plaintext DB columns).
+ * Turns paired `**` markers into `<strong>` segments (common OGL-style emphasis in plaintext DB columns).
  *
  * Preserve newlines with a parent that uses `whitespace-pre-wrap`. Odd `**` counts leave the trailing run as plain text.
  *
- * @param text Raw copy from SRD JSON or Supabase.
+ * @param text Raw copy from bundled JSON or Supabase.
  * @returns React fragments; empty string yields `null`.
  */
 export function renderDbDescription(text: string): ReactNode {
@@ -26,7 +26,7 @@ export function renderDbDescription(text: string): ReactNode {
     if (i % 2 === 1) {
       if (!part) return null;
       return (
-        <strong key={i} className="font-extrabold">
+        <strong key={i} className="font-bold">
           {part}
         </strong>
       );

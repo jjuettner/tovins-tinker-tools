@@ -48,7 +48,7 @@ function findStandardRow(rows: SlotRow[], charLevel: number): SlotRow | undefine
 /**
  * Compute maximum spell slots for a class at the given character level.
  *
- * @param dndClass SRD class (optional).
+ * @param dndClass Class shape from catalog (optional).
  * @param charLevel Character level.
  * @returns Slot maxima description (none/standard/pact).
  */

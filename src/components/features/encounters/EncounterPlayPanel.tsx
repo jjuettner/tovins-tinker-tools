@@ -1,4 +1,4 @@
-import { CirclePlus, Droplet, Plus, Skull } from "lucide-react";
+import { CirclePlus, Droplet, Plus, Shield, Skull } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ConditionDetailDialog } from "@/components/features/play/ConditionDetailDialog";
 import { ConditionPickerDialog } from "@/components/features/play/ConditionPickerDialog";
@@ -42,6 +42,14 @@ function avatarStyleForKey(key: string): { backgroundColor: string; color: strin
 
 function normalizeEncounterConditionSlugs(slugs: string[] | undefined): string[] {
   return Array.from(new Set((slugs ?? []).map((s) => s.trim().toLowerCase()).filter(Boolean)));
+}
+
+function acLabelFromMonsterAc(raw: string | null): string | null {
+  if (!raw) return null;
+  // Examples: "15 (natural armor)" -> "15", "12" -> "12"
+  const stripped = raw.replace(/\s*\([^)]*\)\s*/g, " ").trim();
+  const m = stripped.match(/\d+/);
+  return m ? m[0] : null;
 }
 
 function buildEntities(
@@ -633,9 +641,20 @@ export default function EncounterPlayPanel(props: { campaignId: string; encounte
                 const isExpanded = isActive || isSelected;
                 const dmgVal = dmgByEntity[e.id] ?? "";
                 const monsterAvatar = e.kind === "monster" && e.monsterId ? monstersForAvatarsById.get(e.monsterId)?.img_url ?? null : null;
+                const monsterAcRaw = e.kind === "monster" && e.monsterId ? monstersForAvatarsById.get(e.monsterId)?.ac ?? null : null;
                 const pcClassIndex = e.kind === "pc" && e.characterId ? characterById.get(e.characterId)?.classIndex ?? "" : "";
                 const pcAvatarUrl = e.kind === "pc" && e.characterId ? characterById.get(e.characterId)?.avatarUrl ?? null : null;
                 const pcIcon = e.kind === "pc" ? classIconUrl(pcClassIndex) : null;
+                const pcAc = e.kind === "pc" && e.characterId ? characterById.get(e.characterId)?.armorClass : undefined;
+                const monsterAcLabel = acLabelFromMonsterAc(monsterAcRaw);
+                const acLabel =
+                  e.kind === "pc"
+                    ? typeof pcAc === "number"
+                      ? String(pcAc)
+                      : "—"
+                    : monsterAcRaw
+                      ? monsterAcLabel ?? "—"
+                      : "—";
                 const pcSlugs =
                   e.kind === "pc" && e.characterId ? characterById.get(e.characterId)?.conditionSlugs ?? [] : [];
                 const monsterSlugs =
@@ -737,7 +756,17 @@ export default function EncounterPlayPanel(props: { campaignId: string; encounte
                           ) : null}
                         </div>
                         <div className="mt-1">
-                          <HpReadonlyBadge currentHp={e.currentHp} maxHp={e.maxHp} tempHp={e.kind === "pc" ? e.tempHp ?? 0 : 0} />
+                          <div className="flex flex-wrap items-center gap-2">
+                            <HpReadonlyBadge
+                              currentHp={e.currentHp}
+                              maxHp={e.maxHp}
+                              tempHp={e.kind === "pc" ? e.tempHp ?? 0 : 0}
+                            />
+                            <span className="inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-white/70 px-2 py-0.5 text-[11px] font-medium text-zinc-700 dark:border-zinc-800 dark:bg-zinc-950/40 dark:text-zinc-200">
+                              <Shield className="h-3.5 w-3.5" aria-hidden="true" />
+                              <span className="tabular-nums">{acLabel}</span>
+                            </span>
+                          </div>
                         </div>
                       </div>
                       <div

@@ -6,10 +6,10 @@ import type { Character, EquippedItem } from "@/types/character";
 /**
  * Resolve weapon mastery index for an equipped weapon.
  *
- * Prefers saved override when set; otherwise uses SRD mastery on the equipment row.
+ * Prefers saved override when set; otherwise uses default mastery on the equipment row.
  *
  * @param weapon Equipped weapon instance.
- * @param eq SRD equipment row for this weapon (if known).
+ * @param eq Equipment row for this weapon (if known).
  * @returns Mastery index, or undefined if not proficient / missing.
  */
 export function resolvedWeaponMasteryIndex(weapon: EquippedItem, eq: DndEquipment | undefined): string | undefined {
@@ -23,7 +23,7 @@ export function resolvedWeaponMasteryIndex(weapon: EquippedItem, eq: DndEquipmen
  * Pick the ability used for an attack with a weapon, plus its modifier.
  *
  * @param stats Ability scores.
- * @param eq SRD equipment row (weapon).
+ * @param eq Equipment row (weapon).
  * @returns Selected ability and computed modifier.
  */
 export function weaponAbilityAndMod(

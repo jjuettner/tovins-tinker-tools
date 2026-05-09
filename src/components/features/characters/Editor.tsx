@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { buttonClass, inputClass, inputClassFull, smallLabelClass } from "@/components/ui/controlClasses";
 import CharacterAvatar from "@/components/ui/CharacterAvatar";
 import { NumberInput } from "@/components/ui/NumberInput";
-import { useRulesetSrdCatalog } from "@/hooks/useRulesetSrdCatalog";
+import { useRulesetCatalog } from "@/hooks/useRulesetCatalog";
 import { computeArmorClass } from "@/lib/character/armorClass";
 import { newEquippedItemId, normalizeDraft } from "@/lib/character/normalize";
 import { emptyWeapon, rebuildEquipped, splitEquipped } from "@/lib/equippedLayout";
@@ -58,7 +58,7 @@ export function CharacterEditor(props: {
         setAllRulesets(rs.map((r) => ({ id: r.id, name: r.name })));
       } catch {
         if (cancelled) return;
-        setAllRulesets([{ id: DND2024_RULESET_ID, name: "D&D 2024 SRD" }]);
+        setAllRulesets([{ id: DND2024_RULESET_ID, name: "D&D 2024" }]);
       }
     }
     void run();
@@ -124,7 +124,7 @@ export function CharacterEditor(props: {
     setSelectedRuleIds(allRulesets.map((r) => r.id));
   }, [campaignId, allRulesets]);
 
-  const catalog = useRulesetSrdCatalog(activeRuleIds);
+  const catalog = useRulesetCatalog(activeRuleIds);
 
   const classAllowedByCampaign = useMemo(() => {
     if (!campaignId) return true;

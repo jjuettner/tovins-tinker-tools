@@ -15,7 +15,7 @@ type Props = {
 };
 
 /**
- * Colored SRD-condition chips (matches Play header styling).
+ * Colored condition chips (matches Play header styling).
  *
  * @param slugs Stored slugs from character or encounter entity.
  * @param labelBySlug Display names from the conditions catalog (fallback: slug snippet).

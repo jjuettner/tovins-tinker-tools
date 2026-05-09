@@ -29,7 +29,7 @@ async function readJson<T>(relPath: string): Promise<T> {
 }
 
 async function main() {
-  const raw = await readJson<JsonCondition[]>("src/data/PHB24/5e-SRD-Conditions.json");
+  const raw = await readJson<JsonCondition[]>("src/data/PHB24/5e-Conditions.json");
   const rows = raw
     .map((c) => ({
       slug: typeof c.index === "string" ? c.index.trim().toLowerCase() : "",

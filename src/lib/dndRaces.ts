@@ -1,4 +1,4 @@
-import rawRaces from "@/data/PHB24/5e-SRD-Races.json";
+import rawRaces from "@/data/PHB24/5e-Races.json";
 
 export type DndRaceTraitRef = {
   index: string;

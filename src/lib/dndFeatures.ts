@@ -1,6 +1,6 @@
-import rawFeatures from "@/data/PHB24/5e-SRD-Features.json";
+import rawFeatures from "@/data/PHB24/5e-Features.json";
 
-export type DndSrdClassFeature = {
+export type BundledClassFeature = {
   index: string;
   name: string;
   level: number;
@@ -10,17 +10,17 @@ export type DndSrdClassFeature = {
   desc?: string[];
 };
 
-const features = rawFeatures as unknown as DndSrdClassFeature[];
+const features = rawFeatures as unknown as BundledClassFeature[];
 
 /**
- * SRD class features unlocked at this level: same class, no subclass (we don't store subclass yet),
- * not a sub-choice row (`parent` — e.g. "Fighting Style: Archery" vs "Fighting Style").
+ * Class features unlocked at this level from bundled PHB24 data: same class, no subclass
+ * until we persist subclass (`subclass`), and excludes sub-choice rows (`parent`).
  *
- * @param classIndex SRD class index (e.g. "fighter").
+ * @param classIndex Ruleset class slug (e.g. `fighter`).
  * @param level Character class level.
  * @returns Sorted list of unlocked base class features.
  */
-export function unlockedBaseClassFeaturesFromSrd(classIndex: string, level: number): DndSrdClassFeature[] {
+export function unlockedBaseClassFeatures(classIndex: string, level: number): BundledClassFeature[] {
   const cid = classIndex.trim();
   if (!cid) return [];
   return features

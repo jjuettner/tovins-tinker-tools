@@ -3,9 +3,9 @@ import type { DndClass, DndFeat, DndSpell } from "@/lib/dndData";
 import type { DndEquipment } from "@/lib/dndEquipment";
 import type { DndRace } from "@/lib/dndRaces";
 import type { DndWeaponMastery } from "@/lib/dndWeaponMastery";
-import { fetchClasses, fetchEquipment, fetchFeats, fetchRaces, fetchSpells, fetchWeaponMastery } from "@/lib/db/srd";
+import { fetchClasses, fetchEquipment, fetchFeats, fetchRaces, fetchSpells, fetchWeaponMastery } from "@/lib/db/rulesetCatalog";
 
-export type RulesetSrdCatalog = {
+export type RulesetCatalog = {
   loading: boolean;
   error: string | null;
   races: DndRace[];
@@ -23,9 +23,9 @@ export type RulesetSrdCatalog = {
 };
 
 /**
- * Normalize spell-school name to an SRD-ish index.
+ * Normalize spell-school name to a slug-style index (lowercase, hyphen-separated).
  *
- * @param s School name.
+ * @param s School display name from row data.
  * @returns Index string.
  */
 function toDndSchoolIndex(s: string): string {
@@ -33,10 +33,10 @@ function toDndSchoolIndex(s: string): string {
 }
 
 /**
- * Transform race rows into SRD race objects sorted by name.
+ * Map race rows to client `DndRace` shapes sorted by name.
  *
- * @param rows Race rows.
- * @returns SRD races.
+ * @param rows Race rows from the database.
+ * @returns Race list for UI.
  */
 function transformRaces(rows: { slug: string; name: string }[]) {
   return rows
@@ -45,10 +45,10 @@ function transformRaces(rows: { slug: string; name: string }[]) {
 }
 
 /**
- * Transform class rows into SRD class objects sorted by name.
+ * Map class rows to client class shapes sorted by name.
  *
- * @param rows Class rows.
- * @returns SRD classes.
+ * @param rows Class rows from the database.
+ * @returns Class list for UI.
  */
 function transformClasses(rows: { slug: string; name: string; hit_die: number | null }[]) {
   return rows
@@ -61,10 +61,10 @@ function transformClasses(rows: { slug: string; name: string; hit_die: number | 
 }
 
 /**
- * Transform feat rows into SRD feat objects sorted by name.
+ * Map feat rows to client feat shapes sorted by name.
  *
- * @param rows Feat rows.
- * @returns SRD feats.
+ * @param rows Feat rows from the database.
+ * @returns Feat list for UI.
  */
 function transformFeats(rows: { slug: string; name: string; feat_type: string | null; repeatable: string | null; description: string | null }[]) {
   return rows
@@ -96,7 +96,7 @@ function normalizeSpellStringArray(value: unknown): string[] | undefined {
 }
 
 /**
- * Read spell body text from ruleset `data` jsonb (SRD arrays or importer prose).
+ * Read spell body text from ruleset `data` jsonb (JSON arrays from seed data or importer prose).
  *
  * @param data Row `data` column.
  * @returns `desc` and `higher_level` compatible with `DndSpell`.
@@ -126,10 +126,10 @@ function spellNarrativeFromData(data: unknown): { desc?: string[]; higher_level?
 }
 
 /**
- * Transform spell rows into SRD spell objects sorted by name.
+ * Map spell rows to client spell shapes sorted by name.
  *
- * @param rows Spell rows.
- * @returns SRD spells.
+ * @param rows Spell rows from the database.
+ * @returns Spell list for UI.
  */
 function transformSpells(rows: Array<{
   slug: string;
@@ -175,12 +175,22 @@ function transformSpells(rows: Array<{
 }
 
 /**
- * Load SRD catalog rows for the given rulesets and expose derived index maps.
+ * Load ruleset catalog rows for active rulesets and expose derived index maps.
  *
  * @param rulesetIds Active ruleset ids.
  * @returns Catalog (loading/error + arrays + index maps).
  */
-export function useRulesetSrdCatalog(rulesetIds: string[]): Omit<RulesetSrdCatalog, "loading" | "error" | "racesByIndex" | "classesByIndex" | "spellsByIndex" | "featsByIndex" | "equipmentByIndex" | "weaponMasteryByIndex"> & {
+export function useRulesetCatalog(rulesetIds: string[]): Omit<
+  RulesetCatalog,
+  | "loading"
+  | "error"
+  | "racesByIndex"
+  | "classesByIndex"
+  | "spellsByIndex"
+  | "featsByIndex"
+  | "equipmentByIndex"
+  | "weaponMasteryByIndex"
+> & {
   loading: boolean;
   error: string | null;
   racesByIndex: Record<string, DndRace>;
@@ -303,6 +313,5 @@ export function useRulesetSrdCatalog(rulesetIds: string[]): Omit<RulesetSrdCatal
     featsByIndex,
     equipmentByIndex,
     weaponMasteryByIndex
-  } satisfies RulesetSrdCatalog;
+  } satisfies RulesetCatalog;
 }
-

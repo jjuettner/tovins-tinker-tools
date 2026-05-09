@@ -11,7 +11,7 @@ import SpellsTab from "@/components/features/play/SpellsTab";
 import { useActiveRulesetIds } from "@/hooks/useActiveRulesetIds";
 import { useCharacters } from "@/hooks/useCharacters";
 import { useRemoteSpellSlots } from "@/hooks/useRemoteSpellSlots";
-import { useRulesetSrdCatalog } from "@/hooks/useRulesetSrdCatalog";
+import { useRulesetCatalog } from "@/hooks/useRulesetCatalog";
 import { useConditions } from "@/hooks/useConditions";
 import { useStoredState } from "@/hooks/useStoredState";
 import { normalizeCharacter } from "@/lib/character/normalize";
@@ -50,7 +50,7 @@ export function PlayPage() {
   );
 
   const { activeRuleIds } = useActiveRulesetIds(c?.campaignId ?? null);
-  const catalog = useRulesetSrdCatalog(activeRuleIds);
+  const catalog = useRulesetCatalog(activeRuleIds);
   const { maximaFor } = useRemoteSpellSlots(activeRuleIds);
 
   const classByIndex = catalog.loading ? dndClassByIndex : catalog.classesByIndex;

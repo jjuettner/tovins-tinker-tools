@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { fetchClassSpellSlots } from "@/lib/db/srd";
+import { fetchClassSpellSlots } from "@/lib/db/rulesetCatalog";
 import type { SpellSlotMaxima } from "@/lib/spellSlots";
 
 type SlotPayload =
@@ -7,7 +7,7 @@ type SlotPayload =
   | { kind: "pact"; max: number; slotSpellLevel: number };
 
 /**
- * Load class spell-slot progressions from remote SRD tables.
+ * Load class spell-slot progressions from remote ruleset catalog tables.
  *
  * @param rulesetIds Active rulesets.
  * @returns Loading state + resolver for maxima at (class, level).

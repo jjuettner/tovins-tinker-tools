@@ -16,7 +16,7 @@ const SPELLCASTING_ABILITY_BY_CLASS_INDEX: Partial<Record<string, Ability>> = {
 /**
  * Get spellcasting ability for a class index.
  *
- * @param classIndex SRD class index (e.g. `wizard`).
+ * @param classIndex Ruleset class slug (e.g. `wizard`).
  * @returns Ability used for spellcasting, or null if unknown/non-caster.
  */
 export function spellcastingAbilityForClassIndex(classIndex: string): Ability | null {

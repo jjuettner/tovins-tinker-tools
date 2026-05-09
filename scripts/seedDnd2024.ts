@@ -61,8 +61,8 @@ async function upsertRuleset() {
   const { error: insertErr } = await supabase.from("rulesets").insert({
     id: DND2024_RULESET_ID,
     slug: "dnd2024",
-    name: "D&D 2024 SRD",
-    description: "Seeded from local SRD JSON files.",
+    name: "D&D 2024",
+    description: "Seeded from local PHB24 JSON files.",
     is_builtin: true
   });
   if (insertErr) throw insertErr;
@@ -240,14 +240,14 @@ async function seedSpellSlots(nameToSlug: Map<string, string>) {
 async function main() {
   await upsertRuleset();
 
-  const spells = await readJson<unknown[]>("src/data/5e-SRD-Spells.json");
-  const classes = await readJson<unknown[]>("src/data/5e-SRD-Classes.json");
-  const races = await readJson<unknown[]>("src/data/5e-SRD-Races.json");
-  const feats = await readJson<unknown[]>("src/data/5e-SRD-Feats.json");
-  const equipment = await readJson<unknown[]>("src/data/5e-SRD-Equipment.json");
-  const features = await readJson<unknown[]>("src/data/5e-SRD-Features.json");
-  const traits = await readJson<unknown[]>("src/data/5e-SRD-Traits.json");
-  const weaponMastery = await readJson<unknown[]>("src/data/5e-SRD-Weapon-Mastery-Properties.json");
+  const spells = await readJson<unknown[]>("src/data/PHB24/5e-Spells.json");
+  const classes = await readJson<unknown[]>("src/data/PHB24/5e-Classes.json");
+  const races = await readJson<unknown[]>("src/data/PHB24/5e-Races.json");
+  const feats = await readJson<unknown[]>("src/data/PHB24/5e-Feats.json");
+  const equipment = await readJson<unknown[]>("src/data/PHB24/5e-Equipment.json");
+  const features = await readJson<unknown[]>("src/data/PHB24/5e-Features.json");
+  const traits = await readJson<unknown[]>("src/data/PHB24/5e-Traits.json");
+  const weaponMastery = await readJson<unknown[]>("src/data/PHB24/5e-Weapon-Mastery-Properties.json");
 
   await batchUpsert("spells", spells.map(mapSpell).filter((x) => x.slug && x.name), "ruleset_id,slug");
   await batchUpsert("classes", classes.map(mapClass).filter((x) => x.slug && x.name), "ruleset_id,slug");

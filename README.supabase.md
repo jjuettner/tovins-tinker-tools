@@ -11,9 +11,9 @@
 
 - apply SQL in:
   - `supabase/migrations/0001_core.sql`
-  - `supabase/migrations/0002_srd.sql`
+  - `supabase/migrations/0002_srd.sql` (ruleset catalog tables; filename kept for migration history)
 
-## Seed SRD (dnd2024)
+## Seed dnd2024 ruleset catalog
 
 Create `.env.seed` (see `seed.env.example`), then:
 
@@ -23,7 +23,7 @@ npm run seed:dnd2024
 
 Notes:
 - creates/updates ruleset `dnd2024` with fixed id `00000000-0000-4000-8000-00000000d202`
-- upserts SRD rows into `spells`, `classes`, `races`, `feats`, `equipment`, `features`, `traits`, `weapon_mastery_properties`, `class_spell_slots`
+- upserts catalog rows into `spells`, `classes`, `races`, `feats`, `equipment`, `features`, `traits`, `weapon_mastery_properties`, `class_spell_slots`
 
 ## Import extra ruleset (TCE)
 

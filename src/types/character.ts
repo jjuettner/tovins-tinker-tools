@@ -5,7 +5,7 @@ export type EquippedItem = {
   equipmentIndex: string;
   /** Magic bonus (+1 weapon/armor, etc.) applied to attack/damage or AC as appropriate. */
   modifier: number;
-  /** Weapon mastery property index (SRD); empty uses weapon default mastery if any. */
+  /** Weapon mastery property slug; empty uses weapon default mastery if any. */
   masteryIndex?: string;
   /** When false, ignore weapon's default mastery and any override. */
   masteryProficient?: boolean;
@@ -23,7 +23,7 @@ export type Character = {
    * currently provide a campaign picker (minimal linkage mode).
    */
   campaignId?: string | null;
-  /** SRD race index, e.g. `elf`. */
+  /** Race slug from the active ruleset, e.g. `elf`. */
   raceIndex: string;
   classIndex: string;
   /** Optional subclass index for display (editor may omit). */
@@ -41,7 +41,7 @@ export type Character = {
   equipped: EquippedItem[];
   /** Count of spell slots already spent at each spell level (keys "1"…"9"). */
   spellSlotsUsed: Partial<Record<string, number>>;
-  /** Active SRD condition indices (e.g. `blinded`). */
+  /** Active condition slugs (e.g. `blinded`). */
   conditionSlugs?: string[];
   createdAt: number;
   updatedAt: number;

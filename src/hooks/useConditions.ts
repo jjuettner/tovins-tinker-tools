@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { dndConditions } from "@/lib/dndConditions";
-import { fetchConditions } from "@/lib/db/srd";
+import { fetchConditions } from "@/lib/db/rulesetCatalog";
 
 export type ConditionCatalogItem = {
   slug: string;
@@ -17,7 +17,7 @@ function staticFallback(): ConditionCatalogItem[] {
 }
 
 /**
- * Load condition catalog from Supabase `conditions` table when seeded; otherwise bundled SRD JSON.
+ * Load condition catalog from Supabase `conditions` table when seeded; otherwise bundled PHB24 JSON.
  *
  * @returns Catalog rows + loading flag.
  */

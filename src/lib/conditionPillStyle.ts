@@ -1,6 +1,6 @@
 /**
  * Theme-aware Tailwind bundles for condition pills (light + dark).
- * One stable color per canonical SRD slug; unknown slugs use a deterministic fallback palette.
+ * One stable color per canonical condition slug; unknown slugs use a deterministic fallback palette.
  */
 const BY_SLUG: Record<string, string> = {
   blinded:

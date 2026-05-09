@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { SkillCheckList } from "@/components/features/characters/SkillCheckList";
 import { dndTraitByIndex } from "@/lib/dndTraits";
-import { unlockedBaseClassFeaturesFromSrd } from "@/lib/dndFeatures";
+import { unlockedBaseClassFeatures } from "@/lib/dndFeatures";
 import { renderDbDescription } from "@/lib/renderDbDescription";
 import type { Character } from "@/types/character";
 
@@ -30,8 +30,8 @@ export default function GeneralTab(props: {
     [props.c.feats, props.featByIndex]
   );
 
-  const srdClassFeatures = useMemo(
-    () => unlockedBaseClassFeaturesFromSrd(props.c.classIndex, props.c.level),
+  const bundledClassFeatures = useMemo(
+    () => unlockedBaseClassFeatures(props.c.classIndex, props.c.level),
     [props.c.classIndex, props.c.level]
   );
 
@@ -39,14 +39,14 @@ export default function GeneralTab(props: {
     <div className="space-y-8">
       <SkillCheckList c={props.c} twoColumnAbilityGridFrom="md" />
 
-      {srdClassFeatures.length > 0 ? (
+      {bundledClassFeatures.length > 0 ? (
         <section className="rounded-xl border border-zinc-200 bg-white/60 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
-          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Class features (SRD)</h2>
+          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Class features</h2>
           <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-            From 5e-SRD-Features for your class and level. Subclass paths omitted until a subclass is stored on the character.
+            From bundled PHB24 feature JSON for your class and level. Subclass paths omitted until a subclass is stored on the character.
           </p>
           <ul className="mt-3 space-y-3 text-sm text-zinc-700 dark:text-zinc-200">
-            {srdClassFeatures.map((row) => (
+            {bundledClassFeatures.map((row) => (
               <li key={row.index}>
                 <div className="font-medium text-zinc-900 dark:text-zinc-50">
                   <span className="text-zinc-500 dark:text-zinc-400">Lv {row.level}</span> · {row.name}

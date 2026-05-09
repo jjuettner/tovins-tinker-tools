@@ -1,6 +1,6 @@
-import rawClasses from "@/data/PHB24/5e-SRD-Classes.json";
-import rawFeats from "@/data/PHB24/5e-SRD-Feats.json";
-import rawSpells from "@/data/PHB24/5e-SRD-Spells.json";
+import rawClasses from "@/data/PHB24/5e-Classes.json";
+import rawFeats from "@/data/PHB24/5e-Feats.json";
+import rawSpells from "@/data/PHB24/5e-Spells.json";
 
 export type DndClass = {
   index: string;
@@ -52,7 +52,7 @@ export const dndSpellByIndex: Record<string, DndSpell> = Object.fromEntries(dndS
  *
  * If none match (bad data), falls back to the full spell list.
  *
- * @param classIndex SRD class index.
+ * @param classIndex Ruleset class slug.
  * @returns Spells on class list (or full list).
  */
 export function spellsOnClassList(classIndex: string): DndSpell[] {
