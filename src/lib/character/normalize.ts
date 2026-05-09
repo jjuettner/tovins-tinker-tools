@@ -65,17 +65,31 @@ export function normalizeCharacter(c: Character): Character {
 
   const armorClass = computeArmorClass(equipped, dexMod);
 
+  const rawSub = typeof c.subclassIndex === "string" ? c.subclassIndex.trim() : "";
+  const subclassIndex = rawSub.length > 0 ? rawSub : null;
+
+  const rawCond = Array.isArray(c.conditionSlugs) ? c.conditionSlugs : [];
+  const conditionSlugs = Array.from(
+    new Set(
+      rawCond
+        .map((x) => (typeof x === "string" ? x.trim().toLowerCase() : ""))
+        .filter(Boolean)
+    )
+  );
+
   return {
     ...c,
     avatarUrl,
     raceIndex: typeof c.raceIndex === "string" ? c.raceIndex.trim() : "",
+    subclassIndex,
     level,
     equipped,
     maxHp,
     currentHp,
     tempHp,
     armorClass,
-    spellSlotsUsed
+    spellSlotsUsed,
+    conditionSlugs
   };
 }
 
@@ -90,13 +104,15 @@ export function normalizeDraft(d: CharacterDraft): CharacterDraft {
   return {
     ...d,
     raceIndex: n.raceIndex,
+    subclassIndex: n.subclassIndex,
     level: n.level,
     equipped: n.equipped,
     maxHp: n.maxHp,
     currentHp: n.currentHp,
     tempHp: n.tempHp,
     armorClass: n.armorClass,
-    spellSlotsUsed: n.spellSlotsUsed
+    spellSlotsUsed: n.spellSlotsUsed,
+    conditionSlugs: n.conditionSlugs
   };
 }
 

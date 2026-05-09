@@ -6,6 +6,7 @@ import { useActiveRulesetIds } from "@/hooks/useActiveRulesetIds";
 import { formatSigned, proficiencyBonus } from "@/lib/dnd";
 import { dndClassByIndex, dndFeatByIndex, dndSpellByIndex, type DndSpell } from "@/lib/dndData";
 import { dndRaceByIndex } from "@/lib/dndRaces";
+import { renderDbDescription } from "@/lib/renderDbDescription";
 import { dndTraitByIndex } from "@/lib/dndTraits";
 import type { Character } from "@/types/character";
 import { SkillCheckList } from "@/components/features/characters/SkillCheckList";
@@ -144,7 +145,7 @@ export function CharacterSheet(props: {
                 <div className="font-medium text-zinc-900 dark:text-zinc-50">{t.name}</div>
                 {t.description ? (
                   <p className="mt-1 whitespace-pre-wrap text-xs leading-relaxed text-zinc-600 dark:text-zinc-300">
-                    {t.description}
+                    {renderDbDescription(t.description)}
                   </p>
                 ) : null}
               </li>

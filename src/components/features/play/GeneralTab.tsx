@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { SkillCheckList } from "@/components/features/characters/SkillCheckList";
 import { dndTraitByIndex } from "@/lib/dndTraits";
 import { unlockedBaseClassFeaturesFromSrd } from "@/lib/dndFeatures";
+import { renderDbDescription } from "@/lib/renderDbDescription";
 import type { Character } from "@/types/character";
 
 export default function GeneralTab(props: {
@@ -36,7 +37,7 @@ export default function GeneralTab(props: {
 
   return (
     <div className="space-y-8">
-      <SkillCheckList c={props.c} />
+      <SkillCheckList c={props.c} twoColumnAbilityGridFrom="md" />
 
       {srdClassFeatures.length > 0 ? (
         <section className="rounded-xl border border-zinc-200 bg-white/60 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
@@ -52,7 +53,7 @@ export default function GeneralTab(props: {
                 </div>
                 {row.desc?.length ? (
                   <p className="mt-1 whitespace-pre-wrap text-xs leading-relaxed text-zinc-600 dark:text-zinc-300">
-                    {row.desc.join("\n\n")}
+                    {renderDbDescription(row.desc.join("\n\n"))}
                   </p>
                 ) : null}
               </li>
@@ -70,7 +71,7 @@ export default function GeneralTab(props: {
                 <div className="font-medium text-zinc-900 dark:text-zinc-50">{t.name}</div>
                 {t.description ? (
                   <p className="mt-1 whitespace-pre-wrap text-xs leading-relaxed text-zinc-600 dark:text-zinc-300">
-                    {t.description}
+                    {renderDbDescription(t.description)}
                   </p>
                 ) : null}
               </li>
@@ -90,7 +91,7 @@ export default function GeneralTab(props: {
                 <div className="font-medium text-zinc-900 dark:text-zinc-50">{f.name}</div>
                 {f.description ? (
                   <p className="mt-1 whitespace-pre-wrap text-xs leading-relaxed text-zinc-600 dark:text-zinc-300">
-                    {f.description}
+                    {renderDbDescription(f.description)}
                   </p>
                 ) : null}
               </li>

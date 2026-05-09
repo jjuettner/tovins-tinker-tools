@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { buttonClass } from "@/components/ui/controlClasses";
 import { computeSpellSlotsRemaining, type spellSlotMaximaForClass } from "@/lib/spellSlots";
+import { renderDbDescription } from "@/lib/renderDbDescription";
 import type { Character } from "@/types/character";
 import type { DndSpell } from "@/lib/dndData";
 
@@ -21,11 +22,13 @@ function SpellPlayCard({ spell }: { spell: DndSpell }) {
         {spell.concentration ? <span>· Concentration</span> : null}
         {spell.ritual ? <span>· Ritual</span> : null}
       </div>
-      {desc ? <p className="mt-2 whitespace-pre-wrap leading-relaxed text-zinc-700 dark:text-zinc-200">{desc}</p> : null}
+      {desc ? (
+        <p className="mt-2 whitespace-pre-wrap leading-relaxed text-zinc-700 dark:text-zinc-200">{renderDbDescription(desc)}</p>
+      ) : null}
       {hi ? (
-        <p className="mt-2 text-zinc-600 dark:text-zinc-300">
+        <p className="mt-2 whitespace-pre-wrap text-zinc-600 dark:text-zinc-300">
           <span className="font-semibold text-zinc-800 dark:text-zinc-200">At higher levels. </span>
-          {hi}
+          {renderDbDescription(hi)}
         </p>
       ) : null}
     </div>
@@ -34,7 +37,7 @@ function SpellPlayCard({ spell }: { spell: DndSpell }) {
 
 function CastSpellModal(props: {
   c: Character;
-  spell: { index: string; name: string; level: number };
+  spell: DndSpell;
   maxima: ReturnType<typeof spellSlotMaximaForClass>;
   onClose(): void;
   onConfirm(slotLevel: number): void;
@@ -42,12 +45,16 @@ function CastSpellModal(props: {
   const rows = computeSpellSlotsRemaining(props.maxima, props.c.spellSlotsUsed);
   const options = rows.filter((r) => r.spellLevel >= props.spell.level && r.remaining > 0);
   const [pick, setPick] = useState(options[0]?.spellLevel ?? props.spell.level);
+  const hiText = spellParagraphs(props.spell.higher_level);
+  const upcasting = pick > props.spell.level;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true">
-      <div className="w-full max-w-sm rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
         <h2 className="font-display text-base font-semibold text-zinc-900 dark:text-zinc-50">Cast {props.spell.name}</h2>
-        <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-300">Spell level {props.spell.level}. Pick slot level to expend (upcasting).</p>
+        <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-300">
+          Spell level {props.spell.level}. Pick slot level to expend (upcasting uses a higher-level slot).
+        </p>
         {options.length === 0 ? (
           <p className="mt-3 text-sm text-red-600">No valid slots.</p>
         ) : (
@@ -60,6 +67,20 @@ function CastSpellModal(props: {
             ))}
           </div>
         )}
+        {upcasting ? (
+          <div className="mt-4 rounded-lg border border-zinc-200 bg-zinc-50/90 p-3 dark:border-zinc-700 dark:bg-zinc-950/50">
+            <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">At higher levels</p>
+            {hiText ? (
+              <p className="mt-2 max-h-40 overflow-y-auto whitespace-pre-wrap text-xs leading-relaxed text-zinc-700 dark:text-zinc-200">
+                {renderDbDescription(hiText)}
+              </p>
+            ) : (
+              <p className="mt-2 text-xs italic text-zinc-500 dark:text-zinc-400">
+                No &quot;At higher levels&quot; text in the catalog for this spell.
+              </p>
+            )}
+          </div>
+        ) : null}
         <div className="mt-4 flex justify-end gap-2">
           <button type="button" className={buttonClass("ghost")} onClick={props.onClose}>
             Cancel
@@ -86,7 +107,7 @@ export default function SpellsTab(props: {
   cantrips: DndSpell[];
   onPatch(next: Character): void;
 }) {
-  const [castSpell, setCastSpell] = useState<{ index: string; name: string; level: number } | null>(null);
+  const [castSpell, setCastSpell] = useState<DndSpell | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   return (
@@ -183,7 +204,7 @@ export default function SpellsTab(props: {
                         type="button"
                         disabled={disabled}
                         className={buttonClass("primary") + " min-h-[2.25rem] px-3 py-1.5 text-xs " + (disabled ? "opacity-50" : "")}
-                        onClick={() => setCastSpell({ index: s.index, name: s.name, level: s.level })}
+                        onClick={() => setCastSpell(s)}
                       >
                         Cast
                       </button>

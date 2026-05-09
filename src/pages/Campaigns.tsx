@@ -11,6 +11,7 @@ import {
   listCampaigns
 } from "@/lib/db/campaigns";
 import { listRulesets } from "@/lib/db/rulesets";
+import { renderDbDescription } from "@/lib/renderDbDescription";
 
 type UiCampaign = {
   id: string;
@@ -135,7 +136,9 @@ export function CampaignsPage() {
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
                 <div className="font-medium text-zinc-900 dark:text-zinc-50">{c.name}</div>
-                {c.description ? <div className="text-sm text-zinc-600 dark:text-zinc-300">{c.description}</div> : null}
+                {c.description ? (
+                  <div className="whitespace-pre-wrap text-sm text-zinc-600 dark:text-zinc-300">{renderDbDescription(c.description)}</div>
+                ) : null}
               </div>
               <div className="flex items-center gap-2">
                 <button

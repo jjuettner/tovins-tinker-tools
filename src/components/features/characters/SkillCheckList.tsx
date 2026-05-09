@@ -30,9 +30,16 @@ export function SkillCheckList(props: {
   collapsibleTitle?: string;
   /** Each ability block (STR, DEX, …) can expand/collapse. */
   collapseByAbility?: boolean;
+  /**
+   * Breakpoint at which the ability grid becomes two columns (STR/DEX, CON/INT, WIS/CHA).
+   * Default `lg` for character sheet; use `md` for Play General tab on tablet width.
+   */
+  twoColumnAbilityGridFrom?: "md" | "lg";
 }) {
   const scoreStyle = props.scoreStyle ?? "plain";
   const showEmpty = props.showNonProficiencyCircle ?? true;
+  const twoColumnFrom = props.twoColumnAbilityGridFrom ?? "lg";
+  const gridTwoColClass = twoColumnFrom === "md" ? "md:grid-cols-2" : "lg:grid-cols-2";
   const prof = proficiencyBonus(props.c.level);
   const [open, setOpen] = useState(true);
   const [abOpen, setAbOpen] = useState<Record<Ability, boolean>>(initialAbilityOpen);
@@ -136,7 +143,7 @@ export function SkillCheckList(props: {
   }
 
   const grid = (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">{abilities.map((ab) => renderAbilityBlock(ab))}</div>
+    <div className={"grid grid-cols-1 gap-4 " + gridTwoColClass}>{abilities.map((ab) => renderAbilityBlock(ab))}</div>
   );
 
   if (props.collapsible) {

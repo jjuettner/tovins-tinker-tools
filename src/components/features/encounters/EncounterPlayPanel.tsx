@@ -1,6 +1,10 @@
-import { Droplet, Plus, Skull } from "lucide-react";
+import { CirclePlus, Droplet, Plus, Skull } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { ConditionDetailDialog } from "@/components/features/play/ConditionDetailDialog";
+import { ConditionPickerDialog } from "@/components/features/play/ConditionPickerDialog";
 import { buttonClass, inputClass, smallLabelClass } from "@/components/ui/controlClasses";
+import ConditionPills from "@/components/ui/ConditionPills";
+import { useConditions } from "@/hooks/useConditions";
 import HpReadonlyBadge from "@/components/ui/HpReadonlyBadge";
 import { NumberInput } from "@/components/ui/NumberInput";
 import { eligibleTurnOrder, normalizeEncounterQueue, orderWithDeadAtBottom, rotateTurnOrder } from "@/lib/encounterTurn";
@@ -34,6 +38,10 @@ function avatarStyleForKey(key: string): { backgroundColor: string; color: strin
   const hue = hashToHue(key);
   // Pastel-ish but readable.
   return { backgroundColor: `hsl(${hue} 70% 40%)`, color: "white" };
+}
+
+function normalizeEncounterConditionSlugs(slugs: string[] | undefined): string[] {
+  return Array.from(new Set((slugs ?? []).map((s) => s.trim().toLowerCase()).filter(Boolean)));
 }
 
 function buildEntities(
@@ -70,7 +78,8 @@ function buildEntities(
         monsterId: m.id,
         initiative: initiative[key] ?? 0,
         maxHp: m.hp,
-        currentHp: m.hp
+        currentHp: m.hp,
+        conditionSlugs: []
       });
     }
   }
@@ -87,18 +96,32 @@ export default function EncounterPlayPanel(props: { campaignId: string; encounte
   const [initDraft, setInitDraft] = useState<Record<string, number>>({});
   const [selectedEntityId, setSelectedEntityId] = useState<string | null>(null);
   const [dmgByEntity, setDmgByEntity] = useState<Record<string, string>>({});
+  const { items: conditionCatalog } = useConditions();
+  const [monsterConditionPickerForId, setMonsterConditionPickerForId] = useState<string | null>(null);
+  const [monsterConditionDetail, setMonsterConditionDetail] = useState<{ entityId: string; slug: string } | null>(null);
 
-  const refresh = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  /**
+   * Reload encounters + campaign characters from Supabase.
+   *
+   * @param silent When true, skips loading spinner (keeps UI mounted for HP/conditions updates).
+   */
+  const refresh = useCallback(async (opts?: { silent?: boolean }) => {
+    const silent = opts?.silent === true;
+    if (!silent) {
+      setLoading(true);
+      setError(null);
+    }
     try {
       const [encs, ch] = await Promise.all([listEncounters(props.campaignId), listCharactersByCampaign(props.campaignId)]);
       setRows(encs);
       setChars(ch);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load");
+      const msg = e instanceof Error ? e.message : "Failed to load";
+      setError(msg);
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
   }, [props.campaignId]);
 
@@ -134,6 +157,8 @@ export default function EncounterPlayPanel(props: { campaignId: string; encounte
     setInitDraft({});
     setDmgByEntity({});
     setSelectedEntityId(null);
+    setMonsterConditionPickerForId(null);
+    setMonsterConditionDetail(null);
   }, [selectedId]);
 
   useEffect(() => {
@@ -227,9 +252,67 @@ export default function EncounterPlayPanel(props: { campaignId: string; encounte
 
   const characterById = useMemo(() => new Map(chars.map((c) => [c.id, c] as const)), [chars]);
 
+  const conditionLabelBySlug = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const it of conditionCatalog) {
+      m.set(it.slug.toLowerCase(), it.name);
+    }
+    return m;
+  }, [conditionCatalog]);
+
+  const monsterConditionDetailResolved = useMemo(() => {
+    if (!monsterConditionDetail) {
+      return { slug: null as string | null, name: "", description: "" };
+    }
+    const key = monsterConditionDetail.slug.toLowerCase();
+    const row = conditionCatalog.find((it) => it.slug.toLowerCase() === key);
+    return {
+      slug: monsterConditionDetail.slug,
+      name: row?.name ?? conditionLabelBySlug.get(key) ?? monsterConditionDetail.slug,
+      description: row?.description ?? ""
+    };
+  }, [monsterConditionDetail, conditionCatalog, conditionLabelBySlug]);
+
   async function persistData(enc: EncounterRow, data: EncounterDataV1) {
     await updateEncounter(enc.id, { data });
-    await refresh();
+    await refresh({ silent: true });
+  }
+
+  async function persistMonsterConditionSlugs(entityId: string, nextSlugs: string[]) {
+    if (!props.canDm || !selectedId) return;
+    const normalized = normalizeEncounterConditionSlugs(nextSlugs);
+    const freshEnc = await getEncounter(selectedId);
+    const entities = (freshEnc.data.entities ?? []).map((e) =>
+      e.id === entityId && e.kind === "monster" ? { ...e, conditionSlugs: normalized } : e
+    );
+    await updateEncounter(freshEnc.id, { data: { ...freshEnc.data, entities } });
+    await refresh({ silent: true });
+  }
+
+  async function addMonsterCondition(entityId: string, slug: string) {
+    const key = slug.trim().toLowerCase();
+    if (!key || !props.canDm || !selectedId) return;
+    const freshEnc = await getEncounter(selectedId);
+    const row = freshEnc.data.entities?.find((x) => x.id === entityId);
+    if (!row || row.kind !== "monster") return;
+    const cur = normalizeEncounterConditionSlugs(row.conditionSlugs);
+    if (cur.includes(key)) {
+      setMonsterConditionPickerForId(null);
+      return;
+    }
+    await persistMonsterConditionSlugs(entityId, [...cur, key]);
+    setMonsterConditionPickerForId(null);
+  }
+
+  async function removeMonsterCondition(entityId: string, slug: string) {
+    const drop = slug.toLowerCase();
+    if (!props.canDm || !selectedId) return;
+    const freshEnc = await getEncounter(selectedId);
+    const row = freshEnc.data.entities?.find((x) => x.id === entityId);
+    if (!row || row.kind !== "monster") return;
+    const cur = normalizeEncounterConditionSlugs(row.conditionSlugs).filter((s) => s !== drop);
+    await persistMonsterConditionSlugs(entityId, cur);
+    setMonsterConditionDetail(null);
   }
 
   async function startCombat() {
@@ -256,7 +339,7 @@ export default function EncounterPlayPanel(props: { campaignId: string; encounte
       entities: initialEntities
     };
     await updateEncounter(selected.id, { status: "ongoing", data: next });
-    await refresh();
+    await refresh({ silent: true });
   }
 
   async function nextTurn() {
@@ -281,13 +364,13 @@ export default function EncounterPlayPanel(props: { campaignId: string; encounte
     await updateEncounter(fresh.id, {
       data: { ...fresh.data, entities: rotated.entities, activeEntityId: rotated.activeEntityId, round: nextRound }
     });
-    await refresh();
+    await refresh({ silent: true });
   }
 
   async function finishCombat() {
     if (!selected) return;
     await updateEncounter(selected.id, { status: "finished" });
-    await refresh();
+    await refresh({ silent: true });
   }
 
   async function applyHpDelta(entityId: string, delta: number) {
@@ -353,8 +436,33 @@ export default function EncounterPlayPanel(props: { campaignId: string; encounte
   if (loading) return <p className="text-sm text-zinc-500">Loading…</p>;
   if (error && !selected) return <p className="text-sm text-red-600">{error}</p>;
 
+  const pickerMonster = selected?.data.entities?.find((x) => x.id === monsterConditionPickerForId);
+  const pickerExistingSlugs =
+    pickerMonster?.kind === "monster" ? normalizeEncounterConditionSlugs(pickerMonster.conditionSlugs) : [];
+
   return (
     <div className="flex flex-col gap-6">
+      <ConditionPickerDialog
+        open={monsterConditionPickerForId !== null && selected?.status === "ongoing"}
+        onClose={() => setMonsterConditionPickerForId(null)}
+        items={conditionCatalog}
+        existingSlugs={pickerExistingSlugs}
+        onAdd={(slug) => {
+          if (!monsterConditionPickerForId) return;
+          void addMonsterCondition(monsterConditionPickerForId, slug);
+        }}
+      />
+      <ConditionDetailDialog
+        slug={monsterConditionDetailResolved.slug}
+        name={monsterConditionDetailResolved.name}
+        description={monsterConditionDetailResolved.description}
+        onClose={() => setMonsterConditionDetail(null)}
+        onRemove={() => {
+          if (!monsterConditionDetail) return;
+          void removeMonsterCondition(monsterConditionDetail.entityId, monsterConditionDetail.slug);
+        }}
+      />
+
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
 
       {!selectedId ? (
@@ -445,6 +553,14 @@ export default function EncounterPlayPanel(props: { campaignId: string; encounte
                 const pcClassIndex = e.kind === "pc" && e.characterId ? characterById.get(e.characterId)?.classIndex ?? "" : "";
                 const pcAvatarUrl = e.kind === "pc" && e.characterId ? characterById.get(e.characterId)?.avatarUrl ?? null : null;
                 const pcIcon = e.kind === "pc" ? classIconUrl(pcClassIndex) : null;
+                const pcSlugs =
+                  e.kind === "pc" && e.characterId ? characterById.get(e.characterId)?.conditionSlugs ?? [] : [];
+                const monsterSlugs =
+                  e.kind === "monster" ? normalizeEncounterConditionSlugs(e.conditionSlugs) : [];
+                const slugsShown = e.kind === "pc" ? pcSlugs : monsterSlugs;
+                const combatCanEditMonster =
+                  props.canDm && selected.status === "ongoing" && e.kind === "monster";
+                const showConditionRow = slugsShown.length > 0 || combatCanEditMonster;
                 return (
                   <li
                     key={e.id}
@@ -461,54 +577,68 @@ export default function EncounterPlayPanel(props: { campaignId: string; encounte
                       setSelectedEntityId((cur) => (cur === e.id ? null : e.id));
                     }}
                   >
-                    <div className="flex flex-wrap items-center gap-3">
-                      <div className="relative h-14 w-14 shrink-0">
-                        <div
-                          className={
-                            "pointer-events-none absolute left-0 top-[-14px] h-[64px] w-14 overflow-hidden border-2 shadow-sm " +
-                            "rounded-t-full rounded-b-none " +
-                            (isActive
-                              ? "bg-emerald-50 dark:bg-emerald-950/30"
-                              : isSelected
-                                ? "bg-zinc-50 dark:bg-zinc-950/25"
-                                : "bg-white dark:bg-zinc-950/20") +
-                            " " +
-                            (e.kind === "pc"
-                              ? "border-amber-300 dark:border-amber-500"
-                              : "border-zinc-300 dark:border-zinc-600")
-                          }
-                        >
-                          <div className="absolute inset-x-0 bottom-0 h-3 bg-zinc-950/10 dark:bg-white/10" />
-                          <div className="absolute inset-0 pb-1">
-                            {monsterAvatar ? (
-                              <img src={monsterAvatar} alt="" className="h-full w-full object-cover" />
-                            ) : pcAvatarUrl ? (
-                              <img src={pcAvatarUrl} alt="" className="h-full w-full object-cover" />
-                            ) : pcIcon ? (
-                              <div
-                                className="h-full w-full"
-                                style={avatarStyleForKey(e.characterId ?? e.id)}
-                              >
-                                <img
-                                  src={pcIcon}
-                                  alt=""
-                                  className="h-full w-full object-contain p-1.5 opacity-95 dark:invert"
-                                />
-                              </div>
-                            ) : (
-                              <div
-                                className={
-                                  "grid h-full w-full place-items-center text-base font-semibold"
-                                }
-                                style={avatarStyleForKey((e.kind === "pc" ? e.characterId : e.monsterId) ?? e.id)}
-                              >
-                                {initialsForName(e.displayName)}
-                              </div>
-                            )}
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-3">
+                      <div
+                        className="mx-auto flex shrink-0 flex-col items-center gap-1 sm:mx-0"
+                        onMouseDown={(ev) => ev.stopPropagation()}
+                      >
+                        <div className="relative h-14 w-14">
+                          <div
+                            className={
+                              "pointer-events-none absolute left-0 top-[-14px] h-[64px] w-14 overflow-hidden border-2 shadow-sm " +
+                              "rounded-t-full rounded-b-none " +
+                              (isActive
+                                ? "bg-emerald-50 dark:bg-emerald-950/30"
+                                : isSelected
+                                  ? "bg-zinc-50 dark:bg-zinc-950/25"
+                                  : "bg-white dark:bg-zinc-950/20") +
+                              " " +
+                              (e.kind === "pc"
+                                ? "border-amber-300 dark:border-amber-500"
+                                : "border-zinc-300 dark:border-zinc-600")
+                            }
+                          >
+                            <div className="absolute inset-x-0 bottom-0 h-3 bg-zinc-950/10 dark:bg-white/10" />
+                            <div className="absolute inset-0 pb-1">
+                              {monsterAvatar ? (
+                                <img src={monsterAvatar} alt="" className="h-full w-full object-cover" />
+                              ) : pcAvatarUrl ? (
+                                <img src={pcAvatarUrl} alt="" className="h-full w-full object-cover" />
+                              ) : pcIcon ? (
+                                <div className="h-full w-full" style={avatarStyleForKey(e.characterId ?? e.id)}>
+                                  <img
+                                    src={pcIcon}
+                                    alt=""
+                                    className="h-full w-full object-contain p-1.5 opacity-95 dark:invert"
+                                  />
+                                </div>
+                              ) : (
+                                <div
+                                  className={"grid h-full w-full place-items-center text-base font-semibold"}
+                                  style={avatarStyleForKey((e.kind === "pc" ? e.characterId : e.monsterId) ?? e.id)}
+                                >
+                                  {initialsForName(e.displayName)}
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
+                        <input
+                          key={`init-${e.id}-${e.initiative}`}
+                          type="number"
+                          className={inputClass() + " h-7 w-14 px-2 text-xs text-right tabular-nums"}
+                          disabled={selected.status === "finished"}
+                          defaultValue={e.initiative}
+                          aria-label="Initiative"
+                          onMouseDown={(ev) => ev.stopPropagation()}
+                          onBlur={(ev) => {
+                            const v = Math.floor(Number(ev.target.value));
+                            if (!Number.isFinite(v) || v === e.initiative) return;
+                            void setInitiative(e.id, v);
+                          }}
+                        />
                       </div>
-                      <div className="min-w-0 flex-1">
+                      <div className="min-w-0 flex-[0.9]">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{e.displayName}</span>
                           {e.status === "dead" ? (
@@ -526,59 +656,88 @@ export default function EncounterPlayPanel(props: { campaignId: string; encounte
                           <HpReadonlyBadge currentHp={e.currentHp} maxHp={e.maxHp} tempHp={e.kind === "pc" ? e.tempHp ?? 0 : 0} />
                         </div>
                       </div>
-                      <label className="flex items-center gap-1 text-sm text-zinc-600" onClick={(ev) => ev.stopPropagation()}>
-                        <span className={smallLabelClass()}>Init</span>
-                        <input
-                          key={`init-${e.id}-${e.initiative}`}
-                          type="number"
-                          className={inputClass() + " w-20"}
-                          disabled={selected.status === "finished"}
-                          defaultValue={e.initiative}
-                          onBlur={(ev) => {
-                            const v = Math.floor(Number(ev.target.value));
-                            if (!Number.isFinite(v) || v === e.initiative) return;
-                            void setInitiative(e.id, v);
-                          }}
-                        />
-                      </label>
-                      <div className="flex flex-wrap items-end gap-1" onClick={(ev) => ev.stopPropagation()}>
-                        <input
-                          type="number"
-                          min={0}
-                          className={inputClass() + " w-20"}
-                          disabled={selected.status === "finished"}
-                          placeholder="±"
-                          value={dmgVal}
-                          onChange={(ev) => setDmgByEntity((d) => ({ ...d, [e.id]: ev.target.value }))}
-                        />
-                        <button
-                          type="button"
-                          className={buttonClass("ghost") + " inline-flex items-center gap-1 text-xs"}
-                          disabled={selected.status === "finished"}
-                          onClick={() => {
-                            const n = Math.max(0, Math.floor(Number(dmgVal)));
-                            if (n <= 0) return;
-                            void applyHpDelta(e.id, -n);
-                          }}
-                          aria-label="Damage"
-                        >
-                          <Droplet className="h-3.5 w-3.5 text-red-600" aria-hidden="true" />
-                          DMG
-                        </button>
-                        <button
-                          type="button"
-                          className={buttonClass("ghost") + " inline-flex items-center gap-1 text-xs"}
-                          disabled={selected.status === "finished"}
-                          onClick={() => {
-                            const n = Math.max(0, Math.floor(Number(dmgVal)));
-                            if (n <= 0) return;
-                            void applyHpDelta(e.id, n);
-                          }}
-                          aria-label="Heal"
-                        >
-                          <Plus className="h-3.5 w-3.5 text-emerald-600" strokeWidth={7} aria-hidden="true" />
-                          Heal
-                        </button>
+                      <div
+                        className="min-w-0 flex-[1.4] border-t border-zinc-200/80 pt-2 dark:border-zinc-800/80 sm:border-t-0 sm:pt-0"
+                        onMouseDown={(ev) => ev.stopPropagation()}
+                      >
+                        {showConditionRow ? (
+                          <div className="flex flex-wrap items-center gap-2">
+                            {slugsShown.length ? (
+                              <ConditionPills
+                                slugs={slugsShown}
+                                labelBySlug={conditionLabelBySlug}
+                                onPillClick={
+                                  combatCanEditMonster
+                                    ? (slug) => setMonsterConditionDetail({ entityId: e.id, slug })
+                                    : undefined
+                                }
+                              />
+                            ) : null}
+                            {combatCanEditMonster ? (
+                              <button
+                                type="button"
+                                className={buttonClass("ghost") + " inline-flex h-8 items-center gap-1 px-2 text-[11px]"}
+                                aria-label="Add condition to monster"
+                                onClick={(ev) => {
+                                  ev.stopPropagation();
+                                  setMonsterConditionPickerForId(e.id);
+                                }}
+                              >
+                                <CirclePlus className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                                Condition
+                              </button>
+                            ) : null}
+                          </div>
+                        ) : null}
+                      </div>
+                      <div
+                        className="flex w-full shrink-0 flex-col gap-2 border-t border-zinc-200/80 pt-2 dark:border-zinc-800/80 sm:w-32 sm:border-t-0 sm:pt-0 sm:items-end"
+                        onMouseDown={(ev) => ev.stopPropagation()}
+                      >
+                        <div className="flex w-full flex-col items-end gap-1">
+                          <input
+                            type="number"
+                            min={0}
+                            className={inputClass() + " w-16 shrink-0 text-right tabular-nums"}
+                            disabled={selected.status === "finished"}
+                            placeholder="±"
+                            value={dmgVal}
+                            onChange={(ev) => setDmgByEntity((d) => ({ ...d, [e.id]: ev.target.value }))}
+                            onKeyDown={(ev) => {
+                              if (ev.key === "Enter") ev.preventDefault();
+                            }}
+                          />
+                          <div className="flex w-full flex-nowrap items-center justify-end gap-1">
+                            <button
+                              type="button"
+                              className={buttonClass("ghost") + " inline-flex shrink-0 items-center gap-1 text-xs whitespace-nowrap"}
+                              disabled={selected.status === "finished"}
+                              onClick={() => {
+                                const n = Math.max(0, Math.floor(Number(dmgVal)));
+                                if (n <= 0) return;
+                                void applyHpDelta(e.id, -n);
+                              }}
+                              aria-label="Damage"
+                            >
+                              <Droplet className="h-3.5 w-3.5 text-red-600" aria-hidden="true" />
+                              DMG
+                            </button>
+                            <button
+                              type="button"
+                              className={buttonClass("ghost") + " inline-flex shrink-0 items-center gap-1 text-xs whitespace-nowrap"}
+                              disabled={selected.status === "finished"}
+                              onClick={() => {
+                                const n = Math.max(0, Math.floor(Number(dmgVal)));
+                                if (n <= 0) return;
+                                void applyHpDelta(e.id, n);
+                              }}
+                              aria-label="Heal"
+                            >
+                              <Plus className="h-3.5 w-3.5 text-emerald-600" strokeWidth={7} aria-hidden="true" />
+                              Heal
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     </div>
 

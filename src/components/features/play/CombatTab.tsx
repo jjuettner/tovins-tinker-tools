@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { buttonClass, inputClass, inputClassFull, smallLabelClass } from "@/components/ui/controlClasses";
 import { resolvedWeaponMasteryIndex, unarmedDamageBonus, unarmedToHit, weaponDamageSummary, weaponToHitBonus } from "@/lib/combat";
 import { formatSigned } from "@/lib/dnd";
+import { renderDbDescription } from "@/lib/renderDbDescription";
 import { dndEquipmentByIndex, isWeapon } from "@/lib/dndEquipment";
 import { dndWeaponMasteryByIndex } from "@/lib/dndWeaponMastery";
 import type { Character, EquippedItem } from "@/types/character";
@@ -97,15 +98,21 @@ function AttackRollModal(props: {
               <div className="mt-3 rounded-lg border border-zinc-200 bg-zinc-50/80 p-3 text-xs dark:border-zinc-700 dark:bg-zinc-950/40">
                 <div className="font-semibold text-zinc-900 dark:text-zinc-50">Mastery: {masteryInfo.name}</div>
                 {masteryInfo.description ? (
-                  <p className="mt-1 whitespace-pre-wrap text-zinc-600 dark:text-zinc-300">{masteryInfo.description}</p>
+                  <p className="mt-1 whitespace-pre-wrap text-zinc-600 dark:text-zinc-300">
+                    {renderDbDescription(masteryInfo.description)}
+                  </p>
                 ) : null}
               </div>
             ) : null}
             {combatFeatHints.length > 0 ? (
               <ul className="mt-3 max-h-40 overflow-auto text-xs text-zinc-600 dark:text-zinc-300">
                 {combatFeatHints.map((f) => (
-                  <li key={f.index} className="mt-1 border-t border-zinc-100 pt-1 dark:border-zinc-800">
-                    <span className="font-semibold text-zinc-800 dark:text-zinc-200">{f.name}:</span> {f.description}
+                  <li
+                    key={f.index}
+                    className="mt-1 whitespace-pre-wrap border-t border-zinc-100 pt-1 dark:border-zinc-800"
+                  >
+                    <span className="font-semibold text-zinc-800 dark:text-zinc-200">{f.name}:</span>{" "}
+                    {renderDbDescription(f.description ?? "")}
                   </li>
                 ))}
               </ul>

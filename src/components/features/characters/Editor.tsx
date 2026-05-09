@@ -22,6 +22,7 @@ import {
   spellsOnClassList,
   type DndSpell
 } from "@/lib/dndData";
+import { stripMarkdownBoldMarkers } from "@/lib/renderDbDescription";
 import { toggleInList } from "@/lib/utils";
 import type { CharacterDraft, EquippedItem } from "@/types/character";
 
@@ -846,7 +847,7 @@ export function CharacterEditor(props: {
                         feats: toggleInList(props.draft.feats, f.index)
                       })
                     }
-                    title={f.description}
+                    title={f.description ? stripMarkdownBoldMarkers(f.description) || undefined : undefined}
                   >
                     <span className="truncate">{f.name}</span>
                     {active ? <Check className="h-4 w-4 shrink-0" aria-hidden="true" /> : null}

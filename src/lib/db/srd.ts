@@ -28,6 +28,12 @@ export type EquipmentRow = RulesetScoped<{
 
 export type WeaponMasteryRow = RulesetScoped<{ description: string | null; data: unknown }>;
 
+export type ConditionRow = {
+  slug: string;
+  name: string;
+  description: string;
+};
+
 export type ClassSpellSlotsRow = {
   ruleset_id: string;
   class_slug: string;
@@ -59,6 +65,18 @@ async function fetchByRulesets<T>(table: string, rulesetIds: string[], columns =
  */
 export function fetchSpells(rulesetIds: string[]) {
   return fetchByRulesets<SpellRow>("spells", rulesetIds);
+}
+
+/**
+ * Fetch global condition definitions from `public.conditions` (public read).
+ *
+ * @returns Rows sorted by name (empty if table not seeded yet).
+ */
+export async function fetchConditions(): Promise<ConditionRow[]> {
+  const sb = requireSupabase();
+  const { data, error } = await sb.from("conditions").select("slug,name,description").order("name", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as ConditionRow[];
 }
 
 /**

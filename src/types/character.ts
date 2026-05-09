@@ -26,6 +26,8 @@ export type Character = {
   /** SRD race index, e.g. `elf`. */
   raceIndex: string;
   classIndex: string;
+  /** Optional subclass index for display (editor may omit). */
+  subclassIndex?: string | null;
   level: number;
   stats: Record<Ability, number>;
   proficientSkills: Skill[];
@@ -39,6 +41,8 @@ export type Character = {
   equipped: EquippedItem[];
   /** Count of spell slots already spent at each spell level (keys "1"…"9"). */
   spellSlotsUsed: Partial<Record<string, number>>;
+  /** Active SRD condition indices (e.g. `blinded`). */
+  conditionSlugs?: string[];
   createdAt: number;
   updatedAt: number;
 };

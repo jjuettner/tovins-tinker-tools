@@ -27,6 +27,7 @@ export function makeDraft(partial?: Partial<CharacterDraft>): CharacterDraft {
     campaignId: partial?.campaignId ?? null,
     raceIndex: partial?.raceIndex ?? "",
     classIndex: partial?.classIndex ?? "",
+    subclassIndex: partial?.subclassIndex ?? null,
     level: partial?.level ?? 1,
     stats: partial?.stats ?? defaultStats(),
     proficientSkills: partial?.proficientSkills ?? [],
@@ -38,7 +39,8 @@ export function makeDraft(partial?: Partial<CharacterDraft>): CharacterDraft {
     tempHp: partial?.tempHp ?? 0,
     armorClass: partial?.armorClass ?? 10,
     equipped: partial?.equipped ?? [],
-    spellSlotsUsed: partial?.spellSlotsUsed ?? {}
+    spellSlotsUsed: partial?.spellSlotsUsed ?? {},
+    conditionSlugs: partial?.conditionSlugs ?? []
   };
   return normalizeDraft(raw);
 }

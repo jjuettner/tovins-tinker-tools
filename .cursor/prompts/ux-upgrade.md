@@ -148,3 +148,41 @@
 
 	- RestDialog
 		- Format Lonng Rest like the short rest box (short description, button "Take Long Rest" in same style as "Apply" button)
+
+	- i renamed srd_conditions to just conditions (updated sb table name and all occurences)
+	- conditions should not have the x, instead clicking them will show popup with description
+		- popup has option to remove condition
+
+	- each condition should have a color that matches it
+		- pills should be displayed in that color
+		- make sure the color is distinct and works in light and dark mode
+	- no title for conditions, they are self explanatory
+
+	- for any text that has sections wrapped in "**", make text bold
+		- makea global function and apply to all description texts across the database
+
+	- on large and medium size screens, in play > general tab, make stat blocks into double rows i.e. str/dex first line, con int second line etc
+
+	- in encounter turn order, show conditions on player characters
+		- for npcs, add the option to add conditions
+		- use same visuals as in character play mode
+		 	- extrapolate a ui element into components/ui for the condition pills
+	
+	- encounter turn order
+		- reformat row
+			- top right: initiative input
+			- below: input row dmg/healing
+				- below dmg / heal buttons
+			- left: avatar
+			- next column: name + hp
+			- next column: conditions
+		- fix conditions
+			- button is there, reloads page
+				- avoid page reload/rerender
+				- make status pills appear
+	
+	- initiative input shorter (space for 2-3 digits)
+	- initiative label inline with input, smaller
+	- dmg/heal input shorter (2-3 digits)
+		- no label damage/heal
+		inline input, dmg, heal, no breaks

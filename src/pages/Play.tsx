@@ -2,6 +2,8 @@ import { X } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { buttonClass, highlightButtonClass } from "@/components/ui/controlClasses";
+import { ConditionDetailDialog } from "@/components/features/play/ConditionDetailDialog";
+import { ConditionPickerDialog } from "@/components/features/play/ConditionPickerDialog";
 import CombatTab from "@/components/features/play/CombatTab";
 import GeneralTab from "@/components/features/play/GeneralTab";
 import PlayHeader from "@/components/features/play/PlayHeader";
@@ -10,6 +12,7 @@ import { useActiveRulesetIds } from "@/hooks/useActiveRulesetIds";
 import { useCharacters } from "@/hooks/useCharacters";
 import { useRemoteSpellSlots } from "@/hooks/useRemoteSpellSlots";
 import { useRulesetSrdCatalog } from "@/hooks/useRulesetSrdCatalog";
+import { useConditions } from "@/hooks/useConditions";
 import { useStoredState } from "@/hooks/useStoredState";
 import { normalizeCharacter } from "@/lib/character/normalize";
 import { STORAGE_KEYS } from "@/lib/appConstants";
@@ -26,6 +29,9 @@ export function PlayPage() {
   const { value: usedCharacterId } = useStoredState<string | null>(STORAGE_KEYS.usedCharacterId, null);
   const [tab, setTab] = useState<Tab>("general");
   const [restOpen, setRestOpen] = useState(false);
+  const [conditionsOpen, setConditionsOpen] = useState(false);
+  const [conditionDetailSlug, setConditionDetailSlug] = useState<string | null>(null);
+  const { items: conditionCatalog } = useConditions();
 
   const characters = useMemo(() => characterItems.map((x) => x.character), [characterItems]);
 
@@ -97,6 +103,27 @@ export function PlayPage() {
     return hasSlots || knowsSpells;
   }, [c, slotRows.length]);
 
+  const conditionLabelBySlug = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const it of conditionCatalog) {
+      m.set(it.slug.toLowerCase(), it.name);
+    }
+    return m;
+  }, [conditionCatalog]);
+
+  const conditionDetailResolved = useMemo(() => {
+    if (!conditionDetailSlug) {
+      return { slug: null as string | null, name: "", description: "" };
+    }
+    const key = conditionDetailSlug.toLowerCase();
+    const row = conditionCatalog.find((it) => it.slug.toLowerCase() === key);
+    return {
+      slug: conditionDetailSlug,
+      name: row?.name ?? conditionLabelBySlug.get(key) ?? conditionDetailSlug,
+      description: row?.description ?? ""
+    };
+  }, [conditionDetailSlug, conditionCatalog, conditionLabelBySlug]);
+
   const effectiveTab: Tab = isCaster ? tab : tab === "spells" ? "general" : tab;
 
   if (!usedCharacterId || !c) {
@@ -115,7 +142,44 @@ export function PlayPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <PlayHeader c={c} onRest={() => setRestOpen(true)} classByIndex={classByIndex} isCaster={isCaster} />
+      <PlayHeader
+        c={c}
+        onRest={() => setRestOpen(true)}
+        onOpenConditions={() => setConditionsOpen(true)}
+        classByIndex={classByIndex}
+        isCaster={isCaster}
+        conditionLabelBySlug={conditionLabelBySlug}
+        onConditionPillClick={(slug) => setConditionDetailSlug(slug)}
+      />
+
+      <ConditionDetailDialog
+        slug={conditionDetailResolved.slug}
+        name={conditionDetailResolved.name}
+        description={conditionDetailResolved.description}
+        onClose={() => setConditionDetailSlug(null)}
+        onRemove={() => {
+          const target = conditionDetailResolved.slug;
+          if (!target) return;
+          const key = target.toLowerCase();
+          const cur = c.conditionSlugs ?? [];
+          const nextSlugs = cur.filter((s) => s.toLowerCase() !== key);
+          patch(c.id, () => ({ ...c, conditionSlugs: nextSlugs }));
+          setConditionDetailSlug(null);
+        }}
+      />
+
+      <ConditionPickerDialog
+        open={conditionsOpen}
+        onClose={() => setConditionsOpen(false)}
+        items={conditionCatalog}
+        existingSlugs={c.conditionSlugs ?? []}
+        onAdd={(slug) => {
+          const key = slug.toLowerCase();
+          const cur = c.conditionSlugs ?? [];
+          if (cur.some((s) => s.toLowerCase() === key)) return;
+          patch(c.id, () => ({ ...c, conditionSlugs: [...cur, key] }));
+        }}
+      />
 
       {restOpen ? (
         <RestDialog
@@ -236,31 +300,37 @@ function RestDialog(props: {
               </button>
             </div>
           </div>
-          <button
-            type="button"
-            className={buttonClass("primary") + " justify-center"}
-            onClick={() => {
-              const next: Character = {
-                ...props.c,
-                tempHp: 0,
-                currentHp: props.c.maxHp,
-                spellSlotsUsed: emptySpellSlotsUsed()
-              };
-              props.onPatch(next);
-              props.onClose();
-            }}
-          >
-            Long rest
-          </button>
+          <div className="rounded-xl border border-zinc-200 bg-white/60 p-3 dark:border-zinc-800 dark:bg-zinc-900/40">
+            <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Long rest</div>
+            <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-300">
+              Full HP, clear temp HP, reset spell slots, and clear all conditions.
+            </p>
+            <div className="mt-3 flex justify-end">
+              <button
+                type="button"
+                className={buttonClass("ghost") + " justify-center"}
+                onClick={() => {
+                  const next: Character = {
+                    ...props.c,
+                    tempHp: 0,
+                    currentHp: props.c.maxHp,
+                    spellSlotsUsed: emptySpellSlotsUsed(),
+                    conditionSlugs: []
+                  };
+                  props.onPatch(next);
+                  props.onClose();
+                }}
+              >
+                Take long rest
+              </button>
+            </div>
+          </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-1 gap-2 text-xs text-zinc-600 dark:text-zinc-300">
-          <div>
-            <span className="font-medium text-zinc-800 dark:text-zinc-200">Short rest</span>: heal HP (temp HP unchanged).
-          </div>
-          <div>
-            <span className="font-medium text-zinc-800 dark:text-zinc-200">Long rest</span>: full HP + clear temp HP + reset spell slots.
-          </div>
+        <div className="mt-4 text-xs text-zinc-600 dark:text-zinc-300">
+          <span className="font-medium text-zinc-800 dark:text-zinc-200">Short rest</span> heals HP only.{" "}
+          <span className="font-medium text-zinc-800 dark:text-zinc-200">Long rest</span> fully recovers resources as
+          above.
         </div>
       </div>
     </div>

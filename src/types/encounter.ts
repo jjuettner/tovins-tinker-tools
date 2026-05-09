@@ -9,6 +9,8 @@ export type EncounterEntity = {
   maxHp: number;
   currentHp: number;
   tempHp?: number;
+  /** DM-managed conditions for monsters; PCs use linked character `conditionSlugs`. */
+  conditionSlugs?: string[];
   status?: "dead";
   /** Only used for PCs at 0 HP. */
   deathSaves?: { successes: number; fails: number };

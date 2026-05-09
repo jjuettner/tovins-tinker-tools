@@ -38,6 +38,9 @@ function parseData(raw: unknown): EncounterDataV1 {
       ) {
         continue;
       }
+      const conditionSlugsRaw = Array.isArray(e.conditionSlugs) ? e.conditionSlugs : [];
+      const conditionSlugsParsed = conditionSlugsRaw.filter((s): s is string => typeof s === "string");
+      const conditionSlugs = conditionSlugsParsed.length > 0 ? conditionSlugsParsed : undefined;
       list.push({
         id: e.id,
         kind: e.kind,
@@ -48,6 +51,7 @@ function parseData(raw: unknown): EncounterDataV1 {
         maxHp: e.maxHp,
         currentHp: e.currentHp,
         tempHp: typeof e.tempHp === "number" ? e.tempHp : undefined,
+        conditionSlugs,
         status: e.status === "dead" ? "dead" : undefined,
         deathSaves:
           e.deathSaves &&
