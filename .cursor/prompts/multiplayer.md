@@ -54,3 +54,12 @@
 - prevent save in character editor when assigning character to a campaign that does not have ruleset for class
 
 
+- character fropm Acc2 changed ownership to Acc1
+- can not edit character anymore on Acc2
+- separation between own character and other characters (admin) is gone
+
+- implement visual error when (and why) something cannot be edited (supabase 403)
+	- include a global error handler for this
+- acc2 sees character from acc1 in character list
+	- should not be the case
+	- character is part of acc2's campaign

@@ -2,6 +2,10 @@ import { useCallback, useEffect, useState } from "react";
 import type { Character } from "@/types/character";
 import { deleteCharacter, listCharacters, upsertCharacter, type CharacterListItem } from "@/lib/db/characters";
 import { getProfilesByIds } from "@/lib/db/profiles";
+import {
+  formatDataAccessErrorForUser,
+  reportPermissionDeniedIfApplicable
+} from "@/lib/permissionDeniedBanner";
 
 /**
  * CRUD hook for character list.
@@ -33,7 +37,8 @@ export function useCharacters() {
       );
       setLoading(false);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load characters");
+      reportPermissionDeniedIfApplicable(e);
+      setError(formatDataAccessErrorForUser(e, "Failed to load characters"));
       setLoading(false);
     }
   }, []);
@@ -42,15 +47,31 @@ export function useCharacters() {
     void refresh();
   }, [refresh]);
 
-  const save = useCallback(async (c: Character) => {
-    await upsertCharacter(c);
-    await refresh();
-  }, [refresh]);
+  const save = useCallback(
+    async (c: Character) => {
+      try {
+        await upsertCharacter(c);
+        await refresh();
+      } catch (e) {
+        reportPermissionDeniedIfApplicable(e);
+        setError(formatDataAccessErrorForUser(e, "Failed to save character"));
+      }
+    },
+    [refresh]
+  );
 
-  const remove = useCallback(async (id: string) => {
-    await deleteCharacter(id);
-    await refresh();
-  }, [refresh]);
+  const remove = useCallback(
+    async (id: string) => {
+      try {
+        await deleteCharacter(id);
+        await refresh();
+      } catch (e) {
+        reportPermissionDeniedIfApplicable(e);
+        setError(formatDataAccessErrorForUser(e, "Failed to delete character"));
+      }
+    },
+    [refresh]
+  );
 
   return { characters, ownerLabelById, setCharacters, loading, error, refresh, save, remove } as const;
 }

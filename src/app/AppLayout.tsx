@@ -4,6 +4,7 @@ import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useStoredState } from "@/hooks/useStoredState";
 import { APP_DISPLAY_NAME, STORAGE_KEYS } from "@/lib/appConstants";
 import { signOut, useProfile } from "@/lib/auth";
+import { setPermissionDeniedBannerHandler } from "@/lib/permissionDeniedBanner";
 import CharacterAvatar from "@/components/ui/CharacterAvatar";
 
 type NavItem = {
@@ -52,7 +53,13 @@ export function AppLayout() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [dmMenuOpen, setDmMenuOpen] = useState(false);
   const [mobileDmOpen, setMobileDmOpen] = useState(false);
+  const [permissionBanner, setPermissionBanner] = useState<string | null>(null);
   const location = useLocation();
+  useEffect(() => {
+    setPermissionDeniedBannerHandler((msg) => setPermissionBanner(msg));
+    return () => setPermissionDeniedBannerHandler(null);
+  }, []);
+
   useEffect(() => {
     setMobileOpen(false);
     setUserMenuOpen(false);
@@ -266,6 +273,25 @@ export function AppLayout() {
           </div>
         ) : null}
       </header>
+
+      {permissionBanner ? (
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="border-b border-amber-200 bg-amber-50 text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-100"
+        >
+          <div className="mx-auto flex max-w-6xl items-start gap-3 px-4 py-3 sm:px-6">
+            <p className="min-w-0 flex-1 text-sm leading-relaxed">{permissionBanner}</p>
+            <button
+              type="button"
+              className="shrink-0 rounded-md border border-amber-300/80 bg-white/80 px-2 py-1 text-xs font-medium text-amber-950 hover:bg-white dark:border-amber-800 dark:bg-zinc-900/60 dark:text-amber-50 dark:hover:bg-zinc-900"
+              onClick={() => setPermissionBanner(null)}
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
         <Outlet />
