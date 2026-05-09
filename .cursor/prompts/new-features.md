@@ -21,7 +21,7 @@ in encounter turn ui, display the owner of each character behind their character
 
 
 
-invite link does not work on github pages - 404
+invite link does not work on github github pages: direct links - 404
 refreshing the site causes 404
 
 make a spell compendium, that you can filter by class
