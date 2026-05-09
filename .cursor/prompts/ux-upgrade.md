@@ -123,3 +123,28 @@
     "hint": null,
     "message": "new row violates row-level security policy for table \"campaigns\""
 }
+
+
+## character play mode 
+	- spells tab
+	- show spell slots before cantrips
+	- fix spell card descriptions
+
+	- when selecting to upcast a spell, show part of spell description in popup after but including the words "At higher levels"
+
+
+	- PlayHeader
+		- Show Portrait in desktop mode
+		- leave space for sublass (behind classname)
+		- show hp and ac in separate column
+		- show Spell stats: (atk, save) in separate column
+		- add button for adding conditions under the rest button
+			- get conditions from srd
+			- import into supabase
+		- display conditions at bottom of playerHeader as pills
+			- add small "x" to delete
+			- long rest clears all conditions
+
+
+	- RestDialog
+		- Format Lonng Rest like the short rest box (short description, button "Take Long Rest" in same style as "Apply" button)

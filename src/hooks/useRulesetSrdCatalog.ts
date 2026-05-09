@@ -79,6 +79,53 @@ function transformFeats(rows: { slug: string; name: string; feat_type: string | 
 }
 
 /**
+ * Normalize JSON spell narrative fields to string arrays.
+ *
+ * @param value `desc` / `higher_level` from API or DB `data`.
+ * @returns Paragraph list or undefined when empty.
+ */
+function normalizeSpellStringArray(value: unknown): string[] | undefined {
+  if (Array.isArray(value)) {
+    const parts = value.map((v) => (typeof v === "string" ? v.trim() : "")).filter(Boolean);
+    return parts.length > 0 ? parts : undefined;
+  }
+  if (typeof value === "string" && value.trim()) {
+    return [value.trim()];
+  }
+  return undefined;
+}
+
+/**
+ * Read spell body text from ruleset `data` jsonb (SRD arrays or importer prose).
+ *
+ * @param data Row `data` column.
+ * @returns `desc` and `higher_level` compatible with `DndSpell`.
+ */
+function spellNarrativeFromData(data: unknown): { desc?: string[]; higher_level?: string[] } {
+  if (!data || typeof data !== "object") {
+    return {};
+  }
+  const d = data as Record<string, unknown>;
+  const desc = normalizeSpellStringArray(d.desc);
+  const higher = normalizeSpellStringArray(d.higher_level);
+  if (desc !== undefined || higher !== undefined) {
+    return { desc, higher_level: higher };
+  }
+
+  const prose = typeof d.description === "string" ? d.description.trim() : "";
+  if (!prose) {
+    return {};
+  }
+  const split = prose.split(/\n\s*At Higher Levels\.?\s*/i);
+  const main = split[0]?.trim() ?? "";
+  const hi = split.length > 1 ? split.slice(1).join("\n").trim() : "";
+  return {
+    desc: main ? [main] : undefined,
+    higher_level: hi ? [hi] : undefined
+  };
+}
+
+/**
  * Transform spell rows into SRD spell objects sorted by name.
  *
  * @param rows Spell rows.
@@ -95,6 +142,7 @@ function transformSpells(rows: Array<{
   concentration?: boolean | null;
   ritual?: boolean | null;
   classes?: string[] | null;
+  data?: unknown;
 }>) {
   return rows
     .map((sp) => {
@@ -106,6 +154,7 @@ function transformSpells(rows: Array<{
         : undefined;
 
       const classes = Array.isArray(sp.classes) ? sp.classes.filter(Boolean).map((idx) => ({ index: idx })) : undefined;
+      const narrative = spellNarrativeFromData(sp.data);
 
       return {
         index: sp.slug,
@@ -117,7 +166,9 @@ function transformSpells(rows: Array<{
         range: sp.range_text ?? undefined,
         duration: sp.duration ?? undefined,
         concentration: sp.concentration ?? undefined,
-        ritual: sp.ritual ?? undefined
+        ritual: sp.ritual ?? undefined,
+        desc: narrative.desc,
+        higher_level: narrative.higher_level
       } satisfies DndSpell;
     })
     .sort((a, b) => a.name.localeCompare(b.name));
@@ -193,7 +244,8 @@ export function useRulesetSrdCatalog(rulesetIds: string[]): Omit<RulesetSrdCatal
             duration: s.duration ?? null,
             concentration: s.concentration ?? null,
             ritual: s.ritual ?? null,
-            classes: s.classes ?? null
+            classes: s.classes ?? null,
+            data: s.data
           }))
         );
 

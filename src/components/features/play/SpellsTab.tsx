@@ -4,9 +4,13 @@ import { computeSpellSlotsRemaining, type spellSlotMaximaForClass } from "@/lib/
 import type { Character } from "@/types/character";
 import type { DndSpell } from "@/lib/dndData";
 
+function spellParagraphs(lines: string[] | undefined): string {
+  return (lines ?? []).map((p) => p.trim()).filter(Boolean).join("\n\n");
+}
+
 function SpellPlayCard({ spell }: { spell: DndSpell }) {
-  const desc = (spell.desc ?? []).join("\n\n");
-  const hi = (spell.higher_level ?? []).join("\n\n");
+  const desc = spellParagraphs(spell.desc);
+  const hi = spellParagraphs(spell.higher_level);
   return (
     <div className="mt-2 rounded-lg border border-zinc-200 bg-zinc-50/90 p-3 text-left text-xs dark:border-zinc-700 dark:bg-zinc-950/50">
       <div className="flex flex-wrap gap-x-2 gap-y-1 text-[11px] text-zinc-500 dark:text-zinc-400">
@@ -87,34 +91,6 @@ export default function SpellsTab(props: {
 
   return (
     <div className="space-y-6">
-      {props.cantrips.length > 0 ? (
-        <section className="rounded-xl border border-zinc-200 bg-white/60 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
-          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Cantrips</h2>
-          <ul className="mt-3 space-y-2">
-            {props.cantrips.map((s) => (
-              <li key={s.index} className="rounded-lg border border-zinc-200 dark:border-zinc-800">
-                <div className="flex gap-2 p-2">
-                  <div className="min-w-0 flex-1">
-                    <button
-                      type="button"
-                      className="w-full rounded-md px-2 py-1.5 text-left text-sm font-medium text-zinc-900 hover:bg-zinc-100 dark:text-zinc-50 dark:hover:bg-zinc-800/60"
-                      onClick={() => setExpandedId((id) => (id === s.index ? null : s.index))}
-                    >
-                      {s.name}
-                      <span className="ml-2 text-xs font-normal text-zinc-500">Cantrip</span>
-                    </button>
-                    {expandedId === s.index ? <SpellPlayCard spell={s} /> : null}
-                  </div>
-                  <div className="flex w-[5.5rem] shrink-0 items-start justify-end pt-1">
-                    <span className="text-[11px] text-zinc-400">—</span>
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
-
       <section className="rounded-xl border border-zinc-200 bg-white/60 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
         <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Spell slots</h2>
         {props.slotRows.length === 0 ? (
@@ -150,6 +126,34 @@ export default function SpellsTab(props: {
           </ul>
         )}
       </section>
+
+      {props.cantrips.length > 0 ? (
+        <section className="rounded-xl border border-zinc-200 bg-white/60 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
+          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Cantrips</h2>
+          <ul className="mt-3 space-y-2">
+            {props.cantrips.map((s) => (
+              <li key={s.index} className="rounded-lg border border-zinc-200 dark:border-zinc-800">
+                <div className="flex gap-2 p-2">
+                  <div className="min-w-0 flex-1">
+                    <button
+                      type="button"
+                      className="w-full rounded-md px-2 py-1.5 text-left text-sm font-medium text-zinc-900 hover:bg-zinc-100 dark:text-zinc-50 dark:hover:bg-zinc-800/60"
+                      onClick={() => setExpandedId((id) => (id === s.index ? null : s.index))}
+                    >
+                      {s.name}
+                      <span className="ml-2 text-xs font-normal text-zinc-500">Cantrip</span>
+                    </button>
+                    {expandedId === s.index ? <SpellPlayCard spell={s} /> : null}
+                  </div>
+                  <div className="flex w-[5.5rem] shrink-0 items-start justify-end pt-1">
+                    <span className="text-[11px] text-zinc-400">—</span>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       <section className="rounded-xl border border-zinc-200 bg-white/60 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
         <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Prepared spells</h2>
