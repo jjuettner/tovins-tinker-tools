@@ -17,6 +17,8 @@ export type DndFeat = {
   index: string;
   name: string;
   description?: string;
+  /** Short play-mode blurb from catalog `summary`; falls back to `description` in Play. */
+  summary?: string;
   type?: string;
   repeatable?: string;
 };
@@ -34,6 +36,8 @@ export type DndSpell = {
   casting_time?: string;
   concentration?: boolean;
   ritual?: boolean;
+  /** Short play-mode blurb from catalog `summary`; falls back to `desc` in Play. */
+  summary?: string;
 };
 
 const classes = (rawClasses as unknown as Record<string, unknown>[]).map((c) => ({

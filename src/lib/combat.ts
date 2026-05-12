@@ -3,6 +3,13 @@ import type { DndEquipment } from "@/lib/dndEquipment";
 import { dndEquipmentByIndex, isWeapon, weaponIsFinesse, weaponIsRanged } from "@/lib/dndEquipment";
 import type { Character, EquippedItem } from "@/types/character";
 
+function equippedWeaponFlatBonus(weapon: EquippedItem): number {
+  if (weapon.flatDamageBonus !== undefined && Number.isFinite(weapon.flatDamageBonus)) {
+    return Math.floor(weapon.flatDamageBonus);
+  }
+  return 0;
+}
+
 /**
  * Resolve weapon mastery index for an equipped weapon.
  *
@@ -74,7 +81,7 @@ export function canUseRecklessAttack(c: Character, weapon: EquippedItem): boolea
 }
 
 /**
- * Summarize weapon damage dice, bonus, and type.
+ * Summarize weapon damage dice, bonus, and type. Includes magic `modifier` and optional `flatDamageBonus` (damage only, not attack).
  *
  * @param c Character.
  * @param weapon Equipped weapon.
@@ -82,13 +89,14 @@ export function canUseRecklessAttack(c: Character, weapon: EquippedItem): boolea
  */
 export function weaponDamageSummary(c: Character, weapon: EquippedItem): { dice: string; bonus: number; type: string } {
   const eq = dndEquipmentByIndex[weapon.equipmentIndex];
+  const extraFlat = equippedWeaponFlatBonus(weapon);
   if (!eq?.damage?.damage_dice) {
     const { mod } = weaponAbilityAndMod(c.stats, eq);
-    return { dice: "1", bonus: mod + weapon.modifier, type: "bludgeoning" };
+    return { dice: "1", bonus: mod + weapon.modifier + extraFlat, type: "bludgeoning" };
   }
   const { mod } = weaponAbilityAndMod(c.stats, eq);
   const type = eq.damage.damage_type?.index ?? "bludgeoning";
-  return { dice: eq.damage.damage_dice, bonus: mod + weapon.modifier, type };
+  return { dice: eq.damage.damage_dice, bonus: mod + weapon.modifier + extraFlat, type };
 }
 
 /**

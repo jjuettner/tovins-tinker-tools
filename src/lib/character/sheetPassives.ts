@@ -1,4 +1,5 @@
 import type { FeatureRow } from "@/lib/db/rulesetCatalog";
+import { catalogSummaryOrFallback } from "@/lib/catalogSummary";
 import { selectUnlockedClassFeatures } from "@/lib/ruleset/classFeatures";
 import type { Character } from "@/types/character";
 
@@ -55,7 +56,7 @@ export function buildSheetPassiveEntries(c: Character, featureRows: FeatureRow[]
       slug: row.slug,
       name: row.name,
       level: lv,
-      description: descriptionFromFeatureData(row.data),
+      description: catalogSummaryOrFallback(row.summary, descriptionFromFeatureData(row.data)),
       subclassPathName: scope === "subclass" ? subclassDisplayNameFromFeatureData(row.data) : null
     };
   };

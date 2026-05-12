@@ -18,15 +18,29 @@ in encounter turn ui, display the owner of each character behind their character
 
 
 
-
-
-
 invite link does not work on github github pages: direct links - 404
 refreshing the site causes 404
 
 make a spell compendium, that you can filter by class
 
-cap char stats at 20 in editor
+cap char stats at 20 in character stats editor
 proficiency bonus in player head
 
 
+when adding a weapon, add an option to do a flat damage bonus to said weapon
+
+add a summary field to spells, feats and class features, show that text when casting spell or attacking with a weapon instead (default text as fallback)
+make this editable in admin content
+remove admin menu from user menu
+make admin content filter- and sortable
+	reuse components from compendium
+
+
+admin
+	on save: dont lose selection
+	features 
+		class filter
+		sort option: level
+
+spells:
+	use description for spell card. use summary for attack popup

@@ -1,50 +1,16 @@
-import type { Session } from "@supabase/supabase-js";
-import { useEffect, useState } from "react";
+import { useAuth } from "@/lib/AuthProvider";
 import { requireSupabase } from "@/lib/supabase";
 
-export type Profile = {
-  id: string;
-  display_name: string | null;
-  is_admin: boolean;
-};
+export type { Profile } from "@/lib/AuthProvider";
 
 /**
- * Subscribe to Supabase auth session changes.
+ * Subscribe to Supabase auth session changes (shared via `AuthProvider`).
  *
  * @returns Current session + loading state.
  */
 export function useSession() {
-  const sb = requireSupabase();
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let mounted = true;
-    sb.auth
-      .getSession()
-      .then(({ data }) => {
-        if (!mounted) return;
-        setSession(data.session ?? null);
-        setLoading(false);
-      })
-      .catch(() => {
-        if (!mounted) return;
-        setSession(null);
-        setLoading(false);
-      });
-
-    const { data } = sb.auth.onAuthStateChange((_event, nextSession) => {
-      setSession(nextSession);
-      setLoading(false);
-    });
-
-    return () => {
-      mounted = false;
-      data.subscription.unsubscribe();
-    };
-  }, [sb]);
-
-  return { session, loading } as const;
+  const { session, sessionLoading } = useAuth();
+  return { session, loading: sessionLoading } as const;
 }
 
 /**
@@ -134,45 +100,11 @@ export async function signOut() {
 }
 
 /**
- * Load profile record for current session.
+ * Load profile record for current session (shared via `AuthProvider`).
  *
  * @returns Profile + loading state.
  */
 export function useProfile() {
-  const sb = requireSupabase();
-  const { session } = useSession();
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    async function run() {
-      if (!session?.user?.id) {
-        setProfile(null);
-        setLoading(false);
-        return;
-      }
-      setLoading(true);
-      const { data, error } = await sb
-        .from("profiles")
-        .select("id, display_name, is_admin")
-        .eq("id", session.user.id)
-        .maybeSingle();
-      if (cancelled) return;
-      if (error) {
-        setProfile(null);
-        setLoading(false);
-        return;
-      }
-      setProfile((data as Profile | null) ?? null);
-      setLoading(false);
-    }
-    run();
-    return () => {
-      cancelled = true;
-    };
-  }, [sb, session?.user?.id]);
-
-  return { profile, loading } as const;
+  const { profile, profileLoading } = useAuth();
+  return { profile, loading: profileLoading } as const;
 }
-

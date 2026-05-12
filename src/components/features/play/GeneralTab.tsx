@@ -3,6 +3,7 @@ import { SkillCheckList } from "@/components/features/characters/SkillCheckList"
 import { buildSheetPassiveEntries } from "@/lib/character/sheetPassives";
 import { dndTraitByIndex } from "@/lib/dndTraits";
 import type { FeatureRow } from "@/lib/db/rulesetCatalog";
+import { formatSigned, proficiencyBonus } from "@/lib/dnd";
 import { renderDbDescription } from "@/lib/renderDbDescription";
 import type { Character } from "@/types/character";
 import RulesetFeatureDescription from "@/components/features/play/RulesetFeatureDescription";
@@ -48,6 +49,13 @@ export default function GeneralTab(props: {
 
   return (
     <div className="space-y-8">
+      <div className="text-center text-xs text-zinc-600 dark:text-zinc-300">
+        <span className="font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Proficiency</span>{" "}
+        <span className="font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">
+          {formatSigned(proficiencyBonus(props.c.level))}
+        </span>
+      </div>
+
       <SkillCheckList c={props.c} twoColumnAbilityGridFrom="md" />
 
       {showRulesetFeaturesBlock ? (

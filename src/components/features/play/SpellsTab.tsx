@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { buttonClass } from "@/components/ui/controlClasses";
+import { catalogSummaryOrFallback } from "@/lib/catalogSummary";
 import { computeSpellSlotsRemaining, type spellSlotMaximaForClass } from "@/lib/spellSlots";
 import { renderDbDescription } from "@/lib/renderDbDescription";
+import { formatSigned } from "@/lib/dnd";
+import { spellAttackAndSaveDcForCharacter } from "@/lib/spellcasting";
 import type { Character } from "@/types/character";
 import type { DndSpell } from "@/lib/dndData";
 
@@ -10,7 +13,7 @@ function spellParagraphs(lines: string[] | undefined): string {
 }
 
 function SpellPlayCard({ spell }: { spell: DndSpell }) {
-  const desc = spellParagraphs(spell.desc);
+  const main = spellParagraphs(spell.desc);
   const hi = spellParagraphs(spell.higher_level);
   return (
     <div className="mt-2 rounded-lg border border-zinc-200 bg-zinc-50/90 p-3 text-left text-xs dark:border-zinc-700 dark:bg-zinc-950/50">
@@ -22,8 +25,8 @@ function SpellPlayCard({ spell }: { spell: DndSpell }) {
         {spell.concentration ? <span>· Concentration</span> : null}
         {spell.ritual ? <span>· Ritual</span> : null}
       </div>
-      {desc ? (
-        <p className="mt-2 whitespace-pre-wrap leading-relaxed text-zinc-700 dark:text-zinc-200">{renderDbDescription(desc)}</p>
+      {main ? (
+        <p className="mt-2 whitespace-pre-wrap leading-relaxed text-zinc-700 dark:text-zinc-200">{renderDbDescription(main)}</p>
       ) : null}
       {hi ? (
         <p className="mt-2 whitespace-pre-wrap text-zinc-600 dark:text-zinc-300">
@@ -47,6 +50,7 @@ function CastSpellModal(props: {
   const [pick, setPick] = useState(options[0]?.spellLevel ?? props.spell.level);
   const hiText = spellParagraphs(props.spell.higher_level);
   const upcasting = pick > props.spell.level;
+  const castBody = catalogSummaryOrFallback(props.spell.summary, spellParagraphs(props.spell.desc));
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true">
@@ -55,6 +59,11 @@ function CastSpellModal(props: {
         <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-300">
           Spell level {props.spell.level}. Pick slot level to expend (upcasting uses a higher-level slot).
         </p>
+        {castBody ? (
+          <p className="mt-3 max-h-32 overflow-y-auto whitespace-pre-wrap text-xs leading-relaxed text-zinc-700 dark:text-zinc-200">
+            {renderDbDescription(castBody)}
+          </p>
+        ) : null}
         {options.length === 0 ? (
           <p className="mt-3 text-sm text-red-600">No valid slots.</p>
         ) : (
@@ -109,9 +118,30 @@ export default function SpellsTab(props: {
 }) {
   const [castSpell, setCastSpell] = useState<DndSpell | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const spell = spellAttackAndSaveDcForCharacter(props.c);
 
   return (
     <div className="space-y-6">
+      <section className="rounded-xl border border-zinc-200 bg-white/60 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
+        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Spellcasting</h2>
+        {!spell ? (
+          <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">No spellcasting stats for this character.</p>
+        ) : (
+          <div className="mt-3 grid grid-cols-2 gap-3 sm:max-w-md">
+            <div>
+              <div className="text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Spell attack</div>
+              <div className="mt-1 text-lg font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">
+                {formatSigned(spell.spellAttackMod)}
+              </div>
+            </div>
+            <div>
+              <div className="text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Spell save DC</div>
+              <div className="mt-1 text-lg font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">{spell.spellSaveDc}</div>
+            </div>
+          </div>
+        )}
+      </section>
+
       <section className="rounded-xl border border-zinc-200 bg-white/60 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
         <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Spell slots</h2>
         {props.slotRows.length === 0 ? (

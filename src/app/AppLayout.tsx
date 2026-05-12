@@ -1,4 +1,4 @@
-import { Book, ChevronDown, Dice6, LogOut, Menu, Moon, Sun, Sword, Swords, Tent, User, X } from "lucide-react";
+import { Book, ChevronDown, Database, Dice6, LogOut, Menu, Moon, Sun, Sword, Swords, Tent, User, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useStoredState } from "@/hooks/useStoredState";
@@ -24,6 +24,7 @@ export function AppLayout() {
   const prefersDark = usePrefersDark();
   const { value: dark, setValue: setDark } = useStoredState<boolean>(STORAGE_KEYS.themeDark, prefersDark);
   const { profile } = useProfile();
+  const isAdmin = profile?.is_admin === true;
   const { value: usedCharacterId } = useStoredState<string | null>(STORAGE_KEYS.usedCharacterId, null);
   const { value: usedCharacterName } = useStoredState<string | null>(STORAGE_KEYS.usedCharacterName, null);
   const { value: usedCharacterClassIndex } = useStoredState<string | null>(STORAGE_KEYS.usedCharacterClassIndex, null);
@@ -53,6 +54,8 @@ export function AppLayout() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [dmMenuOpen, setDmMenuOpen] = useState(false);
   const [mobileDmOpen, setMobileDmOpen] = useState(false);
+  const [adminMenuOpen, setAdminMenuOpen] = useState(false);
+  const [mobileAdminOpen, setMobileAdminOpen] = useState(false);
   const [permissionBanner, setPermissionBanner] = useState<string | null>(null);
   const location = useLocation();
   useEffect(() => {
@@ -65,6 +68,8 @@ export function AppLayout() {
     setUserMenuOpen(false);
     setDmMenuOpen(false);
     setMobileDmOpen(false);
+    setAdminMenuOpen(false);
+    setMobileAdminOpen(false);
   }, [location.pathname]);
 
   return (
@@ -150,6 +155,43 @@ export function AppLayout() {
                 </div>
               ) : null}
             </div>
+            {isAdmin ? (
+              <>
+                <div className="mx-1 h-6 w-px bg-zinc-200/70 dark:bg-zinc-800/70" aria-hidden="true" />
+                <div className="relative">
+                  <button
+                    type="button"
+                    className={
+                      "inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition " +
+                      "text-zinc-700 hover:bg-zinc-200/60 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-900/60 dark:hover:text-zinc-50"
+                    }
+                    onClick={() => setAdminMenuOpen((v) => !v)}
+                    aria-label="Admin menu"
+                    aria-expanded={adminMenuOpen}
+                  >
+                    Admin
+                    <ChevronDown className="h-4 w-4 opacity-80" aria-hidden="true" />
+                  </button>
+                  {adminMenuOpen ? (
+                    <div className="absolute left-0 top-12 z-30 w-56 rounded-xl border border-zinc-200 bg-white p-2 shadow-lg dark:border-zinc-800 dark:bg-zinc-950">
+                      <NavLink
+                        to="/admin/content"
+                        className={({ isActive }) =>
+                          (
+                            "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium " +
+                            "text-zinc-800 hover:bg-zinc-100 dark:text-zinc-100 dark:hover:bg-zinc-900/60 " +
+                            (isActive ? "bg-zinc-100 dark:bg-zinc-900/60" : "")
+                          ).trim()
+                        }
+                      >
+                        <Database className="h-4 w-4" aria-hidden="true" />
+                        Content
+                      </NavLink>
+                    </div>
+                  ) : null}
+                </div>
+              </>
+            ) : null}
           </nav>
 
           <div className="flex items-center gap-2">
@@ -268,6 +310,40 @@ export function AppLayout() {
                     </NavLink>
                   ))}
                 </div>
+              ) : null}
+              {isAdmin ? (
+                <>
+                  <div className="my-1 border-t border-zinc-200/70 dark:border-zinc-800/70" />
+                  <button
+                    type="button"
+                    className="inline-flex w-full items-center justify-between rounded-md px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-200/60 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-900/60 dark:hover:text-zinc-50"
+                    onClick={() => setMobileAdminOpen((v) => !v)}
+                    aria-expanded={mobileAdminOpen}
+                  >
+                    <span className="inline-flex items-center gap-2">Admin</span>
+                    <ChevronDown
+                      className={"h-4 w-4 opacity-80 transition " + (mobileAdminOpen ? "rotate-180" : "")}
+                      aria-hidden="true"
+                    />
+                  </button>
+                  {mobileAdminOpen ? (
+                    <div className="flex flex-col gap-1 pl-2">
+                      <NavLink
+                        to="/admin/content"
+                        className={({ isActive }) =>
+                          (
+                            "inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium " +
+                            "text-zinc-700 hover:bg-zinc-200/60 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-900/60 dark:hover:text-zinc-50 " +
+                            (isActive ? "bg-zinc-200/60 text-zinc-900 dark:bg-zinc-900/60 dark:text-zinc-50" : "")
+                          ).trim()
+                        }
+                      >
+                        <Database className="h-4 w-4" aria-hidden="true" />
+                        Content
+                      </NavLink>
+                    </div>
+                  ) : null}
+                </>
               ) : null}
             </nav>
           </div>

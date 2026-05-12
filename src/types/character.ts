@@ -14,6 +14,8 @@ export type EquippedItem = {
   equipmentIndex: string;
   /** Magic bonus (+1 weapon/armor, etc.) applied to attack/damage or AC as appropriate. */
   modifier: number;
+  /** Extra flat damage on weapon hits; does not add to attack bonus. */
+  flatDamageBonus?: number;
   /** Weapon mastery property slug; empty uses weapon default mastery if any. */
   masteryIndex?: string;
   /** When false, ignore weapon's default mastery and any override. */

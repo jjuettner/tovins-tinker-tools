@@ -64,5 +64,5 @@ export function rebuildEquipped(
  * @returns Empty equipped weapon row.
  */
 export function emptyWeapon(): EquippedItem {
-  return { id: newEquippedItemId(), equipmentIndex: "", modifier: 0 };
+  return { id: newEquippedItemId(), equipmentIndex: "", modifier: 0, flatDamageBonus: 0 };
 }

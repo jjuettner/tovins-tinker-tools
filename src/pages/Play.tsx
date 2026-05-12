@@ -251,6 +251,7 @@ export function PlayPage() {
           c={c}
           weapons={weapons}
           featByIndex={catalog.loading ? dndFeatByIndex : catalog.featsByIndex}
+          catalogFeatures={catalog.features}
           onPatch={(next) => patch(c.id, () => next)}
         />
       ) : null}

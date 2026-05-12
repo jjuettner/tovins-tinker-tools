@@ -3,8 +3,6 @@ import { buttonClass } from "@/components/ui/controlClasses";
 import CharacterAvatar from "@/components/ui/CharacterAvatar";
 import HpReadonlyBadge from "@/components/ui/HpReadonlyBadge";
 import ConditionPills from "@/components/ui/ConditionPills";
-import { formatSigned } from "@/lib/dnd";
-import { spellAttackAndSaveDcForCharacter } from "@/lib/spellcasting";
 import type { Character } from "@/types/character";
 import type { DndClass } from "@/lib/dndData";
 
@@ -22,11 +20,10 @@ export default function PlayHeader(props: {
   onConditionPillClick(slug: string): void;
 }) {
   const clsName = props.classByIndex[props.c.classIndex]?.name ?? (props.c.classIndex || "Class");
-  const spell = props.isCaster ? spellAttackAndSaveDcForCharacter(props.c) : null;
   const slugs = props.c.conditionSlugs ?? [];
 
   return (
-    <header className="rounded-2xl border border-zinc-200 bg-gradient-to-br from-white to-zinc-50/90 p-5 shadow-sm dark:border-zinc-800 dark:from-zinc-900/80 dark:to-zinc-950/60">
+    <header className="rounded-2xl border border-zinc-200 bg-gradient-to-br from-white to-zinc-50/90 p-4 shadow-sm dark:border-zinc-800 dark:from-zinc-900/80 dark:to-zinc-950/60">
       <div className="flex min-w-0 gap-4">
         <div className="hidden shrink-0 md:block">
           <CharacterAvatar
@@ -40,10 +37,10 @@ export default function PlayHeader(props: {
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
-              <h1 className="font-display text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+              <h1 className="font-display text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
                 {props.c.name || "Unnamed"}
               </h1>
-              <p className="mt-1 text-sm font-medium text-zinc-600 dark:text-zinc-300">
+              <p className="mt-0.5 text-sm font-medium text-zinc-600 dark:text-zinc-300">
                 <span className="text-zinc-800 dark:text-zinc-100">{clsName}</span>
                 <span className="text-zinc-400 dark:text-zinc-500"> · </span>
               {props.c.subclassIndex?.trim() ? (
@@ -73,8 +70,7 @@ export default function PlayHeader(props: {
 
           <div
             className={
-              "mt-4 grid gap-3 " +
-              (props.isCaster ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5" : "grid-cols-2 sm:grid-cols-3")
+              "mt-3 grid grid-cols-3 gap-3"
             }
           >
               <div>
@@ -101,32 +97,12 @@ export default function PlayHeader(props: {
                   {props.speedFt !== null ? `${props.speedFt} ft.` : "—"}
                 </div>
               </div>
-              {props.isCaster && spell ? (
-                <>
-                  <div>
-                    <div className="text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                      Spell attack
-                    </div>
-                    <div className="mt-1 text-lg font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">
-                      {formatSigned(spell.spellAttackMod)}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                      Spell save DC
-                    </div>
-                    <div className="mt-1 text-lg font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">
-                      {spell.spellSaveDc}
-                    </div>
-                  </div>
-                </>
-              ) : null}
           </div>
         </div>
       </div>
 
       {slugs.length > 0 ? (
-        <div className="mt-4 border-t border-zinc-200/80 pt-3 dark:border-zinc-800/80">
+        <div className="mt-3 border-t border-zinc-200/80 pt-2.5 dark:border-zinc-800/80">
           <ConditionPills slugs={slugs} labelBySlug={props.conditionLabelBySlug} onPillClick={props.onConditionPillClick} />
         </div>
       ) : null}

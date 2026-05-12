@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { inputClassFull, smallLabelClass } from "@/components/ui/controlClasses";
+import { CatalogLabeledSelect, CatalogSearchField } from "@/components/features/compendium/CatalogListControls";
 import { dndClassByIndex, dndClasses, type DndSpell } from "@/lib/dndData";
 import type { SpellRow } from "@/lib/db/rulesetCatalog";
 import { fetchSpells } from "@/lib/db/rulesetCatalog";
@@ -92,33 +92,23 @@ export default function SpellCompendiumPanel() {
         <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Spells from all rulesets. Filter by class.</p>
 
         <div className="mt-3 flex flex-wrap items-end gap-2">
-          <label className="flex min-w-[12rem] flex-1 flex-col gap-1">
-            <span className={smallLabelClass()}>Search</span>
-            <input className={inputClassFull()} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Name or slug…" />
-          </label>
-          <label className="flex min-w-[10rem] flex-col gap-1">
-            <span className={smallLabelClass()}>Class</span>
-            <select className={inputClassFull()} value={classIndex} onChange={(e) => setClassIndex(e.target.value)}>
-              <option value="">All</option>
-              {dndClasses.map((c) => (
-                <option key={c.index} value={c.index}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex min-w-[9rem] flex-col gap-1">
-            <span className={smallLabelClass()}>Level</span>
-            <select className={inputClassFull()} value={level} onChange={(e) => setLevel(e.target.value as LevelFilter)}>
-              <option value="all">All</option>
-              <option value="cantrip">Cantrip</option>
-              {(["1", "2", "3", "4", "5", "6", "7", "8", "9"] as const).map((n) => (
-                <option key={n} value={n}>
-                  Level {n}
-                </option>
-              ))}
-            </select>
-          </label>
+          <CatalogSearchField id="compendium-spell-search" value={search} onChange={setSearch} />
+          <CatalogLabeledSelect
+            label="Class"
+            value={classIndex}
+            onChange={setClassIndex}
+            options={[{ value: "", label: "All" }, ...dndClasses.map((c) => ({ value: c.index, label: c.name }))]}
+          />
+          <CatalogLabeledSelect
+            label="Level"
+            value={level}
+            onChange={(v) => setLevel(v as LevelFilter)}
+            options={[
+              { value: "all", label: "All" },
+              { value: "cantrip", label: "Cantrip" },
+              ...(["1", "2", "3", "4", "5", "6", "7", "8", "9"] as const).map((n) => ({ value: n, label: `Level ${n}` }))
+            ]}
+          />
         </div>
 
         {error ? <p className="mt-2 text-sm text-red-700 dark:text-red-300">{error}</p> : null}
@@ -169,6 +159,8 @@ type DbSpellUi = Omit<DndSpell, "classes"> & {
   rulesetId: string;
   rulesetName: string;
   classes: string[];
+  /** Optional catalog summary column. */
+  summary?: string;
 };
 
 function spellFromDb(row: SpellRow, rulesetName: string): DbSpellUi | null {
@@ -188,7 +180,8 @@ function spellFromDb(row: SpellRow, rulesetName: string): DbSpellUi | null {
     concentration: row.concentration ?? data.concentration,
     ritual: row.ritual ?? data.ritual,
     rulesetId: row.ruleset_id,
-    rulesetName
+    rulesetName,
+    summary: typeof row.summary === "string" && row.summary.trim() ? row.summary.trim() : undefined
   };
 }
 
@@ -236,6 +229,15 @@ function SpellDetailCard(props: { spell: DbSpellUi }) {
           <dd className="font-medium">{classes.length ? classes.join(", ") : "—"}</dd>
         </div>
       </dl>
+
+      {s.summary?.trim() ? (
+        <div>
+          <h4 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Summary</h4>
+          <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-zinc-700 dark:text-zinc-200">
+            {renderDbDescription(s.summary.trim())}
+          </p>
+        </div>
+      ) : null}
 
       {desc ? (
         <div>

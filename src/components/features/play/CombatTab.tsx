@@ -1,6 +1,8 @@
 import { Crosshair, Droplet, Sword } from "lucide-react";
 import { useMemo, useState } from "react";
 import { buttonClass, inputClass, inputClassFull, smallLabelClass } from "@/components/ui/controlClasses";
+import { buildSheetPassiveEntries } from "@/lib/character/sheetPassives";
+import { catalogSummaryOrFallback } from "@/lib/catalogSummary";
 import {
   canUseRecklessAttack,
   resolvedWeaponMasteryIndex,
@@ -9,6 +11,7 @@ import {
   weaponDamageSummary,
   weaponToHitBonus
 } from "@/lib/combat";
+import type { FeatureRow } from "@/lib/db/rulesetCatalog";
 import { formatSigned } from "@/lib/dnd";
 import { renderDbDescription } from "@/lib/renderDbDescription";
 import { dndEquipmentByIndex, isWeapon } from "@/lib/dndEquipment";
@@ -33,10 +36,13 @@ const DAMAGE_TYPES = [
 
 type DamageRow = { type: string; amount: number };
 
+type AttackHint = { key: string; name: string; body: string };
+
 function AttackRollModal(props: {
   c: Character;
   ctx: { kind: "weapon"; weapon: EquippedItem } | { kind: "unarmed" };
   featByIndex: Record<string, import("@/lib/dndData").DndFeat>;
+  catalogFeatures: FeatureRow[];
   onClose(): void;
 }) {
   const toHit = props.ctx.kind === "unarmed" ? unarmedToHit(props.c) : weaponToHitBonus(props.c, props.ctx.weapon);
@@ -44,15 +50,36 @@ function AttackRollModal(props: {
   const [reckless, setReckless] = useState(false);
   const canReckless = props.ctx.kind === "weapon" && canUseRecklessAttack(props.c, props.ctx.weapon);
 
-  const combatFeatHints = useMemo(() => {
-    return (props.c.feats ?? [])
+  const attackHints = useMemo((): AttackHint[] => {
+    const fromFeats: AttackHint[] = (props.c.feats ?? [])
       .map((i) => props.featByIndex[i])
       .filter((f): f is NonNullable<typeof f> => Boolean(f))
       .filter((f) => {
-        const t = `${f.name} ${f.description ?? ""}`.toLowerCase();
+        const t = `${f.name} ${f.description ?? ""} ${f.summary ?? ""}`.toLowerCase();
         return t.includes("weapon") || t.includes("attack") || t.includes("damage") || t.includes("critical");
-      });
-  }, [props.c.feats, props.featByIndex]);
+      })
+      .map((f) => ({
+        key: `feat-${f.index}`,
+        name: f.name,
+        body: catalogSummaryOrFallback(f.summary, f.description ?? "")
+      }))
+      .filter((h) => h.body.trim().length > 0);
+
+    const passive = buildSheetPassiveEntries(props.c, props.catalogFeatures);
+    const fromFeatures: AttackHint[] = passive
+      .filter((e) => {
+        const t = `${e.name} ${e.description}`.toLowerCase();
+        return t.includes("weapon") || t.includes("attack") || t.includes("damage") || t.includes("critical");
+      })
+      .map((e) => ({
+        key: `feature-${e.slug}`,
+        name: e.name,
+        body: e.description.trim()
+      }))
+      .filter((h) => h.body.length > 0);
+
+    return [...fromFeats, ...fromFeatures];
+  }, [props.c, props.featByIndex, props.catalogFeatures]);
 
   const dmg =
     props.ctx.kind === "unarmed"
@@ -97,6 +124,19 @@ function AttackRollModal(props: {
                 </span>
               </label>
             ) : null}
+            {attackHints.length > 0 ? (
+              <ul className="mt-3 max-h-36 overflow-auto text-xs text-zinc-600 dark:text-zinc-300">
+                {attackHints.map((h) => (
+                  <li
+                    key={h.key}
+                    className="mt-1 whitespace-pre-wrap border-t border-zinc-100 pt-1 dark:border-zinc-800"
+                  >
+                    <span className="font-semibold text-zinc-800 dark:text-zinc-200">{h.name}:</span>{" "}
+                    {renderDbDescription(h.body)}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
             <div className="mt-4 flex gap-2">
               <button
                 type="button"
@@ -136,15 +176,15 @@ function AttackRollModal(props: {
                 ) : null}
               </div>
             ) : null}
-            {combatFeatHints.length > 0 ? (
+            {attackHints.length > 0 ? (
               <ul className="mt-3 max-h-40 overflow-auto text-xs text-zinc-600 dark:text-zinc-300">
-                {combatFeatHints.map((f) => (
+                {attackHints.map((h) => (
                   <li
-                    key={f.index}
+                    key={h.key}
                     className="mt-1 whitespace-pre-wrap border-t border-zinc-100 pt-1 dark:border-zinc-800"
                   >
-                    <span className="font-semibold text-zinc-800 dark:text-zinc-200">{f.name}:</span>{" "}
-                    {renderDbDescription(f.description ?? "")}
+                    <span className="font-semibold text-zinc-800 dark:text-zinc-200">{h.name}:</span>{" "}
+                    {renderDbDescription(h.body)}
                   </li>
                 ))}
               </ul>
@@ -163,6 +203,7 @@ export default function CombatTab(props: {
   c: Character;
   weapons: EquippedItem[];
   featByIndex: Record<string, import("@/lib/dndData").DndFeat>;
+  catalogFeatures: FeatureRow[];
   onPatch(next: Character): void;
 }) {
   const [rows, setRows] = useState<DamageRow[]>([{ type: "bludgeoning", amount: 0 }]);
@@ -348,7 +389,15 @@ export default function CombatTab(props: {
         </ul>
       </section>
 
-      {attackCtx ? <AttackRollModal c={props.c} ctx={attackCtx} featByIndex={props.featByIndex} onClose={() => setAttackCtx(null)} /> : null}
+      {attackCtx ? (
+        <AttackRollModal
+          c={props.c}
+          ctx={attackCtx}
+          featByIndex={props.featByIndex}
+          catalogFeatures={props.catalogFeatures}
+          onClose={() => setAttackCtx(null)}
+        />
+      ) : null}
     </div>
   );
 }

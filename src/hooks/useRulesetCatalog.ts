@@ -87,12 +87,22 @@ function transformClasses(rows: { slug: string; name: string; hit_die: number | 
  * @param rows Feat rows from the database.
  * @returns Feat list for UI.
  */
-function transformFeats(rows: { slug: string; name: string; feat_type: string | null; repeatable: string | null; description: string | null }[]) {
+function transformFeats(
+  rows: {
+    slug: string;
+    name: string;
+    feat_type: string | null;
+    repeatable: string | null;
+    description: string | null;
+    summary?: string | null;
+  }[]
+) {
   return rows
     .map((f) => ({
       index: f.slug,
       name: f.name,
       description: f.description ?? undefined,
+      summary: typeof f.summary === "string" && f.summary.trim() ? f.summary.trim() : undefined,
       type: f.feat_type ?? undefined,
       repeatable: f.repeatable ?? undefined
     }))
@@ -152,19 +162,22 @@ function spellNarrativeFromData(data: unknown): { desc?: string[]; higher_level?
  * @param rows Spell rows from the database.
  * @returns Spell list for UI.
  */
-function transformSpells(rows: Array<{
-  slug: string;
-  name: string;
-  level: number;
-  school: string | null;
-  casting_time?: string | null;
-  range_text?: string | null;
-  duration?: string | null;
-  concentration?: boolean | null;
-  ritual?: boolean | null;
-  classes?: string[] | null;
-  data?: unknown;
-}>) {
+function transformSpells(
+  rows: Array<{
+    slug: string;
+    name: string;
+    level: number;
+    school: string | null;
+    casting_time?: string | null;
+    range_text?: string | null;
+    duration?: string | null;
+    concentration?: boolean | null;
+    ritual?: boolean | null;
+    classes?: string[] | null;
+    summary?: string | null;
+    data?: unknown;
+  }>
+) {
   return rows
     .map((sp) => {
       const school = sp.school
@@ -176,6 +189,7 @@ function transformSpells(rows: Array<{
 
       const classes = Array.isArray(sp.classes) ? sp.classes.filter(Boolean).map((idx) => ({ index: idx })) : undefined;
       const narrative = spellNarrativeFromData(sp.data);
+      const summaryTrim = typeof sp.summary === "string" && sp.summary.trim() ? sp.summary.trim() : undefined;
 
       return {
         index: sp.slug,
@@ -189,7 +203,8 @@ function transformSpells(rows: Array<{
         concentration: sp.concentration ?? undefined,
         ritual: sp.ritual ?? undefined,
         desc: narrative.desc,
-        higher_level: narrative.higher_level
+        higher_level: narrative.higher_level,
+        summary: summaryTrim
       } satisfies DndSpell;
     })
     .sort((a, b) => a.name.localeCompare(b.name));
@@ -269,7 +284,16 @@ export function useRulesetCatalog(rulesetIds: string[]): Omit<
         const classesUi = transformClasses(
           classesRows.map((c) => ({ slug: c.slug, name: c.name, hit_die: c.hit_die, data: c.data }))
         );
-        const featsUi = transformFeats(featsRows.map((f) => ({ slug: f.slug, name: f.name, feat_type: f.feat_type, repeatable: f.repeatable, description: f.description })));
+        const featsUi = transformFeats(
+          featsRows.map((f) => ({
+            slug: f.slug,
+            name: f.name,
+            feat_type: f.feat_type,
+            repeatable: f.repeatable,
+            description: f.description,
+            summary: f.summary ?? null
+          }))
+        );
         const spellsUi = transformSpells(
           spellsRows.map((s) => ({
             slug: s.slug,
@@ -282,6 +306,7 @@ export function useRulesetCatalog(rulesetIds: string[]): Omit<
             concentration: s.concentration ?? null,
             ritual: s.ritual ?? null,
             classes: s.classes ?? null,
+            summary: s.summary ?? null,
             data: s.data
           }))
         );

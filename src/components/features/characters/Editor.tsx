@@ -525,7 +525,7 @@ export function CharacterEditor(props: {
             <NumberInput
               className={inputClassFull()}
               min={1}
-              max={30}
+              max={20}
               twoDigitUnder40={true}
               value={props.draft.stats[ab]}
               onChange={(next) =>
@@ -601,7 +601,7 @@ export function CharacterEditor(props: {
       <div className="mt-5 rounded-xl border border-zinc-200 bg-zinc-50/70 p-4 dark:border-zinc-800 dark:bg-zinc-950/30">
         <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Weapons & armor</h3>
         <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-300">
-          Equipped weapons (for Play combat). One body armor and optional shield. Magic bonus applies to hit, damage, and armor as appropriate.
+          Equipped weapons (for Play combat). One body armor and optional shield. Magic bonus adds to hit and damage; flat bonus adds to damage only.
         </p>
 
         <div className="mt-4 space-y-4">
@@ -1054,15 +1054,28 @@ function WeaponEquipRow(props: {
           </div>
         </div>
         <div className="flex flex-col items-end gap-2">
-          <label className="flex flex-col gap-1">
-            <span className={smallLabelClass()}>Bonus</span>
-            <input
-              type="number"
-              className={inputClass() + " w-20"}
-              value={props.item.modifier}
-              onChange={(e) => props.onChange({ ...props.item, modifier: Number(e.target.value) })}
-            />
-          </label>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+            <label className="flex flex-col gap-1">
+              <span className={smallLabelClass()}>Magic +X (hit &amp; damage)</span>
+              <input
+                type="number"
+                className={inputClass() + " w-20"}
+                value={props.item.modifier}
+                onChange={(e) => props.onChange({ ...props.item, modifier: Number(e.target.value) })}
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className={smallLabelClass()}>Flat damage only</span>
+              <input
+                type="number"
+                className={inputClass() + " w-20"}
+                value={props.item.flatDamageBonus ?? 0}
+                onChange={(e) =>
+                  props.onChange({ ...props.item, flatDamageBonus: Number(e.target.value) })
+                }
+              />
+            </label>
+          </div>
           <button type="button" className={buttonClass("danger")} onClick={props.onRemove} aria-label="Remove weapon">
             <Trash2 className="h-4 w-4" aria-hidden="true" />
           </button>

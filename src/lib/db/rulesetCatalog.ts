@@ -11,12 +11,19 @@ export type SpellRow = RulesetScoped<{
   concentration: boolean | null;
   ritual: boolean | null;
   classes: string[] | null;
+  summary?: string | null;
   data: unknown;
 }>;
 
 export type ClassRow = RulesetScoped<{ hit_die: number | null; data: unknown }>;
 export type RaceRow = RulesetScoped<{ data: unknown }>;
-export type FeatRow = RulesetScoped<{ feat_type: string | null; repeatable: string | null; description: string | null; data: unknown }>;
+export type FeatRow = RulesetScoped<{
+  feat_type: string | null;
+  repeatable: string | null;
+  description: string | null;
+  summary?: string | null;
+  data: unknown;
+}>;
 export type EquipmentRow = RulesetScoped<{
   category: string | null;
   weapon_category: string | null;
@@ -33,6 +40,7 @@ export type FeatureRow = RulesetScoped<{
   class_slug: string | null;
   subclass_slug: string | null;
   level: number | null;
+  summary?: string | null;
   data: unknown;
 }>;
 

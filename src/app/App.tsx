@@ -1,5 +1,6 @@
 import { BrowserRouter, HashRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AppLayout } from "@/app/AppLayout";
+import { AuthProvider } from "@/lib/AuthProvider";
 import { CharactersPage } from "@/pages/Characters";
 import { PlayPage } from "@/pages/Play";
 import { AuthGate } from "@/components/features/auth/AuthGate";
@@ -7,6 +8,7 @@ import { CampaignsPage } from "@/pages/Campaigns";
 import { CompendiumPage } from "@/pages/Compendium";
 import { EncountersPage } from "@/pages/Encounters";
 import { JoinCampaignPage } from "@/pages/JoinCampaign";
+import AdminContent from "@/pages/AdminContent";
 import { ProfilePage } from "@/pages/Profile";
 import { ResetPasswordPage } from "@/pages/ResetPassword";
 
@@ -16,8 +18,9 @@ const routerBasename = rawBase === "/" ? undefined : rawBase.replace(/\/$/, "");
 export function App() {
   const Router = rawBase === "/" ? BrowserRouter : HashRouter;
   return (
-    <Router {...(rawBase === "/" ? { basename: routerBasename } : {})}>
-      <Routes>
+    <AuthProvider>
+      <Router {...(rawBase === "/" ? { basename: routerBasename } : {})}>
+        <Routes>
         <Route element={<AppLayout />}>
           <Route path="reset-password" element={<ResetPasswordPage />} />
           <Route
@@ -84,10 +87,19 @@ export function App() {
               </AuthGate>
             }
           />
+          <Route
+            path="admin/content"
+            element={
+              <AuthGate>
+                <AdminContent />
+              </AuthGate>
+            }
+          />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
+    </AuthProvider>
   );
 }
 

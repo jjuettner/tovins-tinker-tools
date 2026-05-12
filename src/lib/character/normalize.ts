@@ -44,6 +44,10 @@ export function normalizeCharacter(c: Character): Character {
         id: e.id && e.id.length > 0 ? e.id : newEquippedItemId(),
         equipmentIndex: e.equipmentIndex ?? "",
         modifier: Number.isFinite(e.modifier) ? Math.floor(e.modifier) : 0,
+        flatDamageBonus:
+          e.flatDamageBonus !== undefined && Number.isFinite(e.flatDamageBonus)
+            ? Math.floor(e.flatDamageBonus)
+            : 0,
         masteryIndex:
           typeof e.masteryIndex === "string" && e.masteryIndex.trim().length > 0
             ? e.masteryIndex.trim()

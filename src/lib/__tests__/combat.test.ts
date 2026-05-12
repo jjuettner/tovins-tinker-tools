@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canUseRecklessAttack } from "@/lib/combat";
+import { canUseRecklessAttack, weaponDamageSummary, weaponToHitBonus } from "@/lib/combat";
 import type { Character, EquippedItem } from "@/types/character";
 
 function testCharacter(over: Partial<Character>): Character {
@@ -63,5 +63,21 @@ describe("canUseRecklessAttack", () => {
       stats: { STR: 18, DEX: 8, CON: 14, INT: 8, WIS: 10, CHA: 10 }
     });
     expect(canUseRecklessAttack(c, rapier)).toBe(true);
+  });
+});
+
+describe("weapon flat damage bonus", () => {
+  const c = testCharacter({ classIndex: "fighter", level: 1 });
+
+  it("adds flatDamageBonus to damage only, not to-hit", () => {
+    const w: EquippedItem = {
+      id: "w",
+      equipmentIndex: "greataxe",
+      modifier: 1,
+      flatDamageBonus: 4
+    };
+    expect(weaponToHitBonus(c, w)).toBe(6);
+    const dmg = weaponDamageSummary(c, w);
+    expect(dmg.bonus).toBe(8);
   });
 });
